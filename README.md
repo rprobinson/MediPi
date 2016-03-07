@@ -31,7 +31,7 @@ All main functions of MediPi are encapsulated as Elements. These are visually re
 
 This class provides container window nodes for the UI
 
-![Element image](https://github.com/rprobinson/MediPi/blob/master/Element_UML.png)
+![Element image](https://cloud.githubusercontent.com/assets/13271321/13568138/3856b57a-e457-11e5-947c-299967dc2d2a.png)
 
 
 ####Device Class
@@ -96,7 +96,7 @@ MediPi depends on the following libraries:
 * **Java RXTX libraries for serial devices:** https://github.com/rxtx/rxtx
 
 ### Configuration files:
- The configuration files can be downloaded as a zip from here: https://github.com/rprobinson/MediPi/blob/master/reference_Config_v1.0.0-PILOT.zip
+ The configuration files can be downloaded as a zip from here:https://github.com/rprobinson/MediPi/files/161196/reference_Config_v1.0.0-PILOT.zip
 
 ###USB Medical Device Interfaces:
 3 particular devices have been used but others can be developed.
