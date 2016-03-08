@@ -96,7 +96,7 @@ MediPi depends on the following libraries:
 * **Java RXTX libraries for serial devices:** https://github.com/rxtx/rxtx
 
 ### Configuration files:
- The configuration files can be downloaded as a zip from here:https://github.com/rprobinson/MediPi/files/161196/reference_Config_v1.0.0-PILOT.zip
+ The configuration files can be downloaded as a zip from here:https://github.com/rprobinson/MediPi/files/162967/reference_Config_v1.0.0-PILOT-20160308.zip
 
 ###USB Medical Device Interfaces:
 3 particular devices have been used but others can be developed.
