@@ -103,7 +103,7 @@ public class ScalePractitioner extends Scale implements Runnable {
     public void run() {
         try {
             Thread.sleep(1000);
-            String itkTrunkDir = MediPiProperties.getInstance().getProperties().getProperty(MESSAGE_DIR);
+            String itkTrunkDir = medipi.getProperties().getProperty(MESSAGE_DIR);
             File file = lastFileModified(itkTrunkDir);
             FileInputStream fis = new FileInputStream(file);
             StringBuilder builder = new StringBuilder();

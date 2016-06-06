@@ -41,7 +41,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import org.warlock.spine.logging.MediPiLogger;
+import org.medipi.logging.MediPiLogger;
 import org.medipi.devices.drivers.BeurerBF480;
 import org.medipi.utilities.Utilities;
 
@@ -110,7 +110,7 @@ public class PractitionerMessenger extends Element {
 //        viewSP.setPrefHeight(300);
         viewSP.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         viewSP.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
-        messageDir = MediPiProperties.getInstance().getProperties().getProperty(MediPi.ELEMENTNAMESPACESTEM + uniqueDeviceName + ".outgoingmessagedirectory");
+        messageDir = medipi.getProperties().getProperty(MediPi.ELEMENTNAMESPACESTEM + uniqueDeviceName + ".outgoingmessagedirectory");
         if (messageDir == null || messageDir.trim().length() == 0) {
             String error = "Message directory " + MediPi.ELEMENTNAMESPACESTEM + uniqueDeviceName + ".outgoingmessagedirectory parameter not configured";
             MediPiLogger.getInstance().log(BeurerBF480.class.getName(), error);
@@ -118,7 +118,7 @@ public class PractitionerMessenger extends Element {
         }
         Path dir = Paths.get(messageDir);
 
-        String dest = MediPiProperties.getInstance().getProperties().getProperty(MediPi.ELEMENTNAMESPACESTEM + uniqueDeviceName + ".messagedestination");
+        String dest = medipi.getProperties().getProperty(MediPi.ELEMENTNAMESPACESTEM + uniqueDeviceName + ".messagedestination");
         if (dest == null || dest.trim().length() == 0) {
             String error = "Message directory " + MediPi.ELEMENTNAMESPACESTEM + uniqueDeviceName + ".messagedestination parameter not configured";
             MediPiLogger.getInstance().log(BeurerBF480.class.getName(), error);

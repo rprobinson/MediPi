@@ -15,12 +15,25 @@
  */
 package org.medipi;
 
+import org.medipi.authentication.MediPiWindow;
 import org.medipi.devices.Element;
 import java.awt.SplashScreen;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
+import java.net.UnknownHostException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.Enumeration;
 import java.util.Properties;
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -38,7 +51,8 @@ import javafx.scene.layout.TilePane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
-import org.warlock.spine.logging.MediPiLogger;
+import org.medipi.devices.Device;
+import org.medipi.logging.MediPiLogger;
 import org.medipi.utilities.ConfigurationStringTokeniser;
 import org.medipi.utilities.Utilities;
 
@@ -78,8 +92,8 @@ public class MediPi extends Application {
 
     // MediPi version Number
     private static final String MEDIPINAME = "MediPi Telehealth System";
-    private static final String VERSION = "MediPi_v1.0.0";
-    private static final String VERSIONNAME = "PILOT-20160305-1";
+    private static final String VERSION = "MediPi_v1.0.6";
+    private static final String VERSIONNAME = "PILOT-20160601-1";
 
     // Set the MediPi Log directory
     private static final String LOG = "medipi.log";
@@ -112,7 +126,7 @@ public class MediPi extends Application {
     private Stage primaryStage;
     private final ArrayList<Element> elements = new ArrayList<>();
     private TilePane dashTile;
-    private VBox mainWindow;
+    private VBox subWindow;
     // Fatal error flag to stop use of MediPi - one way there is no set back to false
     private boolean fatalError = false;
     private final StringBuilder fatalErrorLog = new StringBuilder("There has been a fatal error: \n");
@@ -123,6 +137,7 @@ public class MediPi extends Application {
     private String patientLastName;
     private String versionIdent;
     private String dataSeparator;
+    private Properties properties;
     /**
      * Debug mode governing standard output and error reporting. Debug mode can
      * take one of 3 values: "debug" mode this will report to standard out debug
@@ -132,10 +147,6 @@ public class MediPi extends Application {
      *
      */
     private int debugMode = NONE;
-    /**
-     * Properties from the main properties file
-     */
-    protected Properties properties;
 
     /**
      * allows access to scene to allow the cursor to be set
@@ -162,6 +173,18 @@ public class MediPi extends Application {
      * "ELEMENTNAMESPACESTEM" a single variable to contain element stem
      */
     public static final String ELEMENTNAMESPACESTEM = "medipi.element.";
+
+    /**
+     * Accessible utilities class
+     */
+    public Utilities utils;
+
+    /**
+     * Properties from the main properties file
+     */
+    public Properties getProperties() {
+        return properties;
+    }
 
     /**
      * Boolean to toggle basic dataview where a guide is shown or a graph of
@@ -242,6 +265,8 @@ public class MediPi extends Application {
                 makeFatalErrorMessage("Properties file failed to load", null);
             }
             properties = MediPiProperties.getInstance().getProperties();
+            // initialise utilities which is accessible to all classes which have reference to MediPi.class
+            utils = new Utilities(properties);
             MediPiMessageBox message = MediPiMessageBox.getInstance();
             message.setMediPi(this);
             //Set up logging
@@ -267,6 +292,49 @@ public class MediPi extends Application {
                 debugMode = DEBUG;
             } else if (dbm.toLowerCase().trim().equals("errorsuppressing")) {
                 debugMode = ERRORSUPPRESSING;
+            }
+
+            // find the Device Name
+            String ip;
+            try {
+                // try to find the MAC address
+                StringBuilder macAdd = new StringBuilder();
+                Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
+                while (interfaces.hasMoreElements()) {
+                    NetworkInterface iface = interfaces.nextElement();
+                    // filters out 127.0.0.1 and inactive interfaces
+                    if (iface.isLoopback() || !iface.isUp()) {
+                        continue;
+                    }
+                    byte[] mac = iface.getHardwareAddress();
+                    if(mac==null){
+                        continue;
+                    }
+                    System.out.print("Current MAC address : ");
+                    for (int i = 0; i < mac.length; i++) {
+                        macAdd.append(String.format("%02X%s", mac[i], (i < mac.length - 1) ? ":" : ""));
+                    }
+                    System.out.print(macAdd.toString().toLowerCase());
+                }
+                // Using the Mac address unlock the JKS keystore for the device
+                try {
+                    String ksf = MediPiProperties.getInstance().getProperties().getProperty("medipi.device.cert.location");
+
+                    KeyStore keyStore = KeyStore.getInstance("jks");
+                    try (FileInputStream fis = new FileInputStream(ksf)) {
+                        //the MAC address used to unlock the JKS must be lowercase
+                        keyStore.load(fis, macAdd.toString().toLowerCase().toCharArray());
+                        // use a system property to save the certicicate name
+                        Enumeration<String> aliases = keyStore.aliases();
+                        // the keystore will only ever contain one key -so take the 1st one
+                        System.setProperty("medipi.device.cert.name", aliases.nextElement());
+                    }
+                } catch (KeyStoreException | IOException | NoSuchAlgorithmException | CertificateException e) {
+                    makeFatalErrorMessage("Device certificate is not correct for this device", null);
+                }
+
+            } catch (Exception e) {
+                makeFatalErrorMessage("Can't find Mac Address for the machine, therefore unable to check device certificate", null);
             }
 
             // fundamental UI decisions made from the properties
@@ -352,7 +420,7 @@ public class MediPi extends Application {
             title.setAlignment(Pos.CENTER);
             // add the NHS logo
             ImageView iw = new ImageView("/org/medipi/nhs.jpg");
-            mainWindow = new VBox();
+            VBox mainWindow = new VBox();
             mainWindow.setId("mainwindow");
             mainWindow.setPadding(new Insets(0, 5, 0, 5));
             mainWindow.setAlignment(Pos.TOP_CENTER);
@@ -371,11 +439,22 @@ public class MediPi extends Application {
             dashTile.setId("mainwindow-dashboard");
             //bind the visibility property so that when not visible the panel doesnt take any space
             dashTile.managedProperty().bind(dashTile.visibleProperty());
-
-            mainWindow.getChildren().addAll(
-                    titleBP,
-                    new Separator(Orientation.HORIZONTAL),
-                    dashTile);
+            subWindow = new VBox();
+            subWindow.setId("subwindow");
+            subWindow.setAlignment(Pos.TOP_CENTER);
+            subWindow.getChildren().addAll(
+                    dashTile
+            );
+            try {
+                MediPiWindow mw = new MediPiWindow(subWindow);
+                mainWindow.getChildren().addAll(
+                        titleBP,
+                        new Separator(Orientation.HORIZONTAL),
+                        mw
+                );
+            } catch (Exception e) {
+                makeFatalErrorMessage("Authentication cannot be loaded - " + e.getMessage(), null);
+            }
 
             StackPane root = new StackPane();
             root.getChildren().add(mainWindow);
@@ -430,7 +509,7 @@ public class MediPi extends Application {
                         if (initError == null) {
                             dashTile.getChildren().add(elem.getDashboardTile());
                             elements.add(elem);
-                            mainWindow.getChildren().add(elem.getWindowComponent());
+                            subWindow.getChildren().add(elem.getWindowComponent());
                         } else {
                             MediPiMessageBox.getInstance().makeErrorMessage("Cannot instantiate an element: \n" + classToken + " - " + elementClass + " - " + initError, null, Thread.currentThread());
                         }
@@ -521,7 +600,7 @@ public class MediPi extends Application {
      * @return the version of MediPi
      */
     public String getVersion() {
-        return versionIdent;
+        return VERSION + "-" + VERSIONNAME;
     }
 
     /**
@@ -575,7 +654,9 @@ public class MediPi extends Application {
             exString = except.getMessage();
         }
         fatalErrorLog.append(errorMessage).append("\n").append(exString);
-        MediPiLogger.getInstance().log(MediPi.class.getName() + ".initialisation", "Fatal Error:" + errorMessage + exString);
+        MediPiLogger
+                .getInstance().log(MediPi.class
+                        .getName() + ".initialisation", "Fatal Error:" + errorMessage + exString);
         primaryStage.setTitle(VERSION);
         Label l = new Label(fatalErrorLog.toString());
         l.setStyle("-fx-background-color: lightblue;");
@@ -584,4 +665,17 @@ public class MediPi extends Application {
         primaryStage.show();
     }
 
+    /**
+     * Method to reset all the data on all the devices loaded onto MediPi
+     *
+     */
+    public void resetAllDevices() {
+        for (Element e : getElements()) {
+            if (Device.class
+                    .isAssignableFrom(e.getClass())) {
+                Device d = (Device) e;
+                d.resetDevice();
+            }
+        }
+    }
 }

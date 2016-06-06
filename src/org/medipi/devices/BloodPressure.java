@@ -41,6 +41,7 @@ import javafx.scene.control.Separator;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -95,6 +96,7 @@ public abstract class BloodPressure extends Device {
     private Date lastDate = new Date(0L);
 
     private Date downloadTimestamp = null;
+    private ArrayList<String> metadata = new ArrayList<>();
 
     /**
      * This is the data separator from the MediPi.properties file
@@ -130,7 +132,9 @@ public abstract class BloodPressure extends Device {
 
         String uniqueDeviceName = getClassTokenName();
         separator = medipi.getDataSeparator();
-        downloadButton = new Button("Download");
+        ImageView iw = medipi.utils.getImageView("medipi.images.arrow", 20, 20);
+        iw.setRotate(90);
+        downloadButton = new Button("Download", iw);
         downloadButton.setId("button-download");
         meterWindow = new VBox();
         meterWindow.setPadding(new Insets(0, 5, 0, 5));
@@ -139,12 +143,11 @@ public abstract class BloodPressure extends Device {
         meterWindow.setMaxSize(800, 350);
         downProg.setVisible(false);
         HBox buttonHbox = new HBox();
-        buttonHbox.setAlignment(Pos.CENTER_RIGHT);
         buttonHbox.setSpacing(10);
+        buttonHbox.getChildren().add(downloadButton);
         if (progressBarResolution > 0D) {
             buttonHbox.getChildren().add(downProg);
         }
-        buttonHbox.getChildren().add(downloadButton);
         //Decide whether to show basic or advanced view
         if (medipi.isBasicDataView()) {
             Guide guide = new Guide(MediPi.ELEMENTNAMESPACESTEM + uniqueDeviceName);
@@ -171,11 +174,6 @@ public abstract class BloodPressure extends Device {
             pulseRateCol.setCellValueFactory(
                     new PropertyValueFactory<>("pulseRate"));
 
-            TableColumn userCol = new TableColumn("User");
-            userCol.setMinWidth(50);
-            userCol.setCellValueFactory(
-                    new PropertyValueFactory<>("user"));
-
             TableColumn restCol = new TableColumn("Rest");
             restCol.setMinWidth(50);
             restCol.setCellValueFactory(
@@ -188,7 +186,7 @@ public abstract class BloodPressure extends Device {
 
             table.setItems(data);
             table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-            table.getColumns().addAll(dateCol, systolCol, diastolCol, pulseRateCol, userCol, restCol, arrhythmiaCol);
+            table.getColumns().addAll(dateCol, systolCol, diastolCol, pulseRateCol, restCol, arrhythmiaCol);
 
             deviceWindow = new VBox();
             deviceWindow.setPadding(new Insets(0, 5, 0, 5));
@@ -264,7 +262,7 @@ public abstract class BloodPressure extends Device {
         // set main Element window
         window.setCenter(meterWindow);
 
-        setRightButton(buttonHbox);
+        setButton2(buttonHbox);
 
         downloadButton(meterVBox);
 
@@ -277,7 +275,7 @@ public abstract class BloodPressure extends Device {
         downloadButton.setOnAction((ActionEvent t) -> {
             resetDevice();
             Task<String> task = new Task<String>() {
-                
+
                 @Override
                 protected String call() throws Exception {
                     try {
@@ -292,29 +290,30 @@ public abstract class BloodPressure extends Device {
                                 //Digest the incoming read data
                                 if (readData.startsWith("START")) {
                                     updateProgress(0D, progressBarResolution);
+                                } else if (readData.startsWith("METADATA")) {
+                                    metadata.add(readData.substring(readData.indexOf(":") + 1));
                                     // the LOOP function allows devices to control a progress bar
                                 } else if (readData.startsWith("LOOP")) {
                                     updateProgress(Double.parseDouble(readData.substring(readData.indexOf(":") + 1)), progressBarResolution);
                                 } else if (readData.startsWith("DATA")) {
                                     String data = readData.substring(readData.indexOf(":") + 1);
                                     String[] line = data.split(Pattern.quote(separator));
-                                    final Date d = Utilities.INTERNAL_DEVICE_FORMAT.parse(line[0] + ":" + line[1]);
-                                    final int systol = Integer.parseInt(line[2]);
-                                    final int diastol = Integer.parseInt(line[3]);
-                                    final int pulse = Integer.parseInt(line[4]);
-                                    final String user = line[5];
-                                    final boolean rest = Boolean.parseBoolean(line[6]);
-                                    final boolean arrhythmia = Boolean.parseBoolean(line[7]);
+                                    final Date d = Utilities.ISO8601FORMATDATEMINUTES.parse(line[0]);
+                                    final int systol = Integer.parseInt(line[1]);
+                                    final int diastol = Integer.parseInt(line[2]);
+                                    final int pulse = Integer.parseInt(line[3]);
+                                    final boolean rest = Boolean.parseBoolean(line[4]);
+                                    final boolean arrhythmia = Boolean.parseBoolean(line[5]);
                                     // add the data to the data array
                                     deviceData.add(line);
                                     // add the data to the screen display - this might be a graph/table
                                     // or just a simple result of the last measure
                                     Platform.runLater(() -> {
-                                        addDataPoint(d, systol, diastol, pulse, user, rest, arrhythmia);
+                                        addDataPoint(d, systol, diastol, pulse, rest, arrhythmia);
                                     });
+                                    hasData.set(true);
                                 } else if (readData.startsWith("END")) {
                                     updateProgress(progressBarResolution, progressBarResolution);
-                                    hasData.set(true);
                                     return "SUCCESS";
                                 } else {
                                     return readData;
@@ -327,7 +326,7 @@ public abstract class BloodPressure extends Device {
                     }
                     return "Unknown error connecting to Meter";
                 }
-                
+
                 // the measure of completion and success is returning "SUCCESS"
                 // all other outcomes indicate failure and pipe the failure
                 // reason given from the device to the error message box
@@ -341,46 +340,46 @@ public abstract class BloodPressure extends Device {
                         MediPiMessageBox.getInstance().makeErrorMessage(getValue(), null, Thread.currentThread());
                     }
                 }
-                
+
                 @Override
                 protected void scheduled() {
                     super.scheduled();
                 }
-                
+
                 @Override
                 protected void failed() {
                     super.failed();
                     MediPiMessageBox.getInstance().makeErrorMessage(getValue(), null, Thread.currentThread());
                 }
-                
+
                 @Override
                 protected void cancelled() {
                     super.failed();
                     MediPiMessageBox.getInstance().makeErrorMessage(getValue(), null, Thread.currentThread());
                 }
             };
-            
+
             // Set up the bindings to control the UI elements during the running of the task
             if (progressBarResolution > 0D) {
                 downProg.progressProperty().bind(task.progressProperty());
                 downProg.visibleProperty().bind(task.runningProperty());
             }
-            
+
             // Disabling Button control
             downloadButton.disableProperty().bind(task.runningProperty());
-            
-            leftButton.disableProperty().bind(
+
+            button3.disableProperty().bind(
                     Bindings.when(task.runningProperty().and(isSchedule))
-                            .then(true)
-                            .otherwise(false)
+                    .then(true)
+                    .otherwise(false)
             );
             //Last measurement taken large display
             meterVBox.visibleProperty().bind(
                     Bindings.when(task.valueProperty().isEqualTo("SUCCESS"))
-                            .then(true)
-                            .otherwise(false)
+                    .then(true)
+                    .otherwise(false)
             );
-            
+
             new Thread(task).start();
         });
     }
@@ -406,6 +405,7 @@ public abstract class BloodPressure extends Device {
         deviceData = new ArrayList<>();
         hasData.set(false);
         downloadTimestamp = null;
+        metadata.clear();
         if (!medipi.isBasicDataView()) {
             data.clear();
         }
@@ -438,13 +438,27 @@ public abstract class BloodPressure extends Device {
     public String getData() {
         StringBuilder sb = new StringBuilder();
         //Add MetaData
-        sb.append("metadata:medipiversion:").append(medipi.getVersion()).append("\n");
-        sb.append("metadata:patientname:").append(medipi.getPatientLastName()).append(",").append(medipi.getPatientFirstName()).append("\n");
-        sb.append("metadata:patientdob:").append(medipi.getPatientDOB()).append("\n");
-        sb.append("metadata:patientnhsnumber:").append(medipi.getPatientNHSNumber()).append("\n");
-        sb.append("metadata:timedownloaded:").append(downloadTimestamp).append("\n");
-        sb.append("metadata:device:").append(getName()).append("\n");
-        sb.append("metadata:format:").append("date,time,systol,diastol,pulseRate,user,rest,arrhythmia").append("\n");
+        sb.append("metadata->persist->medipiversion->").append(medipi.getVersion()).append("\n");
+        for (String s : metadata) {
+            sb.append("metadata->persist->").append(s).append("\n");
+        }
+        sb.append("metadata->timedownloaded->").append(Utilities.ISO8601FORMATDATEMILLI.format(downloadTimestamp)).append("\n");
+        sb.append("metadata->subtype->").append(getName()).append("\n");
+        sb.append("metadata->datadelimiter->").append(medipi.getDataSeparator()).append("\n");
+        sb.append("metadata->columns->")
+                .append("iso8601time").append(medipi.getDataSeparator())
+                .append("systol").append(medipi.getDataSeparator())
+                .append("diastol").append(medipi.getDataSeparator())
+                .append("pulserate").append(medipi.getDataSeparator())
+                .append("rest").append(medipi.getDataSeparator())
+                .append("arrhythmia").append("\n");
+        sb.append("metadata->format->")
+                .append("DATE").append(medipi.getDataSeparator())
+                .append("INTEGER").append(medipi.getDataSeparator())
+                .append("INTEGER").append(medipi.getDataSeparator())
+                .append("INTEGER").append(medipi.getDataSeparator())
+                .append("BOOLEAN").append(medipi.getDataSeparator())
+                .append("BOOLEAN").append("\n");
         // Add Downloaded data
         for (String[] s : deviceData) {
             sb.append(s[0]);
@@ -458,10 +472,6 @@ public abstract class BloodPressure extends Device {
             sb.append(s[4]);
             sb.append(separator);
             sb.append(s[5]);
-            sb.append(separator);
-            sb.append(s[6]);
-            sb.append(separator);
-            sb.append(s[7]);
             sb.append("\n");
         }
         return sb.toString();
@@ -495,7 +505,7 @@ public abstract class BloodPressure extends Device {
      * @param At Rest indicator as measured in the meter
      * @param Heart Arrhythmia detection indicator as measured in the meter
      */
-    private void addDataPoint(Date d, int systol, int diastol, int pulseRate, String user, boolean rest, boolean arrhythmia) {
+    private void addDataPoint(Date d, int systol, int diastol, int pulseRate, boolean rest, boolean arrhythmia) {
         if (d.after(lastDate)) {
             lastSystol.setText(String.valueOf(systol));
             lastSystolDB.setText(String.valueOf(systol));
@@ -506,7 +516,7 @@ public abstract class BloodPressure extends Device {
             lastDate = d;
         }
         if (!medipi.isBasicDataView()) {
-            MeterReading mr = new MeterReading(Utilities.DISPLAY_TABLE_FORMAT.format(d), String.valueOf(systol), String.valueOf(diastol), String.valueOf(pulseRate), String.valueOf(user), String.valueOf(rest), String.valueOf(arrhythmia));
+            MeterReading mr = new MeterReading(Utilities.DISPLAY_TABLE_FORMAT.format(d), String.valueOf(systol), String.valueOf(diastol), String.valueOf(pulseRate), String.valueOf(rest), String.valueOf(arrhythmia));
             data.add(mr);
         }
 
@@ -530,16 +540,14 @@ public abstract class BloodPressure extends Device {
         private final SimpleStringProperty systol;
         private final SimpleStringProperty diastol;
         private final SimpleStringProperty pulseRate;
-        private final SimpleStringProperty user;
         private final SimpleStringProperty rest;
         private final SimpleStringProperty arrhythmia;
 
-        private MeterReading(String date, String systol, String diastol, String pulseRate, String user, String rest, String arrythmia) {
+        private MeterReading(String date, String systol, String diastol, String pulseRate, String rest, String arrythmia) {
             this.date = new SimpleStringProperty(date);
             this.systol = new SimpleStringProperty(systol);
             this.diastol = new SimpleStringProperty(diastol);
             this.pulseRate = new SimpleStringProperty(pulseRate);
-            this.user = new SimpleStringProperty(user);
             this.rest = new SimpleStringProperty(rest);
             this.arrhythmia = new SimpleStringProperty(arrythmia);
         }
@@ -606,22 +614,6 @@ public abstract class BloodPressure extends Device {
          */
         public void setPulseRate(String d) {
             pulseRate.set(d);
-        }
-
-        /**
-         *
-         * @return
-         */
-        public String getUser() {
-            return user.get();
-        }
-
-        /**
-         *
-         * @param d
-         */
-        public void setUser(String d) {
-            user.set(d);
         }
 
         /**

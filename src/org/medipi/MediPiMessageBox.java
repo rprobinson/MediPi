@@ -17,7 +17,7 @@ package org.medipi;
 
 import javafx.application.Platform;
 import jfx.messagebox.MessageBox;
-import org.warlock.spine.logging.MediPiLogger;
+import org.medipi.logging.MediPiLogger;
 
 /**
  * Singleton Class to deliver alert messages to MediPi This class is intended to
@@ -95,6 +95,27 @@ public class MediPiMessageBox {
                         "Error dialog",
                         MessageBox.ICON_ERROR | MessageBox.OK);
             }
+        } catch (Exception ex) {
+            medipi.makeFatalErrorMessage("Fatal Error - Unable to display error message", ex);
+        }
+    }
+    public void makeMessage(String message, Thread thisThread) {
+        try {
+            MediPiLogger.getInstance().log(MediPiMessageBox.class.getName() + ".makeMessage", "MediPi informed the user that: " + message);
+            if (medipi.getDebugMode() == MediPi.ERRORSUPPRESSING) {
+                System.out.println("Message - " + message);
+            } else if (thisThread != Thread.currentThread()) {
+                Platform.runLater(() -> {
+                    MessageBox.show(medipi.getStage(),
+                            "Message - " + message,
+                            "Message dialog",
+                            MessageBox.ICON_INFORMATION | MessageBox.OK);
+                });
+            } else {
+                    MessageBox.show(medipi.getStage(),
+                            "Message - " + message,
+                            "Message dialog",
+                            MessageBox.ICON_INFORMATION | MessageBox.OK);            }
         } catch (Exception ex) {
             medipi.makeFatalErrorMessage("Fatal Error - Unable to display error message", ex);
         }

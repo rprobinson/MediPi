@@ -85,7 +85,7 @@ public class QuestionnairePractitioner extends Device {
     public String init() throws Exception {
 
         String uniqueDeviceName = getClassTokenName();
-        name = MediPiProperties.getInstance().getProperties().getProperty(MediPi.ELEMENTNAMESPACESTEM + uniqueDeviceName + ".title");
+        name = medipi.getProperties().getProperty(MediPi.ELEMENTNAMESPACESTEM + uniqueDeviceName + ".title");
         if (name == null || name.trim().length() == 0) {
             throw new Exception("The Questionnaire doesn't have a title name");
         }
@@ -185,7 +185,7 @@ public class QuestionnairePractitioner extends Device {
 
     private void execute() {
         try {
-            String itkTrunkDir = MediPiProperties.getInstance().getProperties().getProperty(MESSAGE_DIR);
+            String itkTrunkDir = medipi.getProperties().getProperty(MESSAGE_DIR);
             File file = lastFileModified(itkTrunkDir);
             FileInputStream fis = new FileInputStream(file);
             StringBuilder builder = new StringBuilder();

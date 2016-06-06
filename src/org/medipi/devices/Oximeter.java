@@ -18,6 +18,7 @@ package org.medipi.devices;
 import extfx.scene.chart.DateAxis;
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.regex.Pattern;
@@ -133,7 +134,6 @@ public abstract class Oximeter extends Device {
      */
     protected Task task;
 
-
     /**
      * Constructor for a Generic Oximeter
      *
@@ -156,7 +156,7 @@ public abstract class Oximeter extends Device {
 
         String uniqueDeviceName = getClassTokenName();
         separator = medipi.getDataSeparator();
-        recordButton = new Button("Record");
+        recordButton = new Button("Record", medipi.utils.getImageView("medipi.images.record", 20, 20));
         recordButton.setId("button-record");
 
         oxiWindow = new VBox();
@@ -268,7 +268,7 @@ public abstract class Oximeter extends Device {
         );
         // set main Element window
         window.setCenter(oxiWindow);
-        setRightButton(recordButton);
+        setButton2(recordButton);
 
         // Setup reccord button action to start or stop the main task
         recordButton.setOnAction((ActionEvent t) -> {
@@ -283,7 +283,7 @@ public abstract class Oximeter extends Device {
                         // serial device cant stop
                     }
                 });
-                
+
             }
         });
 
@@ -301,7 +301,7 @@ public abstract class Oximeter extends Device {
         return DEVICE_TYPE;
     }
 
-        @Override
+    @Override
     public String getProfileId() {
         return PROFILEID;
     }
@@ -373,7 +373,7 @@ public abstract class Oximeter extends Device {
                             } else {
                                 updateValue("INPROGRESS");
                                 String[] line = readData.split(Pattern.quote(separator));
-                                final long timestamp = Long.parseLong(line[0]);
+                                final Date timestamp = Utilities.ISO8601FORMATDATEMILLI.parse(line[0]);
                                 final int pulse = Integer.parseInt(line[1]);
                                 final int spO2 = Integer.parseInt(line[2]);
                                 final int wave = Integer.parseInt(line[3]);
@@ -445,7 +445,12 @@ public abstract class Oximeter extends Device {
                 .then("Stop")
                 .otherwise("Record")
         );
-        leftButton.disableProperty().bind(
+        recordButton.graphicProperty().bind(
+                Bindings.when(task.runningProperty())
+                .then(medipi.utils.getImageView("medipi.images.stop", 20, 20))
+                .otherwise(medipi.utils.getImageView("medipi.images.record", 20, 20))
+        );
+        button3.disableProperty().bind(
                 Bindings.when(task.runningProperty().and(isSchedule))
                 .then(true)
                 .otherwise(false)
@@ -475,13 +480,20 @@ public abstract class Oximeter extends Device {
         StringBuilder sb = new StringBuilder();
 
         //Add MetaData
-        sb.append("metadata:medipiversion:").append(medipi.getVersion()).append("\n");
-        sb.append("metadata:patientname:").append(medipi.getPatientLastName()).append(",").append(medipi.getPatientFirstName()).append("\n");
-        sb.append("metadata:patientdob:").append(medipi.getPatientDOB()).append("\n");
-        sb.append("metadata:patientnhsnumber:").append(medipi.getPatientNHSNumber()).append("\n");
-        sb.append("metadata:timedownloaded:").append(downloadTimestamp).append("\n");
-        sb.append("metadata:device:").append(getName()).append("\n");
-        sb.append("metadata:format:").append("time,pulse,sp02,wave").append("\n");
+        sb.append("metadata->persist->medipiversion->").append(medipi.getVersion()).append("\n");
+        sb.append("metadata->timedownloaded->").append(Utilities.ISO8601FORMATDATEMILLI.format(downloadTimestamp)).append("\n");
+        sb.append("metadata->subtype->").append(getName()).append("\n");
+        sb.append("metadata->datadelimiter->").append(medipi.getDataSeparator()).append("\n");
+        sb.append("metadata->columns->")
+                .append("iso8601time").append(medipi.getDataSeparator())
+                .append("pulse").append(medipi.getDataSeparator())
+                .append("spo2").append(medipi.getDataSeparator())
+                .append("wave").append("\n");
+        sb.append("metadata->format->")
+                .append("DATE").append(medipi.getDataSeparator())
+                .append("INTEGER").append(medipi.getDataSeparator())
+                .append("INTEGER").append(medipi.getDataSeparator())
+                .append("DOUBLE").append("\n");
         // Add Downloaded data
         for (String[] s : deviceData) {
             sb.append(s[0]);
@@ -504,18 +516,18 @@ public abstract class Oximeter extends Device {
      * @param spO2 in %
      * @param waveForm
      */
-    public void addDataPoint(long time, int pulseRate, int spO2, int waveForm) {
+    public void addDataPoint(Date time, int pulseRate, int spO2, int waveForm) {
 
         if (startTimeTF.getText().equals("-")) {
-            startTimeTF.setText(Utilities.DISPLAY_FORMAT.format(new Date(time)));
+            startTimeTF.setText(Utilities.DISPLAY_FORMAT.format(time));
         }
-        endTimeTF.setText(Utilities.DISPLAY_FORMAT.format(new Date(time)));
+        endTimeTF.setText(Utilities.DISPLAY_FORMAT.format(time));
         if (!medipi.isBasicDataView()) {
-            XYChart.Data<Date, Number> pulseXYData = new XYChart.Data<>(new Date(time), pulseRate);
+            XYChart.Data<Date, Number> pulseXYData = new XYChart.Data<>(time, pulseRate);
             pulseSeries.getData().add(pulseXYData);
-            XYChart.Data<Date, Number> spO2XYData = new XYChart.Data<>(new Date(time), spO2);
+            XYChart.Data<Date, Number> spO2XYData = new XYChart.Data<>(time, spO2);
             spO2Series.getData().add(spO2XYData);
-            XYChart.Data<Date, Number> waveFormXYData = new XYChart.Data<>(new Date(time), waveForm);
+            XYChart.Data<Date, Number> waveFormXYData = new XYChart.Data<>(time, waveForm);
             waveFormSeries.getData().add(waveFormXYData);
         }
         if (pulseRate != 0) {

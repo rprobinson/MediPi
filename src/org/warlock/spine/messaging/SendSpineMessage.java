@@ -23,7 +23,7 @@ import org.warlock.itk.distributionenvelope.DistributionEnvelopeHelper;
 import org.warlock.spine.connection.ConnectionManager;
 import org.warlock.spine.connection.SDSSpineEndpointResolver;
 import org.warlock.spine.connection.SdsTransmissionDetails;
-import org.warlock.spine.logging.MediPiLogger;
+import org.medipi.logging.MediPiLogger;
 import org.warlock.spine.logging.SpineToolsLogger;
 import org.medipi.MediPiProperties;
 

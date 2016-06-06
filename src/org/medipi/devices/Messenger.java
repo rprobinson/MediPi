@@ -109,7 +109,7 @@ public class Messenger extends Element {
         messengerWindow.setMinSize(800, 350);
         messengerWindow.setMaxSize(800, 350);
         // get the image file for the alert image to be superimposed on the dashboard tile when a new message is received
-        String alertImageFile = MediPiProperties.getInstance().getProperties().getProperty(MEDIPIIMAGESEXCLAIM);
+        String alertImageFile = medipi.getProperties().getProperty(MEDIPIIMAGESEXCLAIM);
         alertImageView = new ImageView("file:///" + alertImageFile);
 
         // Create the view of the message content - scrollable
@@ -127,7 +127,7 @@ public class Messenger extends Element {
         viewSP.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         viewSP.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
         // location of the persistent message store
-        messageDir = MediPiProperties.getInstance().getProperties().getProperty(MediPi.ELEMENTNAMESPACESTEM + uniqueDeviceName + ".incomingmessagedirectory");
+        messageDir = medipi.getProperties().getProperty(MediPi.ELEMENTNAMESPACESTEM + uniqueDeviceName + ".incomingmessagedirectory");
         if (messageDir == null || messageDir.trim().length() == 0) {
             throw new Exception("Message Directory parameter not configured");
         }
@@ -211,11 +211,11 @@ public class Messenger extends Element {
         // Start the incoming message timer. This wakes up every definable period (default set to 30s) 
         // and performs functions to interrogate a secure remote directory to check for new files(messages)
         try {
-            String time = MediPiProperties.getInstance().getProperties().getProperty(MediPi.ELEMENTNAMESPACESTEM + uniqueDeviceName + ".pollincomingmsgperiod");
+            String time = medipi.getProperties().getProperty(MediPi.ELEMENTNAMESPACESTEM + uniqueDeviceName + ".pollincomingmsgperiod");
             if (time == null || time.trim().length() == 0) {
                 time = "30";
             }
-            String url = MediPiProperties.getInstance().getProperties().getProperty(MediPi.ELEMENTNAMESPACESTEM + uniqueDeviceName + ".messageserver");
+            String url = medipi.getProperties().getProperty(MediPi.ELEMENTNAMESPACESTEM + uniqueDeviceName + ".messageserver");
             if (url == null || url.trim().length() == 0) {
                 throw new Exception("Unable to start the incoming message service - Message server URL is not set in configuration");
             }

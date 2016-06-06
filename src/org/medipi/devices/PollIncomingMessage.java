@@ -20,7 +20,7 @@ import java.io.InputStreamReader;
 import java.nio.file.Path;
 import java.util.Date;
 import org.medipi.MediPiMessageBox;
-import org.warlock.spine.logging.MediPiLogger;
+import org.medipi.logging.MediPiLogger;
 
 /**
  * Class to poll a secure remote server directory and bring back into the local

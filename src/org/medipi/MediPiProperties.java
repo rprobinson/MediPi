@@ -19,7 +19,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.Properties;
-import org.warlock.spine.logging.MediPiLogger;
+import org.medipi.logging.MediPiLogger;
 import org.medipi.utilities.ConfigurationStringTokeniser;
 
 /**

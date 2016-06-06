@@ -42,6 +42,7 @@ import org.medipi.utilities.ConfigurationStringTokeniser;
 import org.medipi.DashboardTile;
 import org.medipi.MediPi;
 import org.medipi.MediPiProperties;
+import org.medipi.utilities.Utilities;
 
 /**
  * Class to display and manage a simple yes/no Questionnaire which will follow a
@@ -80,7 +81,7 @@ public class Questionnaire extends Device {
     private String firstRuleName = null;
     private String questionSet;
     private Label question = new Label("");
-    private String name;
+    private String titleName;
     private Date downloadTimestamp = null;
     private String questionnaireVersion = null;
 
@@ -108,8 +109,8 @@ public class Questionnaire extends Device {
         String uniqueDeviceName = getClassTokenName();
         // The device is dynamically named from the configuration file as there 
         // are different questionnaire rulsets which could be applied
-        name = MediPiProperties.getInstance().getProperties().getProperty(MediPi.ELEMENTNAMESPACESTEM + uniqueDeviceName + ".title");
-        if (name == null || name.trim().length() == 0) {
+        titleName = medipi.getProperties().getProperty(MediPi.ELEMENTNAMESPACESTEM + uniqueDeviceName + ".title");
+        if (titleName == null || titleName.trim().length() == 0) {
             throw new Exception("The Questionnaire doesn't have a title name");
         }
         // Scrollable main window
@@ -118,14 +119,16 @@ public class Questionnaire extends Device {
         questionnaireWindow.setSpacing(5);
         questionnaireWindow.setMinHeight(350);
         questionnaireWindow.setMaxHeight(350);
+        questionnaireWindow.setMinWidth(800);
+        questionnaireWindow.setMaxWidth(800);
         questionList = new VBox();
         questionList.setId("questionnaire-questionpanel");
         ScrollPane questionSP = new ScrollPane();
         questionSP.setContent(questionList);
         questionSP.setFitToWidth(true);
         questionSP.setFitToHeight(true);
-        questionSP.setMinHeight(170);
-        questionSP.setMaxHeight(170);
+        questionSP.setMinHeight(210);
+        questionSP.setMaxHeight(210);
         questionSP.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         questionSP.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
         // Make sure that the latest question is always in view
@@ -151,18 +154,13 @@ public class Questionnaire extends Device {
         listSP.setMaxHeight(60);
         listSP.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         listSP.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
-        startButton = new Button("Start Questionnaire");
+        startButton = new Button("Start Questionnaire", medipi.utils.getImageView("medipi.images.play", 20, 20));
         startButton.setId("questionnaire-button-start");
         HBox buttonHbox = new HBox();
         buttonHbox.setPadding(new Insets(5, 5, 5, 5));
         buttonHbox.setSpacing(10);
         buttonHbox.setAlignment(Pos.BASELINE_LEFT);
-        Label nameLabel = new Label(name);
-        nameLabel.setId("questionnaire-title-label");
-        buttonHbox.getChildren().addAll(
-                nameLabel,
-                startButton);
-        questionnaireWindow.setAlignment(Pos.TOP_LEFT);
+//        questionnaireWindow.setAlignment(Pos.TOP_LEFT);
         Label responseTitleLabel = new Label("Action to take:");
         responseTitleLabel.setId("questionnaire-responsepanel");
         questionnaireWindow.getChildren().addAll(
@@ -178,7 +176,7 @@ public class Questionnaire extends Device {
         window.setCenter(questionnaireWindow);
 
         // load the questionnaire ruleset
-        questionSet = MediPiProperties.getInstance().getProperties().getProperty(MediPi.ELEMENTNAMESPACESTEM + uniqueDeviceName + ".questions");
+        questionSet = medipi.getProperties().getProperty(MediPi.ELEMENTNAMESPACESTEM + uniqueDeviceName + ".questions");
         if (questionSet == null || !questionSet.contains(".questions")) {
             throw new Exception("Cannot find Question Ruleset");
         }
@@ -187,6 +185,7 @@ public class Questionnaire extends Device {
             resetDevice();
             execute(firstRuleName);
         });
+        setButton2(startButton);
 
         hasData.bind(responseLabel.textProperty().isNotEmpty());
 
@@ -206,7 +205,7 @@ public class Questionnaire extends Device {
 
     @Override
     public String getName() {
-        return name;
+        return titleName;
     }
 
     @Override
@@ -227,30 +226,31 @@ public class Questionnaire extends Device {
         final int FALSE_RESPONSE = 2;
         // handle buttons for when being run as part of a schedule 
         if (isSchedule.get()) {
-            centreButton.setDisable(true);
-            leftButton.setDisable(true);
+            button1.setDisable(true);
+            button3.setDisable(true);
         }
         String[] rule = questionnaire.get(ruleName);
-        yes = new Button("Yes");
+        yes = new Button("Yes", medipi.utils.getImageView("medipi.images.yes", 20, 20));
         yes.setId("questionnaire-button-yes");
-        no = new Button("No");
+        no = new Button("No", medipi.utils.getImageView("medipi.images.no", 20, 20));
         no.setId("questionnaire-button-no");
 
         //actions for clicking "yes"
         yes.setOnAction((ActionEvent t) -> {
             // add data to data arraylist for transmission later
-            data.add(new String[]{questions.get(rule[QUESTION]), yes.getText()});
+            data.add(new String[]{Utilities.ISO8601FORMATDATEMILLI.format(new Date()),questions.get(rule[QUESTION]), yes.getText()});
             yes.setDisable(true);
             no.setDisable(true);
             no.setVisible(false);
             String response = responses.get(rule[TRUE_RESPONSE]);
             if (response != null) {
                 // add data to data arraylist for transmission later
-                data.add(new String[]{response, ADVICE_TO_PATIENT});
+                // n.b. 1 millisecond is added to the response to differentiate it and maintain unique timestamps
+                data.add(new String[]{Utilities.ISO8601FORMATDATEMILLI.format(new Date(System.currentTimeMillis()+1L)),response, ADVICE_TO_PATIENT});
                 responseLabel.setText(response);
                 if (isSchedule.get()) {
-                    centreButton.setDisable(false);
-                    leftButton.setDisable(false);
+                    button1.setDisable(false);
+                    button3.setDisable(false);
                 }
                 // take the time of downloading the data
                 downloadTimestamp = new Date();
@@ -264,18 +264,19 @@ public class Questionnaire extends Device {
         //actions for clicking "no"
         no.setOnAction((ActionEvent t) -> {
             // add data to data arraylist for transmission later
-            data.add(new String[]{questions.get(rule[QUESTION]), no.getText()});
+            data.add(new String[]{Utilities.ISO8601FORMATDATEMILLI.format(new Date()),questions.get(rule[QUESTION]), no.getText()});
             yes.setDisable(true);
             yes.setVisible(false);
             no.setDisable(true);
             String response = responses.get(rule[FALSE_RESPONSE]);
             if (response != null) {
                 // add data to data arraylist for transmission later
-                data.add(new String[]{response, ADVICE_TO_PATIENT});
+                // n.b. 1 millisecond is added to the response to differentiate it and maintain unique timestamps
+                data.add(new String[]{Utilities.ISO8601FORMATDATEMILLI.format(new Date(System.currentTimeMillis()+1L)),response, ADVICE_TO_PATIENT});
                 responseLabel.setText(response);
                 if (isSchedule.get()) {
-                    centreButton.setDisable(false);
-                    leftButton.setDisable(false);
+                    button1.setDisable(false);
+                    button3.setDisable(false);
                 }
                 // take the time of downloading the data
                 downloadTimestamp = new Date();
@@ -372,7 +373,7 @@ public class Questionnaire extends Device {
                 }
             }
             if (questionnaireVersion == null) {
-                throw new Exception(name + " Ruleset has no version number - unsafe to continue");
+                throw new Exception(titleName + " Ruleset has no version number - unsafe to continue");
             }
         }
     }
@@ -466,19 +467,26 @@ public class Questionnaire extends Device {
     public String getData() {
         StringBuilder sb = new StringBuilder();
         //Add MetaData
-        sb.append("metadata:medipiversion:").append(medipi.getVersion()).append("\n");
-        sb.append("metadata:patientname:").append(medipi.getPatientLastName()).append(",").append(medipi.getPatientFirstName()).append("\n");
-        sb.append("metadata:patientdob:").append(medipi.getPatientDOB()).append("\n");
-        sb.append("metadata:patientnhsnumber:").append(medipi.getPatientNHSNumber()).append("\n");
-        sb.append("metadata:timedownloaded:").append(downloadTimestamp).append("\n");
-        sb.append("metadata:device:").append(getName()).append("\n");
-        sb.append("metadata:format:").append("question").append(medipi.getDataSeparator()).append("answer").append("\n");
-        sb.append("metadata:questionnaireversion:").append(name).append("\n");
+        sb.append("metadata->persist->medipiversion->").append(medipi.getVersion()).append("\n");
+        sb.append("metadata->persist->questionnaireversion->").append(titleName).append("\n");
+        sb.append("metadata->timedownloaded->").append(Utilities.ISO8601FORMATDATEMILLI.format(downloadTimestamp)).append("\n");
+        sb.append("metadata->subtype->").append(getName()).append("\n");
+        sb.append("metadata->datadelimiter->").append(medipi.getDataSeparator()).append("\n");
+        sb.append("metadata->columns->")
+                .append("iso8601time").append(medipi.getDataSeparator())
+                .append("question").append(medipi.getDataSeparator())
+                .append("answer").append("\n");
+        sb.append("metadata->format->")
+                .append("DATE").append(medipi.getDataSeparator())
+                .append("STRING").append(medipi.getDataSeparator())
+                .append("STRING").append("\n");
         // Add Downloaded data
         for (String[] s : data) {
             sb.append(s[0]);
             sb.append(medipi.getDataSeparator());
             sb.append(s[1]);
+            sb.append(medipi.getDataSeparator());
+            sb.append(s[2]);
             sb.append("\n");
         }
         return sb.toString();

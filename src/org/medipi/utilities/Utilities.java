@@ -17,16 +17,20 @@ package org.medipi.utilities;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Properties;
+import java.util.TimeZone;
 import javafx.scene.image.ImageView;
 
 /**
  * Utilities class to allow universal access to useful methods or public Objects
- * 
+ *
  * TODO: Need to extract out these methods from MediPi
- * 
+ *
  * @author rick@robinsonhq.com
  */
 public class Utilities {
+
+    private final Properties properties;
 
     public static final DateFormat DISPLAY_FORMAT = new SimpleDateFormat("EEE d MMM yyyy HH:mm:ss");
     public static final DateFormat INTERNAL_FORMAT = new SimpleDateFormat("yyyyMMddHHmmss");
@@ -38,17 +42,51 @@ public class Utilities {
     public static final DateFormat DISPLAY_SCHEDULE_FORMAT = new SimpleDateFormat("HH:mm:ss dd/MM/yyyy");
     public static final DateFormat INTERNAL_SPINE_FORMAT = new SimpleDateFormat("yyyyMMddHHmmss.SSS");
     public static final DateFormat DISPLAY_OXIMETER_TIME_FORMAT = new SimpleDateFormat("HH:mm:ss");
+    public static final DateFormat ISO8601FORMATDATEMILLI = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+    public static final DateFormat ISO8601FORMATDATESECONDS = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+    public static final DateFormat ISO8601FORMATDATEMINUTES = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'");
 
-
-    public Utilities() {
+    /**
+     *
+     * @param mp
+     */
+    public Utilities(Properties mp) {
+        properties = mp;
+        final String TIMEZONE = "medipi.timezone";
+        String timezone = properties.getProperty(TIMEZONE);
+        if (timezone != null && timezone.length() > 0) {
+            ISO8601FORMATDATEMILLI.setTimeZone(TimeZone.getTimeZone(timezone));
+            ISO8601FORMATDATESECONDS.setTimeZone(TimeZone.getTimeZone(timezone));
+            ISO8601FORMATDATEMINUTES.setTimeZone(TimeZone.getTimeZone(timezone));
+        } else {
+            ISO8601FORMATDATEMILLI.setTimeZone(TimeZone.getTimeZone("GMT"));
+            ISO8601FORMATDATESECONDS.setTimeZone(TimeZone.getTimeZone("GMT"));
+            ISO8601FORMATDATEMINUTES.setTimeZone(TimeZone.getTimeZone("GMT"));
+        }
     }
-    public ImageView getImageView(String img) {
 
+    /**
+     * Utility method to return an imageView from a MediPi property reference
+     *
+     * @param property MediPi property reference
+     * @param w width of returned imageView
+     * @param h height of returned imageView
+     * @return ImageView of the property name
+     */
+    public ImageView getImageView(String property, Integer w, Integer h) {
+
+        String img = properties.getProperty(property);
         ImageView image;
         if (img == null || img.trim().length() == 0) {
             image = new ImageView("/org/medipi/Default.jpg");
         } else {
             image = new ImageView("file:///" + img);
+        }
+        if (h != null) {
+            image.setFitHeight(h);
+        }
+        if (w != null) {
+            image.setFitWidth(w);
         }
         return image;
     }

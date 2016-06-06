@@ -127,9 +127,6 @@ public class Scheduler extends Device {
     // not sure what the best setting for this thread pool is but 3 seems to work
     private static final int TIMER_THREAD_POOL_SIZE = 3;
     private String schedulerFile;
-    private String arrowImageFile;
-    private String passImageFile;
-    private String failImageFile;
     private ImageView alertImageView;
     private final ArrayList<Schedule> deviceData = new ArrayList<>();
     // property to indicate whether data has bee recorded for this device
@@ -196,14 +193,11 @@ public class Scheduler extends Device {
         schedulerWindow.setMaxSize(800, 350);
         schedulerWindow.setAlignment(Pos.TOP_CENTER);
         // get details of all images which are required
-        String alertImageFile = MediPiProperties.getInstance().getProperties().getProperty(MEDIPIIMAGESEXCLAIM);
+        String alertImageFile = medipi.getProperties().getProperty(MEDIPIIMAGESEXCLAIM);
         alertImageView = new ImageView("file:///" + alertImageFile);
-        arrowImageFile = MediPiProperties.getInstance().getProperties().getProperty(MEDIPIIMAGESARROW);
-        passImageFile = MediPiProperties.getInstance().getProperties().getProperty(MEDIPIIMAGESPASS);
-        failImageFile = MediPiProperties.getInstance().getProperties().getProperty(MEDIPIIMAGESFAIL);
 
         // Find location of scheduler file
-        schedulerFile = MediPiProperties.getInstance().getProperties().getProperty(MediPi.ELEMENTNAMESPACESTEM + uniqueDeviceName + ".scheduler");
+        schedulerFile = medipi.getProperties().getProperty(MediPi.ELEMENTNAMESPACESTEM + uniqueDeviceName + ".scheduler");
         if (schedulerFile == null || schedulerFile.trim().length() == 0) {
             return "Scheduler Directory parameter not configured";
         }
@@ -269,7 +263,7 @@ public class Scheduler extends Device {
         viewStatus.setFitToHeight(true);
         viewStatus.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         viewStatus.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
-        left = new Button("Run Schedule Now");
+        left = new Button("Run Schedule Now", medipi.utils.getImageView("medipi.images.play", 20, 20));
         left.setId("button-runschednow");
 
         Label title = new Label("List of schedules");
@@ -290,7 +284,7 @@ public class Scheduler extends Device {
 
         // set main Element window
         window.setCenter(schedulerWindow);
-        setRightButton(left);
+        setButton2(left);
         refreshSchedule();
         // refresh the schedule every time the Schedule window is called
         window.visibleProperty().addListener((ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) -> {
@@ -301,7 +295,7 @@ public class Scheduler extends Device {
         // Start the scheduler timer. This wakes up every definable period (default set to 10s) 
         // and refreshes the schedule to see if the scheduler is up to date
         try {
-            String time = MediPiProperties.getInstance().getProperties().getProperty(MediPi.ELEMENTNAMESPACESTEM + uniqueDeviceName + ".pollscheduletimer");
+            String time = medipi.getProperties().getProperty(MediPi.ELEMENTNAMESPACESTEM + uniqueDeviceName + ".pollscheduletimer");
             if (time == null || time.trim().length() == 0) {
                 time = "10";
             }
@@ -395,11 +389,10 @@ public class Scheduler extends Device {
         // (with a pass or fail badge superimposed).
         for (String s : sched.getDeviceSched()) {
             Element elem = medipi.getElement(s);
-            SpineTransmitter st = null;
-            try {
-                st = (SpineTransmitter) elem;
-            } catch (ClassCastException cce) {
 
+            Transmitter st = null;
+            if (Transmitter.class.isAssignableFrom(elem.getClass())) {
+                st = (Transmitter) elem;
             }
             if (st == null) {
                 boolean found = false;
@@ -408,17 +401,17 @@ public class Scheduler extends Device {
                     if (s.equals(t)) {
                         found = true;
                         transmitted.getChildren().add(getImage(elem, true));
-                        transmitted.getChildren().add(getImage(arrowImageFile));
+                        transmitted.getChildren().add(medipi.utils.getImageView(MEDIPIIMAGESARROW, 40, 40));
                     }
                 }
                 // if transmitted element not found in list of scheduled elements then fail badge
                 if (!found) {
                     transmitted.getChildren().add(getImage(elem, false));
-                    transmitted.getChildren().add(getImage(arrowImageFile));
+                    transmitted.getChildren().add(medipi.utils.getImageView(MEDIPIIMAGESARROW, 40, 40));
                 }
             }
             scheduled.getChildren().add(getImage(elem, null));
-            scheduled.getChildren().add(getImage(arrowImageFile));
+            scheduled.getChildren().add(medipi.utils.getImageView(MEDIPIIMAGESARROW, 40, 40));
         }
         // remove the last element which will be an arrow
         scheduled.getChildren().remove(scheduled.getChildren().size() - 1);
@@ -447,20 +440,6 @@ public class Scheduler extends Device {
         Label l = new Label(text);
         l.setId(id);
         return l;
-    }
-
-    // private method for creating a new ImageView from a path - should be subsumed into Utilities generally 
-    private ImageView getImage(String img) {
-
-        ImageView image;
-        if (img == null || img.trim().length() == 0) {
-            image = new ImageView("/org/medipi/Default.jpg");
-        } else {
-            image = new ImageView("file:///" + img);
-        }
-        image.setFitHeight(70);
-        image.setFitWidth(70);
-        return image;
     }
 
     // private method for returning a node containing and image for the element passed
@@ -496,9 +475,9 @@ public class Scheduler extends Device {
             image.setCache(true);
             image.setCacheHint(CacheHint.SPEED);
         } else if (measured) {
-            imageSP.getChildren().add(getImage(passImageFile));
+            imageSP.getChildren().add(medipi.utils.getImageView(MEDIPIIMAGESPASS, 70, 70));
         } else {
-            imageSP.getChildren().add(getImage(failImageFile));
+            imageSP.getChildren().add(medipi.utils.getImageView(MEDIPIIMAGESFAIL, 70, 70));
         }
         imageBP.setMinSize(90, 90);
         imageBP.setId("schedule-component");
@@ -540,7 +519,7 @@ public class Scheduler extends Device {
                 String status = st.nextToken().toUpperCase();
                 //schedule time
                 String d = st.nextToken();
-                Date time = Utilities.INTERNAL_FORMAT.parse(d);
+                Date time = Utilities.ISO8601FORMATDATESECONDS.parse(d);
 
                 //repeat time in mins
                 int repeat = Integer.parseInt(st.nextToken());
@@ -572,7 +551,7 @@ public class Scheduler extends Device {
             } else {
                 lastSchedule = latestSched;
                 //check to see if the latest entry is valid
-                Date lastTime = Utilities.DISPLAY_SCHEDULE_FORMAT.parse(lastSchedule.getTimeDisp());
+                Date lastTime = new Date(lastSchedule.getTime());
                 left.setDisable(false);
                 // find next scheduled measurements
                 nextScheduledEventTime = findNextSchedule(lastSchedule, latestTrans);
@@ -613,9 +592,9 @@ public class Scheduler extends Device {
         if (latestTrans == null) {
             transTime = new Date(0L);
         } else {
-            transTime = Utilities.DISPLAY_SCHEDULE_FORMAT.parse(latestTrans.getTimeDisp());
+            transTime = new Date(latestTrans.getTime());
         }
-        Date schedTime = Utilities.DISPLAY_SCHEDULE_FORMAT.parse(latestSched.getTimeDisp());
+        Date schedTime = new Date(latestSched.getTime());
         int repeat = latestSched.getRepeat();
         Calendar schedCal = Calendar.getInstance();
         schedCal.setTime(schedTime);
@@ -653,12 +632,11 @@ public class Scheduler extends Device {
                     Element e = medipi.getElement(s);
                     // set this Schedule in each of the devices to be run for callbacks
                     e.setScheduler(this);
-                    try {
-                        Device dev = (Device) e;
-                        dev.resetDevice();
-                    } catch (ClassCastException cce) {
-                        continue;
+                    if (Device.class.isAssignableFrom(e.getClass())) {
+                        Device d = (Device) e;
+                        d.resetDevice();
                     }
+
                 }
                 //Call the first device in the list and pass the remaining ones into the recursive Element.callDeviceWindow() 
                 ArrayList<String> d = lastSchedule.getDeviceSched();
@@ -686,8 +664,8 @@ public class Scheduler extends Device {
                 output.append(" ");
                 output.append(sched.getEventTypeDisp());
                 output.append(" ");
-                Date time = Utilities.DISPLAY_SCHEDULE_FORMAT.parse(sched.getTimeDisp());
-                output.append(Utilities.INTERNAL_FORMAT.format(time));
+                Date time = new Date(sched.getTime());
+                output.append(Utilities.ISO8601FORMATDATESECONDS.format(time));
                 output.append(" ");
                 output.append(sched.getRepeatDisp());
                 output.append(" ");
@@ -696,7 +674,7 @@ public class Scheduler extends Device {
             output.flush();
             output.close();
             return true;
-        } catch (IOException | ParseException ex) {
+        } catch (IOException ex) {
             Logger.getLogger(Scheduler.class.getName()).log(Level.SEVERE, null, ex);
             return false;
         }
@@ -726,19 +704,29 @@ public class Scheduler extends Device {
         String separator = medipi.getDataSeparator();
         StringBuilder sb = new StringBuilder();
         //Add MetaData
-        sb.append("metadata:medipiversion:").append(medipi.getVersion()).append("\n");
-        sb.append("metadata:patientname:").append(medipi.getPatientLastName()).append(",").append(medipi.getPatientFirstName()).append("\n");
-        sb.append("metadata:patientdob:").append(medipi.getPatientDOB()).append("\n");
-        sb.append("metadata:patientnhsnumber:").append(medipi.getPatientNHSNumber()).append("\n");
-        sb.append("metadata:timedownloaded:").append(new Date()).append("\n");
-        sb.append("metadata:device:").append(getName()).append("\n");
-        sb.append("metadata:format:").append("id,type,time,repeat,devices").append("\n");
+        sb.append("metadata->persist->medipiversion->").append(medipi.getVersion()).append("\n");
+        sb.append("metadata->timedownloaded->").append(Utilities.ISO8601FORMATDATEMILLI.format(new Date())).append("\n");
+        sb.append("metadata->subtype->").append(getName()).append("\n");
+        sb.append("metadata->datadelimiter->").append(medipi.getDataSeparator()).append("\n");
+        sb.append("metadata->columns->")
+                .append("iso8601time").append(medipi.getDataSeparator())
+                .append("id").append(medipi.getDataSeparator())
+                .append("type").append(medipi.getDataSeparator())
+                .append("repeat").append(medipi.getDataSeparator())
+                .append("devices").append("\n");
+        sb.append("metadata->format->")
+                .append("DATE").append(medipi.getDataSeparator())
+                .append("STRING").append(medipi.getDataSeparator())
+                .append("STRING").append(medipi.getDataSeparator())
+                .append("INTEGER").append(medipi.getDataSeparator())
+                .append("STRING").append("\n");
         for (Schedule sched : deviceData) {
+            Date time = new Date(sched.getTime());
+            sb.append(Utilities.ISO8601FORMATDATESECONDS.format(time));
+            sb.append(separator);
             sb.append(sched.getUUIDDisp());
             sb.append(separator);
             sb.append(sched.getEventTypeDisp());
-            sb.append(separator);
-            sb.append(sched.getTimeDisp());
             sb.append(separator);
             sb.append(sched.getRepeatDisp());
             sb.append(separator);

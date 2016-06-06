@@ -91,6 +91,8 @@ public class Settings extends Element {
         creditsView.setMaxHeight(200);
         creditsView.setMinHeight(200);
         creditsView.setEditable(false);
+        Label versionLabel = new Label();
+        versionLabel.setId("settings-creditscontent");
         ScrollPane viewSP = new ScrollPane();
         viewSP.setContent(creditsView);
         viewSP.setFitToWidth(true);
@@ -99,17 +101,18 @@ public class Settings extends Element {
         viewSP.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
 
         // location of the credits file
-        String creditsDir = MediPiProperties.getInstance().getProperties().getProperty(MediPi.ELEMENTNAMESPACESTEM + uniqueDeviceName + ".credits");
+        String creditsDir = medipi.getProperties().getProperty(MediPi.ELEMENTNAMESPACESTEM + uniqueDeviceName + ".credits");
         if (creditsDir == null || creditsDir.trim().length() == 0) {
             throw new Exception("credits file location parameter not configured");
         }
-        
+
+        versionLabel.setText("MediPi Version: " + medipi.getVersion());
         creditsView.setText(readFile(creditsDir, StandardCharsets.UTF_8));
 
         Label creditsLabel = new Label("Credits");
         creditsLabel.setId("settings-text");
 
-        Button closeButton = new Button("Close MediPi");
+        Button closeButton = new Button("Close MediPi", medipi.utils.getImageView("medipi.images.cancel", 20, 20));
         closeButton.setId("button-closemedipi");
         closeButton.setOnAction((ActionEvent t) -> {
             exit();
@@ -117,13 +120,14 @@ public class Settings extends Element {
 
         settingsWindow.getChildren().addAll(
                 creditsLabel,
-                creditsView
+                creditsView,
+                versionLabel
         );
 
         // set main Element window
         window.setCenter(settingsWindow);
-        
-        setRightButton(closeButton);
+
+        setButton2(closeButton);
 
         // successful initiation of the this class results in a null return
         return null;

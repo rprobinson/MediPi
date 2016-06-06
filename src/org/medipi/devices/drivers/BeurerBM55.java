@@ -17,7 +17,7 @@ package org.medipi.devices.drivers;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import org.warlock.spine.logging.MediPiLogger;
+import org.medipi.logging.MediPiLogger;
 import org.medipi.MediPi;
 import org.medipi.devices.BloodPressure;
 import org.medipi.MediPiMessageBox;
@@ -49,14 +49,14 @@ public class BeurerBM55 extends BloodPressure {
     public String init() throws Exception {
         //find the python script location
         String deviceNamespace = MediPi.ELEMENTNAMESPACESTEM + getClassTokenName();
-        pythonScript = MediPiProperties.getInstance().getProperties().getProperty(deviceNamespace + ".python");
+        pythonScript = medipi.getProperties().getProperty(deviceNamespace + ".python");
         if (pythonScript == null || pythonScript.trim().length() == 0) {
             String error = "Cannot find python script for driver for "+MAKE+" "+MODEL+" - for "+deviceNamespace + ".python";
             MediPiLogger.getInstance().log(BeurerBF480.class.getName(), error);
             return error;
         }
         //find the user which the data should be collected from (1-10)
-        user = MediPiProperties.getInstance().getProperties().getProperty(deviceNamespace + ".user").trim();
+        user = medipi.getProperties().getProperty(deviceNamespace + ".user").trim();
         if (user == null || user.length() == 0) {
             String error = "Cannot find user for "+MAKE+" "+MODEL+" - for "+deviceNamespace + ".user";
             MediPiLogger.getInstance().log(BeurerBF480.class.getName(), error);
@@ -79,7 +79,7 @@ public class BeurerBM55 extends BloodPressure {
      */
     @Override
     public String getName() {
-        return MAKE + " " + MODEL;
+        return MAKE + ":" + MODEL;
     }
 
 

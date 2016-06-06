@@ -20,6 +20,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.UUID;
 import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.SimpleLongProperty;
 import javafx.beans.property.SimpleStringProperty;
 import org.medipi.MediPiMessageBox;
 import org.medipi.utilities.Utilities;
@@ -37,7 +38,7 @@ public class Schedule {
 
     private SimpleStringProperty uuid;
     private SimpleStringProperty eventType;
-    private SimpleStringProperty time;
+    private SimpleLongProperty time;
     private SimpleStringProperty deviceSched;
     private SimpleIntegerProperty repeat;
     private StringBuilder devices = new StringBuilder();
@@ -58,7 +59,7 @@ public class Schedule {
             this.uuid = new SimpleStringProperty(u.toString());
             // event status
             this.eventType = new SimpleStringProperty(type);
-            this.time = new SimpleStringProperty(Utilities.DISPLAY_SCHEDULE_FORMAT.format(d));
+            this.time = new SimpleLongProperty(d.getTime());
             //repeat rate in mins
             this.repeat = new SimpleIntegerProperty(r);
             //devices to be called
@@ -86,6 +87,11 @@ public class Schedule {
     }
 
     public String getTimeDisp() {
+        Date date = new Date(time.get());
+        return Utilities.DISPLAY_SCHEDULE_FORMAT.format(date);
+    }
+    
+    public Long getTime() {
         return time.get();
     }
 

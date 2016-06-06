@@ -43,6 +43,7 @@ import javafx.scene.control.ProgressBar;
 import javafx.scene.control.Separator;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
@@ -144,6 +145,7 @@ public abstract class Scale extends Device {
     private Node dataBox;
     private HBox weightHBox;
     private Date downloadTimestamp = null;
+    private ArrayList<String> metadata = new ArrayList<>();
 
     /**
      * This is the data separator from the MediPi.properties file
@@ -156,7 +158,6 @@ public abstract class Scale extends Device {
      * no progressbar is shown
      */
     protected Double progressBarResolution = null;
-
 
     /**
      * Constructor for Generic Diagnostic scale
@@ -180,7 +181,9 @@ public abstract class Scale extends Device {
 
         String uniqueDeviceName = getClassTokenName();
         separator = medipi.getDataSeparator();
-        downloadButton = new Button("Download");
+        ImageView iw = medipi.utils.getImageView("medipi.images.arrow", 20, 20);
+        iw.setRotate(90);
+        downloadButton = new Button("Download", iw);
         downloadButton.setId("button-download");
         scaleWindow = new VBox();
         scaleWindow.setPadding(new Insets(0, 5, 0, 5));
@@ -189,12 +192,11 @@ public abstract class Scale extends Device {
         scaleWindow.setMaxSize(800, 350);
         downProg.setVisible(false);
         HBox buttonHbox = new HBox();
-        buttonHbox.setAlignment(Pos.CENTER_RIGHT);
         buttonHbox.setSpacing(10);
+        buttonHbox.getChildren().add(downloadButton);
         if (progressBarResolution > 0D) {
             buttonHbox.getChildren().add(downProg);
         }
-        buttonHbox.getChildren().add(downloadButton);
         //Decide whether to show basic or advanced view
         if (medipi.isBasicDataView()) {
             Guide guide = new Guide(MediPi.ELEMENTNAMESPACESTEM + uniqueDeviceName);
@@ -299,7 +301,7 @@ public abstract class Scale extends Device {
         );
         // set main Element window
         window.setCenter(scaleWindow);
-        setRightButton(buttonHbox);
+        setButton2(buttonHbox);
 
         downloadButton();
 
@@ -312,7 +314,7 @@ public abstract class Scale extends Device {
         downloadButton.setOnAction((ActionEvent t) -> {
             resetDevice();
             Task<String> task = new Task<String>() {
-                
+
                 @Override
                 protected String call() throws Exception {
                     try {
@@ -328,17 +330,18 @@ public abstract class Scale extends Device {
                                 if (readData.startsWith("START")) {
                                     updateProgress(Double.parseDouble("0"), progressBarResolution);
                                     // the LOOP function allows devices to control a progress bar
+                                } else if (readData.startsWith("METADATA")) {
+                                    metadata.add(readData.substring(readData.indexOf(":") + 1));
                                 } else if (readData.startsWith("LOOP")) {
                                     updateProgress(Double.parseDouble(readData.substring(readData.indexOf(":") + 1)), progressBarResolution);
                                 } else if (readData.startsWith("DATA")) {
                                     String data = readData.substring(readData.indexOf(":") + 1);
                                     String[] line = data.split(Pattern.quote(separator));
-                                    final Date d = Utilities.INTERNAL_DEVICE_FORMAT.parse(line[0] + ":" + line[1]);
-                                    final String user = line[2];
-                                    final double weight = Double.parseDouble(line[3]);
-                                    final double bodyFat = Double.parseDouble(line[4]);
-                                    final double water = Double.parseDouble(line[5]);
-                                    final double muscle = Double.parseDouble(line[6]);
+                                    final Date d = Utilities.ISO8601FORMATDATEMINUTES.parse(line[0]);
+                                    final double weight = Double.parseDouble(line[1]);
+                                    final double bodyFat = Double.parseDouble(line[2]);
+                                    final double water = Double.parseDouble(line[3]);
+                                    final double muscle = Double.parseDouble(line[4]);
                                     // add the data to the data array
                                     deviceData.add(line);
                                     // add the data to the screen display - this might be a graph/table
@@ -346,9 +349,9 @@ public abstract class Scale extends Device {
                                     Platform.runLater(() -> {
                                         addDataPoint(d, weight, bodyFat, water, muscle);
                                     });
+                                    hasData.set(true);
                                 } else if (readData.startsWith("END")) {
                                     updateProgress(progressBarResolution, progressBarResolution);
-                                    hasData.set(true);
                                     return "SUCCESS";
                                 } else {
                                     //anything else returned will be an error so report
@@ -362,7 +365,7 @@ public abstract class Scale extends Device {
                     }
                     return "Unknown error connecting to Scale";
                 }
-                
+
                 // the measure of completion and success is returning "SUCCESS"
                 // all other outcomes indicate failure and pipe the failure
                 // reason given from the device to the error message box
@@ -376,25 +379,25 @@ public abstract class Scale extends Device {
                         MediPiMessageBox.getInstance().makeErrorMessage(getValue(), null, Thread.currentThread());
                     }
                 }
-                
+
                 @Override
                 protected void scheduled() {
                     super.scheduled();
                 }
-                
+
                 @Override
                 protected void failed() {
                     super.failed();
                     MediPiMessageBox.getInstance().makeErrorMessage(getValue(), null, Thread.currentThread());
                 }
-                
+
                 @Override
                 protected void cancelled() {
                     super.failed();
                     MediPiMessageBox.getInstance().makeErrorMessage(getValue(), null, Thread.currentThread());
                 }
             };
-            
+
             // Set up the bindings to control the UI elements during the running of the task
             if (progressBarResolution > 0D) {
                 downProg.progressProperty().bind(task.progressProperty());
@@ -402,16 +405,16 @@ public abstract class Scale extends Device {
             }
             // Disabling Button control
             downloadButton.disableProperty().bind(task.runningProperty());
-            leftButton.disableProperty().bind(
+            button3.disableProperty().bind(
                     Bindings.when(task.runningProperty().and(isSchedule))
-                            .then(true)
-                            .otherwise(false)
+                    .then(true)
+                    .otherwise(false)
             );
             //Last measurement taken large display
             weightHBox.visibleProperty().bind(
                     Bindings.when(task.valueProperty().isEqualTo("SUCCESS"))
-                            .then(true)
-                            .otherwise(false)
+                    .then(true)
+                    .otherwise(false)
             );
             new Thread(task).start();
         });
@@ -426,7 +429,7 @@ public abstract class Scale extends Device {
     public String getType() {
         return DEVICE_TYPE;
     }
-    
+
     @Override
     public String getProfileId() {
         return PROFILEID;
@@ -438,6 +441,7 @@ public abstract class Scale extends Device {
         deviceData = new ArrayList<>();
         hasData.set(false);
         downloadTimestamp = null;
+        metadata.clear();
         if (!medipi.isBasicDataView()) {
             if (weightSeries != null) {
                 weightSeries.getData().remove(0, weightDP);
@@ -494,13 +498,25 @@ public abstract class Scale extends Device {
     public String getData() {
         StringBuilder sb = new StringBuilder();
         //Add MetaData
-        sb.append("metadata:medipiversion:").append(medipi.getVersion()).append("\n");
-        sb.append("metadata:patientname:").append(medipi.getPatientLastName()).append(",").append(medipi.getPatientFirstName()).append("\n");
-        sb.append("metadata:patientdob:").append(medipi.getPatientDOB()).append("\n");
-        sb.append("metadata:patientnhsnumber:").append(medipi.getPatientNHSNumber()).append("\n");
-        sb.append("metadata:timedownloaded:").append(downloadTimestamp).append("\n");
-        sb.append("metadata:device:").append(getName()).append("\n");
-        sb.append("metadata:format:").append("date,time,user,weight,bodyFat,water,muscle").append("\n");
+        sb.append("metadata->persist->medipiversion->").append(medipi.getVersion()).append("\n");
+        for (String s : metadata) {
+            sb.append("metadata->persist->").append(s).append("\n");
+        }
+        sb.append("metadata->timedownloaded->").append(Utilities.ISO8601FORMATDATEMILLI.format(downloadTimestamp)).append("\n");
+        sb.append("metadata->subtype->").append(getName()).append("\n");
+        sb.append("metadata->datadelimiter->").append(medipi.getDataSeparator()).append("\n");
+        sb.append("metadata->columns->")
+                .append("iso8601time").append(medipi.getDataSeparator())
+                .append("weight").append(medipi.getDataSeparator())
+                .append("bodyfat").append(medipi.getDataSeparator())
+                .append("water").append(medipi.getDataSeparator())
+                .append("muscle").append("\n");
+        sb.append("metadata->format->")
+                .append("DATE").append(medipi.getDataSeparator())
+                .append("DOUBLE").append(medipi.getDataSeparator())
+                .append("DOUBLE").append(medipi.getDataSeparator())
+                .append("DOUBLE").append(medipi.getDataSeparator())
+                .append("DOUBLE").append("\n");
         // Add Downloaded data
         for (String[] s : deviceData) {
             sb.append(s[0]);
@@ -512,10 +528,6 @@ public abstract class Scale extends Device {
             sb.append(s[3]);
             sb.append(separator);
             sb.append(s[4]);
-            sb.append(separator);
-            sb.append(s[5]);
-            sb.append(separator);
-            sb.append(s[6]);
             sb.append("\n");
         }
         return sb.toString();

@@ -38,7 +38,7 @@ import org.medipi.MediPiProperties;
  * This is the primary abstract class which is the fundamental building block of
  * all Elements.
  *
- * 
+ *
  * These elements are represented on the Dashboard screen with tiles and when
  * clicked, these tiles call the Element window. Each Element window uses the
  * whole screen except for the permanent banner at the top. Depending on
@@ -46,8 +46,8 @@ import org.medipi.MediPiProperties;
  * messages from the clinician, Transmission of data to the clinician or an
  * instance of a medical device. All Elements consist of this class and one or
  * more other abstract classes defining functionality of the Element. The last
- * class in the chain is a concrete class (which for example in the case of the medical
- * devices interacts with the USB enabled device itself)
+ * class in the chain is a concrete class (which for example in the case of the
+ * medical devices interacts with the USB enabled device itself)
  *
  * @author riro
  */
@@ -71,19 +71,19 @@ public abstract class Element {
     protected GridPane bottom = new GridPane();
 
     /**
-     * The centre button on the bottom banner
+     * The left button (1) on the bottom banner
      */
-    protected Button centreButton = new Button();
+    protected Button button1 = new Button();
 
     /**
-     * The left button on the bottom banner
+     * The right button (3) on the bottom banner
      */
-    protected Button leftButton = null;
+    protected Button button3 = null;
 
     /**
-     * The right node on the bottom banner
+     * The centre node (2) on the bottom banner
      */
-    protected Node rightNode = null;
+    protected Node node2 = null;
 
     /**
      * Reference to the Scheduler class if present
@@ -108,9 +108,10 @@ public abstract class Element {
         ColumnConstraints col1 = new ColumnConstraints();
         col1.setPercentWidth(35);
         ColumnConstraints col2 = new ColumnConstraints();
-        col2.setPercentWidth(30);
+        col2.setPercentWidth(35);
+        col2.setHalignment(HPos.CENTER);
         ColumnConstraints col3 = new ColumnConstraints();
-        col3.setPercentWidth(35);
+        col3.setPercentWidth(30);
         col3.setHalignment(HPos.RIGHT);
         bottom.getColumnConstraints().addAll(col1, col2, col3);
         bottom.setMinHeight(70);
@@ -183,60 +184,53 @@ public abstract class Element {
      * order of the scheduled measurements
      */
     public void callDeviceWindow(ArrayList<String> ClassTokenChain) {
-        // == null : normal mode when no schedule is being run
         if (ClassTokenChain == null) {
-            Button left = new Button("Back");
-            left.setId("button-back");
-            left.setOnAction((ActionEvent t) -> {
+            // == null : normal mode when no schedule is being run
+            ImageView iw = medipi.utils.getImageView("medipi.images.arrow", 20, 20);
+            iw.setRotate(180);
+            Button b3 = new Button("Back", iw);
+            b3.setId("button-back");
+            b3.setOnAction((ActionEvent t) -> {
                 medipi.callDashboard();
             });
             isSchedule.set(false);
-            setLeftButton(left);
-            setCentreButton(null);
+            setButton3(b3);
+            setButton1(null);
         } else {
             // as part of a scheduled list of element Class Tokens
             // The Cancel Schedule button doesn't get disabled when any of the 
             // Element tasks are in operation - should these be stopped if cancel
             // is activated? 
-            Button centre = new Button("Cancel Schedule");
-            centre.setId("button-cancel");
-            centre.setOnAction((ActionEvent t) -> {
+            Button b1 = new Button("Cancel Schedule", medipi.utils.getImageView("medipi.images.cancel", 20, 20));
+            b1.setId("button-cancel");
+            b1.setOnAction((ActionEvent t) -> {
                 medipi.callDashboard();
                 scheduler.runningProperty().set(false);
             });
-            // Last token
             if (ClassTokenChain.isEmpty()) {
-                Button left = new Button("End Schedule");
-                left.setId("button-end");
-                left.setOnAction((ActionEvent t) -> {
-                    medipi.callDashboard();
-                    scheduler.runningProperty().set(false);
-                });
+                // Last token
                 isSchedule.set(true);
-                setLeftButton(left);
-                setCentreButton(centre);
-                //where there are >1 scheduled elements left to call
+                setButton1(b1);
             } else {
+                //where there are >1 scheduled elements left to call
                 String nextDevice = ClassTokenChain.get(0);
                 ArrayList<String> remainingDevices = new ArrayList(ClassTokenChain.subList(1, ClassTokenChain.size()));
 
-                Button left = new Button("Next");
-                left.setId("button-next");
-                left.setOnAction((ActionEvent t) -> {
+                Button b3 = new Button("Next", medipi.utils.getImageView("medipi.images.arrow", 20, 20));
+                b3.setId("button-next");
+                b3.setOnAction((ActionEvent t) -> {
                     Element e = medipi.getElement(nextDevice);
                     e.callDeviceWindow(remainingDevices);
-                    try {
+                    if (Device.class.isAssignableFrom(Element.this.getClass())) {
                         Device d = (Device) Element.this;
                         if (d.hasDataProperty().get()) {
                             scheduler.addScheduleData(Scheduler.MEASURED, new Date(), new ArrayList<>(Arrays.asList(getClassTokenName())));
                         }
-                    } catch (ClassCastException cce) {
-                        //do nothing
                     }
                 });
                 isSchedule.set(true);
-                setLeftButton(left);
-                setCentreButton(centre);
+                setButton3(b3);
+                setButton1(b1);
 
             }
 
@@ -246,48 +240,48 @@ public abstract class Element {
     }
 
     /**
-     * Set the Left hand button on the bottom panel.
+     * Set the centre button (2) on the bottom panel.
      *
      * Not very happy with this - it's clunky and needs rethinking
      *
      * @param b node which could contain a button or a HBox containing >1 node.
      * To be added to the left hand node of the bottom panel
      */
-    protected void setRightButton(Node b) {
-        bottom.getChildren().remove(rightNode);
+    protected void setButton2(Node b) {
+        bottom.getChildren().remove(node2);
         if (b != null) {
-            rightNode = b;
-            bottom.add(rightNode, 2, 0);
+            node2 = b;
+            bottom.add(node2, 1, 0);
         }
     }
 
     /**
-     * Set the Centre button on the bottom panel.
+     * Set the Left hand button (1) on the bottom panel.
      *
      * Not very happy with this - it's clunky and needs rethinking
      *
-     * @param b button to be added to the centre node of the bottom panel
+     * @param b button to be added to the left node of the bottom panel
      */
-    protected void setCentreButton(Button b) {
-        bottom.getChildren().remove(centreButton);
+    protected void setButton1(Button b) {
+        bottom.getChildren().remove(button1);
         if (b != null) {
-            centreButton = b;
-            bottom.add(centreButton, 1, 0);
+            button1 = b;
+            bottom.add(button1, 0, 0);
         }
     }
 
     /**
-     * Set the Right hand button on the bottom panel.
+     * Set the Right hand button (3) on the bottom panel.
      *
      * Not very happy with this - it's clunky and needs rethinking
      *
      * @param b button to be added to the Right hand node of the bottom panel
      */
-    protected void setLeftButton(Button b) {
-        bottom.getChildren().remove(leftButton);
+    protected void setButton3(Button b) {
+        bottom.getChildren().remove(button3);
         if (b != null) {
-            leftButton = b;
-            bottom.add(leftButton, 0, 0);
+            button3 = b;
+            bottom.add(button3, 2, 0);
         }
     }
 
@@ -297,15 +291,7 @@ public abstract class Element {
      * @return and imageView for this Element
      */
     public ImageView getImage() {
-        ImageView iv;
-        //if image file is null or empty string assigning a default "NO IMAGE" image
-        String imageFile = MediPiProperties.getInstance().getProperties().getProperty(MediPi.ELEMENTNAMESPACESTEM + classToken + ".image");
-        if (imageFile == null || imageFile.trim().length() == 0) {
-            iv = new ImageView("/org/medipi/Default.jpg");
-        } else {
-            iv = new ImageView("file:///" + imageFile);
-        }
-        return iv;
+        return medipi.utils.getImageView(MediPi.ELEMENTNAMESPACESTEM + classToken + ".image", null, null);
     }
 
     /**

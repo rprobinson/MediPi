@@ -28,13 +28,15 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
+import java.util.Date;
 import java.util.Enumeration;
 import java.util.TooManyListenersException;
-import org.warlock.spine.logging.MediPiLogger;
+import org.medipi.logging.MediPiLogger;
 import org.medipi.MediPi;
 import org.medipi.MediPiMessageBox;
 import org.medipi.MediPiProperties;
 import org.medipi.devices.Oximeter;
+import org.medipi.utilities.Utilities;
 
 /**
  * An implementation of a specific device - ContecCMS50DPlus retrieving data
@@ -51,7 +53,7 @@ public class ContecCMS50DPlus extends Oximeter implements SerialPortEventListene
     private static final String MAKE = "Contec";
     private static final String MODEL = "CMS50D+";
     private long nanoTime;
-    private long epochTime;
+    private long epochTimeAtStart;
     static CommPortIdentifier portId;
     static Enumeration portList;
 
@@ -74,7 +76,7 @@ public class ContecCMS50DPlus extends Oximeter implements SerialPortEventListene
     @Override
     public String init() throws Exception {
         String deviceNamespace = MediPi.ELEMENTNAMESPACESTEM + getClassTokenName();
-        portName = MediPiProperties.getInstance().getProperties().getProperty(deviceNamespace + ".portname");
+        portName = medipi.getProperties().getProperty(deviceNamespace + ".portname");
         if (portName == null || portName.trim().length() == 0) {
             String error = "Cannot find the portname for for driver for " + MAKE + " " + MODEL + " - for " + deviceNamespace + ".portname";
             MediPiLogger.getInstance().log(ContecCMS50DPlus.class.getName(), error);
@@ -90,7 +92,7 @@ public class ContecCMS50DPlus extends Oximeter implements SerialPortEventListene
      */
     @Override
     public String getName() {
-        return MAKE + " " + MODEL;
+        return MAKE + ":" + MODEL;
     }
 
     /**
@@ -143,7 +145,7 @@ public class ContecCMS50DPlus extends Oximeter implements SerialPortEventListene
                                 SerialPort.STOPBITS_1,
                                 SerialPort.PARITY_ODD);
                         nanoTime = System.nanoTime();
-                        epochTime = System.currentTimeMillis();
+                        epochTimeAtStart = System.currentTimeMillis();
                         pos = new PipedOutputStream();
                         PipedInputStream pis = new PipedInputStream(pos);
                         dataReader = new BufferedReader(new InputStreamReader(pis));
@@ -288,7 +290,8 @@ public class ContecCMS50DPlus extends Oximeter implements SerialPortEventListene
                                         }
                                     }
                                     if (!stopping) {
-                                        StringBuilder sb = new StringBuilder(String.valueOf(Math.round(System.nanoTime() / 1000000d) - Math.round(nanoTime / 1000000d) + epochTime));
+                                        Date time = new Date(Math.round(System.nanoTime() / 1000000d) - Math.round(nanoTime / 1000000d) + epochTimeAtStart);
+                                        StringBuilder sb = new StringBuilder(Utilities.ISO8601FORMATDATEMILLI.format(time));
                                         sb.append(separator);
                                         sb.append(line[0]);
                                         sb.append(separator);
