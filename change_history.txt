@@ -20,7 +20,7 @@ MediPi_v1.0.4-PILOT-20160322-1
 - Extracted out the Spine functionality from SpineTransmitter class. Renamed it to generic Transmitter class and extended it for Spine in preparation for the REST client interface.
 - refactored how certain classes are cast and added isAssignableFrom() within an if statement rather than attempting a cast and catching the thrown attempt
 
-MediPi_v1.0.5-PILOT-
+MediPi_v1.0.5-PILOT-x
 - updated MediPi class to contain a getter for the medipi properties Properties object and updated appropriate other classes to use it
 - Updated the transmitted data in all the devices to remove patient identifiable entries, update all times with ISO8601 Zulu timestamps and rearranged the metadata. This required changes to all the device drivers including the python scripts updating. Updated some of the Utilities class dateformatter to take a timezone.
 - updated Name for usb devices to have a colon between the make and model
