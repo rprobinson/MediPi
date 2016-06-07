@@ -24,10 +24,8 @@ import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.SimpleBooleanProperty;
+
 import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
@@ -36,6 +34,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.TilePane;
 import javafx.scene.layout.VBox;
+
 import org.medipi.MediPiProperties;
 
 /**
@@ -157,8 +156,8 @@ public class Keypad implements AuthenticationInterface {
         return mainWindow;
     }
 
-    // Use the passcode to unlock the jks. The jks password is made from the 
-    // digits of the passcode alternately padded with the complement of the number inputted 
+    // Use the passcode to unlock the jks. The jks password is made from the
+    // digits of the passcode alternately padded with the complement of the number inputted
     private boolean loadJKS(Integer[] passDigits) {
         char[] pass = new char[passcodeLength * 2];
         try {

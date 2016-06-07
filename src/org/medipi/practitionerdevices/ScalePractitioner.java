@@ -23,13 +23,13 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
+
 import org.medipi.MediPi;
+import org.medipi.MediPiMessageBox;
+import org.medipi.devices.Scale;
 import org.warlock.itk.distributionenvelope.DistributionEnvelope;
 import org.warlock.itk.distributionenvelope.DistributionEnvelopeHelper;
 import org.warlock.itk.distributionenvelope.Payload;
-import org.medipi.MediPiMessageBox;
-import org.medipi.MediPiProperties;
-import org.medipi.devices.Scale;
 
 /**
  * A concrete implementation designed to mimic a device but allowing received
@@ -39,7 +39,7 @@ import org.medipi.devices.Scale;
  * file containing a DistributionEnvelope. When combined with a host listening
  * for incoming messages from MediPi and writing then to disk (e.g. TKW) it can
  * be used to demonstrate that the same data which has been sent is being
- * received. This is obviously not a solution for a production receiver! 
+ * received. This is obviously not a solution for a production receiver!
  *
  * @author rick@robinsonhq.com
  */
@@ -86,16 +86,16 @@ public class ScalePractitioner extends Scale implements Runnable {
     }
 
     @Override
-    public BufferedReader downloadData() {
+    public void downloadData() {
         try {
             pos = new PipedOutputStream();
             PipedInputStream pis = new PipedInputStream(pos);
             dataReader = new BufferedReader(new InputStreamReader(pis));
             new Thread(this).start();
-            return dataReader;
+            //return dataReader;
         } catch (IOException e) {
             MediPiMessageBox.getInstance().makeErrorMessage("Connection Failure", e, Thread.currentThread());
-            return null;
+            //return null;
         }
     }
 

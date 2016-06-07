@@ -1,0 +1,196 @@
+/*
+ Copyright 2016  Richard Robinson @ HSCIC <rrobinson@hscic.gov.uk, rrobinson@nhs.net>
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+ http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+ */
+package org.medipi.devices.drivers.domain;
+
+import java.sql.Timestamp;
+import java.text.ParseException;
+
+import org.medipi.utilities.TimestampUtil;
+
+/**
+ * The Class BF480Measurement converts the integer data array received from
+ * serial interface to meaningful values related to weight measurement.
+ *
+ * @author krishna.kuntala@mastek.com
+ */
+public class BF480Measurement {
+
+	private double weight;
+	private double bodyFat;
+	private double water;
+	private double muscles;
+	private Timestamp measuredTime;
+
+	/**
+	 * Instantiates a new BF480 measurement.
+	 *
+	 * @param weight the weight
+	 * @param bodyFat the body fat
+	 * @param water the water
+	 * @param muscles the muscles
+	 * @param measuredTime the measured time
+	 */
+	public BF480Measurement(final double weight, final double bodyFat, final double water, final double muscles, final Timestamp measuredTime) {
+		this.weight = weight;
+		this.bodyFat = bodyFat;
+		this.water = water;
+		this.muscles = muscles;
+		this.measuredTime = measuredTime;
+	}
+
+	/**
+	 * Instantiates a new BF480 measurement object.
+	 *
+	 * @param reading the reading integers which will be converted to meaningful values after decoding them
+	 * @param readingStartByteNumber the byte number from where the users reading will start. First 0 to 5 integers belongs to user 1, 6 to 11 belongs to user 2 and so on
+	 */
+	public BF480Measurement(final int[] reading, final int readingStartByteNumber) {
+		final int date = reading[readingStartByteNumber + 4];
+		final int time = reading[readingStartByteNumber + 5];
+		final int year = 1920 + (date >> 9);
+		final int month = date >> 5 & 0xf;
+		final int day = date & 0x1f;
+
+		final int hour = time >> 8;
+		final int minute = time & 0xff;
+
+		final String stringMeasurementTime = year + "-" + month + "-" + day + " " + hour + ":" + minute;
+		try {
+			this.measuredTime = TimestampUtil.getTimestamp("yyyy-MM-dd hh:mm", stringMeasurementTime);
+		} catch(final ParseException e) {
+			e.printStackTrace();
+		}
+
+		this.weight = Double.valueOf(reading[readingStartByteNumber + 0]) / 10;
+		this.bodyFat = Double.valueOf(reading[readingStartByteNumber + 1]) / 10;
+		this.water = Double.valueOf(reading[readingStartByteNumber + 2]) / 10;
+		this.muscles = Double.valueOf(reading[readingStartByteNumber + 3]) / 10;
+	}
+
+	/**
+	 * Method to get the weight.
+	 *
+	 * @return the weight
+	 */
+	public double getWeight() {
+		return this.weight;
+	}
+
+	/**
+	 * Method to set the weight.
+	 *
+	 * @param weight the new weight
+	 */
+	public void setWeight(final double weight) {
+		this.weight = weight;
+	}
+
+	/**
+	 * Method to get the body fat.
+	 *
+	 * @return the body fat
+	 */
+	public double getBodyFat() {
+		return this.bodyFat;
+	}
+
+	/**
+	 * Method to set the body fat.
+	 *
+	 * @param bodyFat the new body fat
+	 */
+	public void setBodyFat(final double bodyFat) {
+		this.bodyFat = bodyFat;
+	}
+
+	/**
+	 * Method to get the water.
+	 *
+	 * @return the water
+	 */
+	public double getWater() {
+		return this.water;
+	}
+
+	/**
+	 * Method to set the water.
+	 *
+	 * @param water the new water
+	 */
+	public void setWater(final double water) {
+		this.water = water;
+	}
+
+	/**
+	 * Method to get the muscles.
+	 *
+	 * @return the muscles
+	 */
+	public double getMuscles() {
+		return this.muscles;
+	}
+
+	/**
+	 * Method to set the muscles.
+	 *
+	 * @param muscles the new muscles
+	 */
+	public void setMuscles(final double muscles) {
+		this.muscles = muscles;
+	}
+
+	/**
+	 * Method to get the measured time.
+	 *
+	 * @return the measured time
+	 */
+	public Timestamp getMeasuredTime() {
+		return this.measuredTime;
+	}
+
+	/**
+	 * Method to set the measured time.
+	 *
+	 * @param measuredTime the new measured time
+	 */
+	public void setMeasuredTime(final Timestamp measuredTime) {
+		this.measuredTime = measuredTime;
+	}
+
+	/**
+	 * Method to get all the values in a string array.
+	 *
+	 * @return all the values in string array format
+	 * @throws ParseException the parse exception
+	 */
+	public String[] getAllValues() throws ParseException {
+		final String[] values = new String[5];
+		values[0] = TimestampUtil.getStringDate("yyyy-MM-dd hh:mm", this.getMeasuredTime());
+		values[1] = String.valueOf(this.getWeight());
+		values[2] = String.valueOf(this.getBodyFat());
+		values[3] = String.valueOf(this.getWater());
+		values[4] = String.valueOf(this.getMuscles());
+		return values;
+	}
+
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return "WeightMeasurement [weight=" + this.weight + ", bodyFat=" + this.bodyFat + "%, water=" + this.water + "%, muscles=" + this.muscles + "%, measuredTime=" + this.measuredTime + "]";
+	}
+}

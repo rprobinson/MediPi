@@ -18,19 +18,20 @@ package org.medipi.practitionerdevices;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
+
+import javafx.scene.layout.VBox;
+
 import org.medipi.MediPi;
+import org.medipi.MediPiMessageBox;
+import org.medipi.devices.BloodPressure;
 import org.warlock.itk.distributionenvelope.DistributionEnvelope;
 import org.warlock.itk.distributionenvelope.DistributionEnvelopeHelper;
 import org.warlock.itk.distributionenvelope.Payload;
-import org.medipi.MediPiMessageBox;
-import org.medipi.MediPiProperties;
-import org.medipi.devices.BloodPressure;
 
 /**
  * A concrete implementation designed to mimic a device but allowing received
@@ -40,7 +41,7 @@ import org.medipi.devices.BloodPressure;
  * file containing a DistributionEnvelope. When combined with a host listening
  * for incoming messages from MediPi and writing then to disk (e.g. TKW) it can
  * be used to demonstrate that the same data which has been sent is being
- * received. This is obviously not a solution for a production receiver! 
+ * received. This is obviously not a solution for a production receiver!
  *
  * @author rick@robinsonhq.com
  */
@@ -87,16 +88,16 @@ public class BloodPressurePractitioner extends BloodPressure implements Runnable
     }
 
     @Override
-    public BufferedReader downloadData() {
+    public void downloadData(VBox meterVBox) {
         try {
             pos = new PipedOutputStream();
             PipedInputStream pis = new PipedInputStream(pos);
             dataReader = new BufferedReader(new InputStreamReader(pis));
             new Thread(this).start();
-            return dataReader;
+            //return dataReader;
         } catch (IOException e) {
             MediPiMessageBox.getInstance().makeErrorMessage("Connection Failure", e, Thread.currentThread());
-            return null;
+            //return null;
         }
     }
 

@@ -15,26 +15,21 @@
  */
 package org.medipi;
 
-import org.medipi.authentication.MediPiWindow;
-import org.medipi.devices.Element;
 import java.awt.SplashScreen;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.net.InetAddress;
 import java.net.NetworkInterface;
-import java.net.SocketException;
-import java.net.UnknownHostException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.Properties;
+
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
@@ -51,7 +46,10 @@ import javafx.scene.layout.TilePane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
+
+import org.medipi.authentication.MediPiWindow;
 import org.medipi.devices.Device;
+import org.medipi.devices.Element;
 import org.medipi.logging.MediPiLogger;
 import org.medipi.utilities.ConfigurationStringTokeniser;
 import org.medipi.utilities.Utilities;
@@ -98,13 +96,13 @@ public class MediPi extends Application {
     // Set the MediPi Log directory
     private static final String LOG = "medipi.log";
 
-    // Debug mode can take one of 3 values: 
+    // Debug mode can take one of 3 values:
     // 	"debug" mode this will report to standard out debug messages
     // 	"errorsuppress" mode this will suppress all error messages to the UI, instead only outputting to standard out
     //	"none" mode will not report any standard output messages
     private static final String DEBUGMODE = "medipi.debugmode";
     // Switch to put Patient MediPi into a basic view where no graphs or tables of data are shown
-    // to the patient eventhough they are still recorded and transmitted. Instead a guide is displayed 
+    // to the patient eventhough they are still recorded and transmitted. Instead a guide is displayed
     // which directs patients on how to use the device
     private static final String DATAVIEWBASIC = "medipi.dataview.basic";
     // Patient Microbanner info - patient firstname
@@ -345,7 +343,7 @@ public class MediPi extends Application {
                 // If not set then  start in basic view mode
                 basicDataView = !b.toLowerCase().startsWith("n");
             }
-            // Patient Demographics data is discovered for the patient Microbanner - 
+            // Patient Demographics data is discovered for the patient Microbanner -
             // currently taken directly from the properties but may need interaction with PDS in the future
             Label patientName = null;
             Label nhsNumber = null;
@@ -471,7 +469,7 @@ public class MediPi extends Application {
                 makeFatalErrorMessage(SCREENWIDTH + " and " + SCREENHEIGHT + " - The configured screen sizes are incorrect: width:" + screenwidth + " height:" + screenheight, e);
             }
             scene = new Scene(root, screenwidth, screenheight);
-            // Load CSS properties - see considerations/todo in main text above 
+            // Load CSS properties - see considerations/todo in main text above
             String cssfile = properties.getProperty(CSS);
             if (cssfile == null || cssfile.trim().length() == 0) {
                 makeFatalErrorMessage("No CSS file defined in " + CSS, null);
@@ -491,7 +489,7 @@ public class MediPi extends Application {
             primaryStage.setMinHeight(screenheight);
             primaryStage.show();
 
-            // Basic structure is now created and ready to display any errors that 
+            // Basic structure is now created and ready to display any errors that
             // occur when sub elements are called
             // loop through all the element class tokens defined in the properties file and instantiate
             // Add dashboard Tiles to the initial GUI structure
@@ -521,7 +519,7 @@ public class MediPi extends Application {
                 makeFatalErrorMessage("No Elements have been defined", null);
             }
 
-            //show the tiled dashboard view 
+            //show the tiled dashboard view
             callDashboard();
             // functionality which closes the window when the x is pressed
             primaryStage.setOnHiding((WindowEvent event) -> {
