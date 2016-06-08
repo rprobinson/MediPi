@@ -56,11 +56,21 @@
 			<artifactId>javax-usb</artifactId>
 			<version>1.0.0</version>
 		</dependency>
+		<dependency>
+			<groupId>commons-codec</groupId>
+			<artifactId>commons-codec</artifactId>
+			<version>1.3</version>
+		</dependency>
 
 		<!-- Non-Maven Dependencies: START -->
 		<dependency>
 			<groupId>uk.gov.nhs.digital.telehealth</groupId>
 			<artifactId>DistributionEnvelopeTools</artifactId>
+			<version>0.0.1</version>
+		</dependency>
+		<dependency>
+			<groupId>uk.gov.nhs.digital.telehealth</groupId>
+			<artifactId>CommonUtils</artifactId>
 			<version>0.0.1</version>
 		</dependency>
 		<dependency>
@@ -107,6 +117,22 @@
 							<artifactId>DistributionEnvelopeTools</artifactId>
 							<version>0.0.1</version>
 							<file>${project.basedir}/lib/DistributionEnvelopeTools.jar</file>
+							<repositoryLayout>default</repositoryLayout>
+							<packaging>jar</packaging>
+							<generatePom>true</generatePom>
+						</configuration>
+						<goals>
+							<goal>install-file</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>hack-binary-CommonUtils</id>
+						<phase>pre-clean</phase>
+						<configuration>
+							<groupId>uk.gov.nhs.digital.telehealth</groupId>
+							<artifactId>CommonUtils</artifactId>
+							<version>0.0.1</version>
+							<file>${project.basedir}/lib/CommonUtils.jar</file>
 							<repositoryLayout>default</repositoryLayout>
 							<packaging>jar</packaging>
 							<generatePom>true</generatePom>
