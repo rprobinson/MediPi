@@ -4,7 +4,7 @@
 This is a simple implementation of a Telehealth patient/client system. It has been developed to be flexible and extensible.
 
 This project started as a demonstration of a general telehealth system but with clinical involvement from a Trust in the South of England, it has been developed into a Heart Failure implementation.
-The project is written in Java using JavaFX but includes two python classes. The python scripts are used for convenience to interface with their respective USB medical devices, but the functionality could be incorporated into Java using an open source Java USB library.
+The project is written in Java using JavaFX which communicates with the USB medical devices using javax-usb libraries.
 
 Functionality:
 
@@ -20,7 +20,7 @@ Functionality:
 
 This is a list of functionality to date which has been created under guidance from clinicians. It is not an exhaustive list and is intended to be expanded.
 
-See the MediPi Summary Document: https://github.com/rprobinson/MediPi/blob/master/MediPi_handout-v1.2.pdf
+See the MediPi Summary Document: https://github.com/rprobinson/MediPi/blob/master/MediPi_Summary-v1.3.pdf
 
 ##Architecture
 ###MediPi Class
@@ -47,8 +47,7 @@ This is a class to encapsulate the Guide for any Element. This class reads a fla
 These are the concrete classes which retrieve data from the specific USB enabled device. They are make and model specific. There are 2 ways which data can be taken:
 
 1. Serially/continuously - data is taken for the duration of the device's use, passed to the generic device class and averages are shown on the interface.
-2. Downloaded - All data on the medical device is downloaded and passed to the Generic Device Class. The 2 instances of this (Beurer BF480 and BM55) call python scripts to pull the data down - however this functionality could be incorporated into Java
-This class does not provide any UI nodes - just data
+2. Downloaded - All data on the medical device is downloaded and passed to the Generic Device Class.
 
 ####Other Concrete Classes
 * ####Questionnaire Device Class
@@ -87,27 +86,29 @@ Medipi has been designed to be flexible and extensible and uses dynamically init
 
 The patient details are defined in the properties file.
 
+####Instructions to update configuration files
+    1. Copy config directory to some external location e.g. C:\MediPi\ (for windows machine) or /home/{user}/MediPi
+    2. Open command prompt which is capable of executing .sh file. (Git bash if you are on windows. Terminal on linux installation is capable of executing sh files)
+    3. Go to config directory location on command prompt e.g. C:\MediPi\config or /home/{user}/MediPi/config
+    4. Execute setup-all-configurations.sh "{config-directory-location}" as './set-all-configurations.sh "C:/config"' or './set-all-configurations.sh "/home/{user}/config"'. This will replace all the relative paths in properties and guides files of the configuration.
+
 ###Software Dependencies:
 MediPi depends on the following libraries:
 
 * **SpineTools:** https://github.com/DamianJMurphy/SpineTools-Java
 * **DistributionEnvelopeTools:** https://github.com/DamianJMurphy/DistributionEnvelopeTools-Java
-* **PyUSB:** https://github.com/walac/pyusb
 * **Java RXTX libraries for serial devices:** https://github.com/rxtx/rxtx
-
-### Configuration files:
- The configuration files can be downloaded as a zip from here:https://github.com/rprobinson/MediPi/files/162967/reference_Config_v1.0.0-PILOT-20160308.zip
 
 ###USB Medical Device Interfaces:
 3 particular devices have been used but others can be developed.
 
 * Contec CMS50D+ Finger Pulse Oximeter - The interface is a Java port of the streamed serial interface developed here: https://github.com/atbrask/CMS50Dplus. The device can store up to 24 hours of data but this function has not implemented.
-* Beurer BF480 Diagnostic Scales - The Python script is based upon https://usb2me.wordpress.com/2013/02/03/beurer-bg64/ but the BF480 is a cheaper scale and has a different data structure
-* Beurer BG55 Upper Arm Blood Pressure Monitor: This python script was reverse engineered based upon the experience gained with the previous two devices
+* Beurer BF480 Diagnostic Scales - The Java code is based upon https://usb2me.wordpress.com/2013/02/03/beurer-bg64/ but the BF480 is a cheaper scale and has a different data structure
+* Beurer BG55 Upper Arm Blood Pressure Monitor: This Java code was reverse engineered based upon the experience gained with the previous two devices
 
 
 ##Hardware:
-As MediPi is written in Java (other than the 2 Python scripts outlined above), it can be run on any system which has an appropriate JRE and thus is cross platform. This Heart Failure implementation of MediPi has been executed using:
+As MediPi is written in Java, it can be run on any system which has an appropriate JRE and thus is cross platform. This Heart Failure implementation of MediPi has been executed using:
 
 * Raspberry Pi 2 Model B or Raspberry Pi 3: https://www.raspberrypi.org/products/raspberry-pi-2-model-b/
 * Raspberry Pi Touch Display: https://www.raspberrypi.org/products/raspberry-pi-touch-display/
@@ -166,15 +167,13 @@ then add a line:
 5. Install OpenJFX - Since java 1.8.0_33 Java for ARM hardfloat has not shipped with JavaFX.
 Guide for building OpenJFX: https://wiki.openjdk.java.net/display/OpenJFX/Building+OpenJFX
 
-6. Install PyUSB: https://github.com/walac/pyusb
-
-7. Install Java RXTX libraries for serial devices
+6. Install Java RXTX libraries for serial devices
 
     ```
     sudo apt-get install librxtx-java
 
     ```
-8. Configure the pi so that USB ports can be used without needing su 
+7. Configure the pi so that USB ports can be used without needing su 
 
     ```
     sudo adduser pi plugdev
@@ -190,17 +189,12 @@ Guide for building OpenJFX: https://wiki.openjdk.java.net/display/OpenJFX/Buildi
     ACTION=="add", SUBSYSTEMS=="usb", ATTRS{idVendor}=="0c45", 	ATTRS{idProduct}=="7406", MODE="660", GROUP="plugdev"
 
     ```
-9. Create a directory named "MediPi" in an appropriate location and unzip the reference configuration files to it.
+8. Refer the section `Instructions to update configuration files` to update the configurations files.
 
-10. Update the following files with location details - globally replace `"__ROOT__"` (double underscore) with the location of the MediPi directory created in the previous step:
-	* /MediPi.properties
-	* /guides/beurerbf480.guide
-	* /guides/beurerbm55.guide
-    * /guides/contecCMS50DPlus.guide
+9. Build MediPi.jar using maven build. Execute `mvn clean install` from the root of MediPi repository.
 
-11. Build MediPi.jar and its dependencies from the source and paste it and the lib directory into MediPi directory
+10. Copy the `{medipi-repo-directory}/MediPi/target/MediPi.jar` file to /home/{user}/MediPi/ directory
 
-12. Execute MediPi using:
-
-        java -Djava.library.path=/usr/lib/jni -jar MediPi/MediPi.jar --propertiesFile=/home/riro/MediPi/MediPi.properties
-    
+11. Execute MediPi using:
+        
+        `java -Djava.library.path=/usr/lib/jni -jar /home/{user}/MediPi/MediPi.jar --propertiesFile=/home/{user}/MediPi/config/MediPi.properties`
