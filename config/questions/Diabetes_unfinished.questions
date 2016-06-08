@@ -1,0 +1,15 @@
+BEGIN QUESTIONS
+Question1 Are you feeling well today?
+Question2 Have you felt excessively thirsty?
+
+
+END QUESTIONS
+
+BEGIN RESPONSES
+Response1 Please contact your diabetes nurse for further advice
+END RESPONSES
+
+BEGIN QUESTIONNAIRE
+Rule1 IF Question1 THEN Rule2 ELSE Rule2
+Rule2 IF Question2 THEN Response1 ELSE Rule3
+END QUESTIONNAIRE
