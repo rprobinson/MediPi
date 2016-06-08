@@ -31,4 +31,13 @@ MediPi_v1.0.5-PILOT-x
 - MediPi now checks the device jks keystore using the MAC address of the host machine - this cert name is used to set a system property - the cert name is used for the Restful request
 - The Keypad class sets a system property to be the patient cert name which is used for the Restful request
 
-
+MediPi_v1.0.7-PILOT-20160608-1
+- Removed python dependency to communicate to serial USB devices e.g. Beurer BM55 and BF480
+- Source code migrated to build using maven.
+- Maven build produces a single executable jar with all the dependencies embedded.
+- Collated all the external dependencies as maven dependencies hence eliminating the need to manually collect the dependencies and add them on the classpath.
+- Checked in external dependencies which are not available into maven repository to lib directory. These are added in pom.xml as dependencies which will help in building MediPi code on any machine which has maven installation without worrying about collecting these dependencies.
+- Restructured the MediPi code.
+- Added javax-usb and config files to the repository.
+- Added parent pom to build javax-usb and MediPi with a single command.
+- Updated README.md file to remove the references of python dependencies and added instructions to update configurations and run MediPi.
