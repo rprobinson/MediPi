@@ -90,8 +90,8 @@ public class MediPi extends Application {
 
     // MediPi version Number
     private static final String MEDIPINAME = "MediPi Telehealth System";
-    private static final String VERSION = "MediPi_v1.0.6";
-    private static final String VERSIONNAME = "PILOT-20160601-1";
+    private static final String VERSION = "MediPi_v1.0.7";
+    private static final String VERSIONNAME = "PILOT-20160608-1";
 
     // Set the MediPi Log directory
     private static final String LOG = "medipi.log";
