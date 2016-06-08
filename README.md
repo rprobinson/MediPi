@@ -87,10 +87,10 @@ Medipi has been designed to be flexible and extensible and uses dynamically init
 The patient details are defined in the properties file.
 
 ####Instructions to update configuration files
-    1. Copy config directory to some external location e.g. C:\MediPi\ (for windows machine) or /home/{user}/MediPi
-    2. Open command prompt which is capable of executing .sh file. (Git bash if you are on windows. Terminal on linux installation is capable of executing sh files)
-    3. Go to config directory location on command prompt e.g. C:\MediPi\config or /home/{user}/MediPi/config
-    4. Execute setup-all-configurations.sh "{config-directory-location}" as './set-all-configurations.sh "C:/config"' or './set-all-configurations.sh "/home/{user}/config"'. This will replace all the relative paths in properties and guides files of the configuration.
+1. Copy config directory to some external location e.g. C:\MediPi\ (for windows machine) or /home/{user}/MediPi
+2. Open command prompt which is capable of executing .sh file. (Git bash if you are on windows. Terminal on linux installation is capable of executing sh files)
+3. Go to config directory location on command prompt e.g. C:\MediPi\config or /home/{user}/MediPi/config
+4. Execute setup-all-configurations.sh "{config-directory-location}" as './set-all-configurations.sh "C:/config"' or './set-all-configurations.sh "/home/{user}/config"'. This will replace all the relative paths in properties and guides files of the configuration.
 
 ###Software Dependencies:
 MediPi depends on the following libraries:
@@ -197,4 +197,4 @@ Guide for building OpenJFX: https://wiki.openjdk.java.net/display/OpenJFX/Buildi
 
 11. Execute MediPi using:
         
-        `java -Djava.library.path=/usr/lib/jni -jar /home/{user}/MediPi/MediPi.jar --propertiesFile=/home/{user}/MediPi/config/MediPi.properties`
+        java -Djava.library.path=/usr/lib/jni -jar /home/{user}/MediPi/MediPi.jar --propertiesFile=/home/{user}/MediPi/config/MediPi.properties
