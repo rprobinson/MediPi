@@ -15,10 +15,15 @@
  */
 package org.medipi.devices.drivers.service;
 
+import java.util.Arrays;
+
 import javax.usb.UsbControlIrp;
 import javax.usb.UsbDevice;
 import javax.usb.UsbException;
+import javax.usb.UsbIrp;
 import javax.usb.UsbPipe;
+
+import org.medipi.devices.exceptions.DeviceConnectionException;
 
 /**
  * The Class BM55USBService extends an abstract class USBService.
@@ -50,10 +55,30 @@ public class BM55USBService extends USBService {
 	}
 
 	/* (non-Javadoc)
+	 * @see org.medipi.devices.drivers.service.USBService#readData(javax.usb.UsbPipe, int)
+	 */
+	public byte[] readData(final UsbPipe connectionPipe, final int numberOfBytes) throws UsbException {
+		final byte[] data = new byte[numberOfBytes];
+		final UsbIrp irp = connectionPipe.asyncSubmit(data);
+        irp.waitUntilComplete(500);
+
+        //This condition is just to check if the data is being read properly. Input and output data cannot be the same if the device is responding.
+        if (irp.isUsbException() || Arrays.equals(data, new byte[numberOfBytes])) {
+        	throw new DeviceConnectionException("unknown error connecting to meter");
+        }
+		return data;
+	}
+
+	/* (non-Javadoc)
 	 * @see org.medipi.devices.drivers.service.USBService#terminateDeviceCommunication(javax.usb.UsbDevice, javax.usb.UsbControlIrp)
 	 */
 	@Override
-	public void terminateDeviceCommunication(final UsbDevice device, final UsbControlIrp usbControl) throws UsbException, InterruptedException {
+	public void terminateDeviceCommunication(final UsbDevice device, final UsbControlIrp usbControl, final UsbPipe connectionPipe) throws UsbException, InterruptedException {
 		writeDataToInterface(device, usbControl, new byte[] {(byte) 0xF7}, DEFAULT_BYTE_ARRAY_LENGTH_8, PADDING_BYTE_0xF4);
+		try {
+			readData(connectionPipe, 8);
+		} catch(DeviceConnectionException e) {
+			//do nothing
+		}
 	}
 }

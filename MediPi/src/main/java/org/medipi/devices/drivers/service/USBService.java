@@ -15,6 +15,7 @@
  */
 package org.medipi.devices.drivers.service;
 
+import java.util.Arrays;
 import java.util.List;
 
 import javax.usb.UsbClaimException;
@@ -27,8 +28,11 @@ import javax.usb.UsbEndpoint;
 import javax.usb.UsbException;
 import javax.usb.UsbHub;
 import javax.usb.UsbInterface;
+import javax.usb.UsbIrp;
 import javax.usb.UsbPipe;
 import javax.usb.util.UsbUtil;
+
+import org.medipi.devices.exceptions.DeviceConnectionException;
 
 /**
  * This is an abstract class which provides functionality related to USB serial interfacing.
@@ -73,6 +77,16 @@ public abstract class USBService {
 	public abstract int getNumberOfReadings(final UsbDevice device, final UsbControlIrp usbControl, final UsbPipe connectionPipe) throws UsbException;
 
 	/**
+	 * Read data from the serial interface.
+	 *
+	 * @param connectionPipe the USB connection object which will be used to read the data from the serial interface
+	 * @param numberOfBytes the number of bytes to be read from the serial interface
+	 * @return the byte array read from the serial interface
+	 * @throws UsbException the USB exception
+	 */
+	public abstract byte[] readData(final UsbPipe connectionPipe, final int numberOfBytes) throws UsbException;
+
+	/**
 	 * Terminate device communication.
 	 *
 	 * @param device the device object with which the communication to be instantiated
@@ -80,7 +94,7 @@ public abstract class USBService {
 	 * @throws UsbException the USB exception
 	 * @throws InterruptedException the interrupted exception
 	 */
-	public abstract void terminateDeviceCommunication(final UsbDevice device, final UsbControlIrp usbControl) throws UsbException, InterruptedException;
+	public abstract void terminateDeviceCommunication(final UsbDevice device, final UsbControlIrp usbControl, final UsbPipe connectionPipe) throws UsbException, InterruptedException;
 
 	/**
 	 * Creates the USB control object which will be used to write the data to the serial interface.
@@ -135,20 +149,7 @@ public abstract class USBService {
 		final byte[] outBuffer = getPaddedByteArray(data, bytesLength, paddingByte);
 		usbControl.setData(outBuffer);
 		device.asyncSubmit(usbControl);
-	}
 
-	/**
-	 * Read data from the serial interface.
-	 *
-	 * @param connectionPipe the USB connection object which will be used to read the data from the serial interface
-	 * @param numberOfBytes the number of bytes to be read from the serial interface
-	 * @return the byte array read from the serial interface
-	 * @throws UsbException the USB exception
-	 */
-	public byte[] readData(final UsbPipe connectionPipe, final int numberOfBytes) throws UsbException {
-		final byte[] data = new byte[numberOfBytes];
-		connectionPipe.syncSubmit(data);
-		return data;
 	}
 
 	/**
@@ -161,7 +162,7 @@ public abstract class USBService {
 	 * @param paddingByte the byte which needs to be padded
 	 * @return the padded byte array
 	 */
-	private byte[] getPaddedByteArray(final byte[] inputArray, final int length, final byte paddingByte) {
+	public byte[] getPaddedByteArray(final byte[] inputArray, final int length, final byte paddingByte) {
 		final byte[] outputArray = new byte[length];
 		System.arraycopy(inputArray, 0, outputArray, 0, inputArray.length);
 		for(int paddingBitsCounter = inputArray.length; paddingBitsCounter < length; paddingBitsCounter++) {
@@ -179,7 +180,11 @@ public abstract class USBService {
 	 */
 	public UsbDevice getUSBDevice(final int vendorId, final int productId) {
 		final UsbHub rootUSBHub = UsbUtil.getVirtualRootUsbHub();
-		return findDevice(rootUSBHub, vendorId, productId);
+		UsbDevice device = findDevice(rootUSBHub, vendorId, productId);
+		if(device == null) {
+			throw new DeviceConnectionException("Device not found - is the device plugged into the USB port?");
+		}
+		return device;
 	}
 
 	/**

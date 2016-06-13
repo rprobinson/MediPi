@@ -25,6 +25,7 @@ import javafx.concurrent.Task;
 
 import javax.usb.UsbControlIrp;
 import javax.usb.UsbDevice;
+import javax.usb.UsbException;
 import javax.usb.UsbPipe;
 
 import org.medipi.MediPi;
@@ -175,8 +176,12 @@ public class BeurerBF480 extends Scale {
 						operationStatus = ex.getLocalizedMessage();
 					} finally {
 						if(connectionPipe != null && connectionPipe.isOpen()) {
-							connectionPipe.close();
-							connectionPipe.getUsbEndpoint().getUsbInterface().release();
+							try {
+								connectionPipe.close();
+								connectionPipe.getUsbEndpoint().getUsbInterface().release();
+							} catch(UsbException e) {
+								//Do nothing
+							}
 						}
 					}
 					return operationStatus;

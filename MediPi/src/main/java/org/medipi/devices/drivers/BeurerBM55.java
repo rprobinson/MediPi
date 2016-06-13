@@ -24,6 +24,7 @@ import javafx.scene.layout.VBox;
 
 import javax.usb.UsbControlIrp;
 import javax.usb.UsbDevice;
+import javax.usb.UsbException;
 import javax.usb.UsbPipe;
 
 import org.medipi.MediPi;
@@ -109,7 +110,7 @@ public class BeurerBM55 extends BloodPressure {
 
 			@Override
 			protected String call() throws Exception {
-				String operationStatus = "Unknown error connecting to Scale";
+				String operationStatus = "Unknown error connecting to Meter";
 				UsbPipe connectionPipe = null;
 				try {
 
@@ -121,6 +122,7 @@ public class BeurerBM55 extends BloodPressure {
 					connectionPipe.open();
 					usbService.initialiseDevice(device, usbControl, connectionPipe);
 					int numberOfReadings = usbService.getNumberOfReadings(device, usbControl, connectionPipe);
+
 					progressBarResolution = (double) numberOfReadings;
 
 					updateProgress(0D, progressBarResolution);
@@ -143,15 +145,19 @@ public class BeurerBM55 extends BloodPressure {
 						}
 						updateProgress(readingsCounter, BeurerBM55.this.progressBarResolution);
 					}
-					usbService.terminateDeviceCommunication(device, usbControl);
+					usbService.terminateDeviceCommunication(device, usbControl, connectionPipe);
 					updateProgress(progressBarResolution, progressBarResolution);
 					operationStatus = "SUCCESS";
 				} catch(Exception ex) {
 					operationStatus = ex.getLocalizedMessage();
 				} finally {
 					if(connectionPipe != null && connectionPipe.isOpen()) {
-						connectionPipe.close();
-						connectionPipe.getUsbEndpoint().getUsbInterface().release();
+						try {
+							connectionPipe.close();
+							connectionPipe.getUsbEndpoint().getUsbInterface().release();
+						} catch(UsbException e) {
+							//Do nothing
+						}
 					}
 				}
 				return operationStatus;

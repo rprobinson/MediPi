@@ -20,6 +20,7 @@ import java.util.List;
 
 import javax.usb.UsbControlIrp;
 import javax.usb.UsbDevice;
+import javax.usb.UsbException;
 import javax.usb.UsbPipe;
 
 import org.medipi.devices.drivers.domain.BM55Measurement;
@@ -68,11 +69,15 @@ public class TestBM55USBService {
 					measurements.add(new BM55Measurement(data));
 				}
 			}
-			usbService.terminateDeviceCommunication(device, usbControl);
+			usbService.terminateDeviceCommunication(device, usbControl, connectionPipe);
 		} finally {
 			if(connectionPipe != null && connectionPipe.isOpen()) {
-				connectionPipe.close();
-				connectionPipe.getUsbEndpoint().getUsbInterface().release();
+				try {
+					connectionPipe.close();
+					connectionPipe.getUsbEndpoint().getUsbInterface().release();
+				} catch(UsbException e) {
+					//Do nothing
+				}
 			}
 		}
 		System.out.println("Number of readings:" + measurements.size() + "\n");

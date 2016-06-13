@@ -20,6 +20,7 @@ import java.util.List;
 
 import javax.usb.UsbControlIrp;
 import javax.usb.UsbDevice;
+import javax.usb.UsbException;
 import javax.usb.UsbPipe;
 
 import org.medipi.devices.drivers.domain.BF480Measurement;
@@ -88,8 +89,12 @@ public class TestBF480USBService {
 			}
 		} finally {
 			if(connectionPipe != null && connectionPipe.isOpen()) {
-				connectionPipe.close();
-				connectionPipe.getUsbEndpoint().getUsbInterface().release();
+				try {
+					connectionPipe.close();
+					connectionPipe.getUsbEndpoint().getUsbInterface().release();
+				} catch(UsbException e) {
+					//Do nothing
+				}
 			}
 		}
 		for(BF480Measurement measurement : measurements) {

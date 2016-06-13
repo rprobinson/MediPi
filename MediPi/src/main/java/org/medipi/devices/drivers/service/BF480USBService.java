@@ -50,10 +50,19 @@ public class BF480USBService extends USBService {
 	}
 
 	/* (non-Javadoc)
+	 * @see org.medipi.devices.drivers.service.USBService#readData(javax.usb.UsbPipe, int)
+	 */
+	public byte[] readData(final UsbPipe connectionPipe, final int numberOfBytes) throws UsbException {
+		final byte[] data = new byte[numberOfBytes];
+		connectionPipe.syncSubmit(data);
+		return data;
+	}
+
+	/* (non-Javadoc)
 	 * @see org.medipi.devices.drivers.service.USBService#terminateDeviceCommunication(javax.usb.UsbDevice, javax.usb.UsbControlIrp)
 	 */
 	@Override
-	public void terminateDeviceCommunication(final UsbDevice device, final UsbControlIrp usbControl) throws UsbException, InterruptedException {
+	public void terminateDeviceCommunication(final UsbDevice device, final UsbControlIrp usbControl, final UsbPipe connectionPipe) throws UsbException, InterruptedException {
 		// Not required to terminate the device communication
 	}
 }
