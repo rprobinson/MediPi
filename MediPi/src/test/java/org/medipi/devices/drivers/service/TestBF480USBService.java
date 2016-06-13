@@ -23,6 +23,7 @@ import javax.usb.UsbDevice;
 import javax.usb.UsbException;
 import javax.usb.UsbPipe;
 
+import org.junit.Test;
 import org.medipi.devices.drivers.domain.BF480Measurement;
 import org.medipi.utilities.BytesManipulator;
 
@@ -33,11 +34,8 @@ import org.medipi.utilities.BytesManipulator;
  */
 public class TestBF480USBService {
 
-	//Hex value VENDOR_ID=0x04d9
-	private static final int VENDOR_ID = 1241;
-
-	//Hex value PRODUCT_ID=0x8010
-	private static final int PRODUCT_ID = -32752;
+	private static final short VENDOR_ID = (short) 0x04d9;
+	private static final short PRODUCT_ID = (short) 0x8010;
 
 	private static final int USER_NUMBER = Integer.valueOf(1);
 	private static final int READING_START_BYTE_NUMBER = (USER_NUMBER - 1) * 6;

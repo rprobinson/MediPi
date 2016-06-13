@@ -54,10 +54,8 @@ public class BeurerBF480 extends Scale {
 	private String user;
 	private final USBService usbService;
 
-	//Hex value VENDOR_ID=0x04d9
-	private static final int VENDOR_ID = 1241;
-	//Hex value PRODUCT_ID=0x8010
-	private static final int PRODUCT_ID = -32752;
+	private static final short VENDOR_ID = (short) 0x04d9;
+	private static final short PRODUCT_ID = (short) 0x8010;
 
 	final byte requestType = 33;
 	final byte request = 0x09;

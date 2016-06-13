@@ -33,8 +33,8 @@ import org.medipi.devices.drivers.domain.BM55User;
  */
 public class TestBM55USBService {
 
-	private static final int VENDOR_ID = 0x0c45;
-	private static final int PRODUCT_ID = 0x7406;
+	private static final short VENDOR_ID = (short) 0x0c45;
+	private static final short PRODUCT_ID = (short) 0x7406;
 	private USBService usbService = new BM55USBService();
 
 	/**

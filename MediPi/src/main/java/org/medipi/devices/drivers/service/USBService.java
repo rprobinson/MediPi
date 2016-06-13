@@ -15,7 +15,6 @@
  */
 package org.medipi.devices.drivers.service;
 
-import java.util.Arrays;
 import java.util.List;
 
 import javax.usb.UsbClaimException;
@@ -28,7 +27,6 @@ import javax.usb.UsbEndpoint;
 import javax.usb.UsbException;
 import javax.usb.UsbHub;
 import javax.usb.UsbInterface;
-import javax.usb.UsbIrp;
 import javax.usb.UsbPipe;
 import javax.usb.util.UsbUtil;
 
@@ -178,7 +176,7 @@ public abstract class USBService {
 	 * @param productId the product id of the USB device
 	 * @return the USB device
 	 */
-	public UsbDevice getUSBDevice(final int vendorId, final int productId) {
+	public UsbDevice getUSBDevice(final short vendorId, final short productId) {
 		final UsbHub rootUSBHub = UsbUtil.getVirtualRootUsbHub();
 		UsbDevice device = findDevice(rootUSBHub, vendorId, productId);
 		if(device == null) {
@@ -196,7 +194,7 @@ public abstract class USBService {
 	 * @return the USB device
 	 */
 	@SuppressWarnings("unchecked")
-	private UsbDevice findDevice(final UsbHub hub, final int vendorId, final int productId) {
+	private UsbDevice findDevice(final UsbHub hub, final short vendorId, final short productId) {
 		for(UsbDevice device : (List<UsbDevice>) hub.getAttachedUsbDevices()) {
 			final UsbDeviceDescriptor desc = device.getUsbDeviceDescriptor();
 			if(desc.idVendor() == vendorId && desc.idProduct() == productId) {

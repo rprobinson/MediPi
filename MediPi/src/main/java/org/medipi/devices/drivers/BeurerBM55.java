@@ -51,8 +51,8 @@ public class BeurerBM55 extends BloodPressure {
 	// The number of increments of the progress bar - a value of 0 removes the progBar
 	private static final Double PROGBARRESOLUTION = 60D;
 
-	private static final int VENDOR_ID = 0x0c45;
-	private static final int PRODUCT_ID = 0x7406;
+	private static final short VENDOR_ID = (short) 0x0c45;
+	private static final short PRODUCT_ID = (short) 0x7406;
 	private String user;
 
 	final byte requestType = 33;
