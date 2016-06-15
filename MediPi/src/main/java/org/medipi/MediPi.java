@@ -293,7 +293,7 @@ public class MediPi extends Application {
             }
 
             // find the Device Name
-            String ip;
+            /*String ip;
             try {
                 // try to find the MAC address
                 StringBuilder macAdd = new StringBuilder();
@@ -333,8 +333,8 @@ public class MediPi extends Application {
 
             } catch (Exception e) {
                 makeFatalErrorMessage("Can't find Mac Address for the machine, therefore unable to check device certificate", null);
-            }
-
+            }*/
+            System.setProperty("medipi.device.cert.name", "device.cert");
             // fundamental UI decisions made from the properties
             String b = properties.getProperty(DATAVIEWBASIC);
             if (b == null || b.trim().length() == 0) {

@@ -160,7 +160,7 @@ public class Keypad implements AuthenticationInterface {
     // digits of the passcode alternately padded with the complement of the number inputted
     private boolean loadJKS(Integer[] passDigits) {
         char[] pass = new char[passcodeLength * 2];
-        try {
+        /*try {
             int loop = 0;
             for (Integer i : passDigits) {
                 pass[loop] = Character.forDigit(i, 10);
@@ -183,7 +183,8 @@ public class Keypad implements AuthenticationInterface {
             System.err.println(e.toString());
             Arrays.fill(pass, (char) 0);
             return false;
-        }
+        }*/
+        System.setProperty("medipi.patient.cert.name", "patient.cert");
         Arrays.fill(pass, (char) 0);
         return true;
     }
