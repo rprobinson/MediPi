@@ -89,7 +89,7 @@ import org.medipi.utilities.Utilities;
 public class MediPi extends Application {
 
     // MediPi version Number
-    private static final String MEDIPINAME = "MediPi Telehealth";
+    private static final String MEDIPINAME = "MediPi Telehealth System";
     private static final String VERSION = "MediPi_v1.0.7";
     private static final String VERSIONNAME = "PILOT-20160613-1";
 
