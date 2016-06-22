@@ -44,7 +44,7 @@ public class BytesManipulator {
 	 * @param b the byte which needs to be converted
 	 * @return the unsigned integer
 	 */
-	private static int getUnsignedInteger(final byte b) {
+	public static int getUnsignedInteger(final byte b) {
 		int unsignedInteger = b;
 		if(b < 0) {
 			unsignedInteger = b + 256;
