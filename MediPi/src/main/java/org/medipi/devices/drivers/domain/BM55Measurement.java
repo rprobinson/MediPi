@@ -18,6 +18,7 @@ package org.medipi.devices.drivers.domain;
 import java.sql.Timestamp;
 import java.text.ParseException;
 
+import org.medipi.utilities.BytesManipulator;
 import org.medipi.utilities.TimestampUtil;
 
 /**
@@ -63,9 +64,9 @@ public class BM55Measurement {
 	 * @param reading the reading bytes which will be converted to meaningful values after decoding them
 	 */
 	public BM55Measurement(final byte[] reading) {
-		this.systolicPressure = reading[0] + 25;
-		this.diastolicPressure = reading[1] + 25;
-		this.pulseRate = reading[2];
+		this.systolicPressure = BytesManipulator.getUnsignedInteger((byte) (reading[0] + 25));
+		this.diastolicPressure = BytesManipulator.getUnsignedInteger((byte) (reading[1] + 25));
+		this.pulseRate = BytesManipulator.getUnsignedInteger((byte) reading[2]);
 		String day = null;
 		String month = null;
 		String year = null;
