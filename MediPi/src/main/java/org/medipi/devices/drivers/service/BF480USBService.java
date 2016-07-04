@@ -18,7 +18,10 @@ package org.medipi.devices.drivers.service;
 import javax.usb.UsbControlIrp;
 import javax.usb.UsbDevice;
 import javax.usb.UsbException;
+import javax.usb.UsbIrp;
 import javax.usb.UsbPipe;
+
+import org.medipi.devices.exceptions.DeviceConnectionException;
 
 /**
  * The Class BF480USBService extends an abstract class USBService.
@@ -54,7 +57,13 @@ public class BF480USBService extends USBService {
 	 */
 	public byte[] readData(final UsbPipe connectionPipe, final int numberOfBytes) throws UsbException {
 		final byte[] data = new byte[numberOfBytes];
-		connectionPipe.syncSubmit(data);
+		final UsbIrp irp = connectionPipe.asyncSubmit(data);
+        irp.waitUntilComplete(3000);
+
+        //This condition is just to check if the data is being read properly.
+        if (irp.isUsbException()) {
+        	throw new DeviceConnectionException("Unplug and then replug in the Beurer BF480 Diagnostic Scale and press download");
+        }
 		return data;
 	}
 
