@@ -149,7 +149,7 @@ public class BeurerBF480 extends Scale {
 						int[][] userReadings = BytesManipulator.transpose(readings);
 
 						//convert all 64 readings to an object by iterating over rows of the matrix
-						for(int readingsCounter = 0; readingsCounter < 64; readingsCounter++) {
+						for(int readingsCounter = 0; readingsCounter < BF480USBService.MAX_NUMBER_OF_READINGS; readingsCounter++) {
 							if(userReadings[readingsCounter][readingStartByteNumber + 4] == 0) {
 								break;
 							}

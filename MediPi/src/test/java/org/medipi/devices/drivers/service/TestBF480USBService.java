@@ -23,7 +23,6 @@ import javax.usb.UsbDevice;
 import javax.usb.UsbException;
 import javax.usb.UsbPipe;
 
-import org.junit.Test;
 import org.medipi.devices.drivers.domain.BF480Measurement;
 import org.medipi.utilities.BytesManipulator;
 
@@ -79,7 +78,7 @@ public class TestBF480USBService {
 			int[][] userReadings = BytesManipulator.transpose(readings);
 
 			//convert all 64 readings to an object by iterating over rows of the matrix
-			for(int readingsCounter = 0; readingsCounter < 60; readingsCounter++) {
+			for(int readingsCounter = 0; readingsCounter < BF480USBService.MAX_NUMBER_OF_READINGS; readingsCounter++) {
 				if(userReadings[readingsCounter][READING_START_BYTE_NUMBER + 4] == 0) {
 					break;
 				}
@@ -95,6 +94,7 @@ public class TestBF480USBService {
 				}
 			}
 		}
+		System.out.println("Number of readings:" + measurements.size());
 		for(BF480Measurement measurement : measurements) {
 			System.out.println(measurement + "\n");
 		}

@@ -64,7 +64,7 @@ public class BM55USBService extends USBService {
 
         //This condition is just to check if the data is being read properly. Input and output data cannot be the same if the device is responding.
         if (irp.isUsbException() || Arrays.equals(data, new byte[numberOfBytes])) {
-        	throw new DeviceConnectionException("unknown error connecting to meter");
+        	throw new DeviceConnectionException("Unplug and then replug in the Beurer BM55 Blood Pressure Monitor and press download");
         }
 		return data;
 	}
