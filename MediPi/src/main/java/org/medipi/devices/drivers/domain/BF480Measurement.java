@@ -26,7 +26,7 @@ import org.medipi.utilities.TimestampUtil;
  *
  * @author krishna.kuntala@mastek.com
  */
-public class BF480Measurement {
+public class BF480Measurement implements Comparable<BF480Measurement>{
 
 	private double weight;
 	private double bodyFat;
@@ -168,6 +168,11 @@ public class BF480Measurement {
 	 */
 	public void setMeasuredTime(final Timestamp measuredTime) {
 		this.measuredTime = measuredTime;
+	}
+
+	@Override
+	public int compareTo(final BF480Measurement measurement) {
+		return new Long(this.getMeasuredTime().getTime()).compareTo(measurement.getMeasuredTime().getTime());
 	}
 
 	/**

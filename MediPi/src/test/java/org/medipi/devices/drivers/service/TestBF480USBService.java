@@ -16,6 +16,7 @@
 package org.medipi.devices.drivers.service;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import javax.usb.UsbControlIrp;
@@ -84,6 +85,8 @@ public class TestBF480USBService {
 				}
 				measurements.add(new BF480Measurement(userReadings[readingsCounter], READING_START_BYTE_NUMBER));
 			}
+
+			Collections.sort(measurements);
 		} finally {
 			if(connectionPipe != null && connectionPipe.isOpen()) {
 				try {
