@@ -16,6 +16,7 @@
 package org.medipi.devices.drivers;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -155,17 +156,22 @@ public class BeurerBF480 extends Scale {
 							}
 							final BF480Measurement measurement = new BF480Measurement(userReadings[readingsCounter], readingStartByteNumber);
 							measurements.add(measurement);
+						}
+
+						//Sort the readings with the readings timestamp
+						Collections.sort(measurements);
+
+						for(BF480Measurement measurement : measurements) {
+							System.out.println("\n" + measurement);
 							// add the data to the data array
 							deviceData.add(measurement.getAllValues());
 							// add the data to the screen display - this might be a graph/table
 							// or just a simple result of the last measure
 							Platform.runLater(() -> {
 								addDataPoint(measurement.getMeasuredTime(), measurement.getWeight(), measurement.getBodyFat(), measurement.getWater(), measurement.getMuscles());
+								hasData.set(true);
 							});
 						}
-						Platform.runLater(() -> {
-							hasData.set(true);
-						});
 
 						updateProgress(progressBarResolution, progressBarResolution);
 						operationStatus = "SUCCESS";
