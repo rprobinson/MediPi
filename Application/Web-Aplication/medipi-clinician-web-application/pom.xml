@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>1.2.0.RELEASE</version>
+		<relativePath /> <!-- lookup parent from repository -->
+	</parent>
+
+	<groupId>uk.gov.nhs.digital.telehealth.clinician.web.applications</groupId>
+	<artifactId>medipi-clinician-web-application</artifactId>
+	<version>1.0</version>
+	<packaging>war</packaging>
+	<name>medipi-clinician-web-application</name>
+	<url>http://maven.apache.org</url>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<java.version>1.7</java.version>
+		<main.basedir>${basedir}/../..</main.basedir>
+		<m2eclipse.wtp.contextRoot>/</m2eclipse.wtp.contextRoot>
+		<commons.logging.version>1.1.1</commons.logging.version>
+		<powermock.version>1.6.1</powermock.version>
+		<mockito.version>1.9.5</mockito.version>
+		<log4j.version>1.2.17</log4j.version>
+		<devops.commons>0.0.1-SNAPSHOT</devops.commons>
+		<domain-classifier>domain</domain-classifier>
+	</properties>
+
+	<dependencies>
+		<!-- Spring boot dependencies: START -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+			<exclusions>
+				<exclusion>
+					<artifactId>spring-boot-starter-logging</artifactId>
+					<groupId>org.springframework.boot</groupId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>javax.servlet</groupId>
+			<artifactId>jstl</artifactId>
+		</dependency>
+
+		<!-- Added to allow configuration as a web MVC, built as a WAR file (still executable) -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-tomcat</artifactId>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.tomcat.embed</groupId>
+			<artifactId>tomcat-embed-jasper</artifactId>
+			<scope>provided</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+			<exclusions>
+				<exclusion>
+					<groupId>org.springframework.boot</groupId>
+					<artifactId>spring-boot-starter-logging</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<!-- <dependency> <groupId>org.springframework.boot</groupId> <artifactId>spring-boot-starter-security</artifactId> </dependency> -->
+		<!-- Spring boot dependencies: END -->
+
+		<!-- Third party dependencies: START -->
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>log4j</groupId>
+			<artifactId>log4j</artifactId>
+			<version>${log4j.version}</version><!--$NO-MVN-MAN-VER$ -->
+		</dependency>
+		<dependency>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-all</artifactId>
+			<version>${mockito.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>ma.glasnost.orika</groupId>
+			<artifactId>orika-core</artifactId>
+			<version>1.4.5</version>
+		</dependency>
+		<dependency>
+			<groupId>commons-logging</groupId>
+			<artifactId>commons-logging</artifactId>
+			<version>${commons.logging.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>net.sf.qualitycheck</groupId>
+			<artifactId>quality-test</artifactId>
+			<version>1.2</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.powermock</groupId>
+			<artifactId>powermock-module-junit4</artifactId>
+			<version>${powermock.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.powermock</groupId>
+			<artifactId>powermock-api-mockito</artifactId>
+			<version>${powermock.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<!-- Third party dependencies: END -->
+
+		<!-- common dependencies: START -->
+		<dependency>
+			<groupId>com.dev.ops.common</groupId>
+			<artifactId>devops-commons</artifactId>
+			<version>${devops.commons}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.dev.ops.common</groupId>
+			<artifactId>devops-commons</artifactId>
+			<version>${devops.commons}</version>
+			<classifier>tests</classifier>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.dev.ops.common</groupId>
+			<artifactId>devops-exception-manager</artifactId>
+			<version>${devops.commons}</version>
+		</dependency>
+		<!-- common dependencies: END -->
+
+		<!-- Services domain dependencies: START -->
+		<dependency>
+			<groupId>uk.gov.nhs.digital.telehealth.clinician.services</groupId>
+			<artifactId>medipi-clinician-service</artifactId>
+			<version>1.0</version>
+			<classifier>${domain-classifier}</classifier>
+			<exclusions>
+				<exclusion>
+					<artifactId>spring-boot-starter-data-jpa</artifactId>
+					<groupId>org.springframework.boot</groupId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<!-- Services domain dependencies: END -->
+
+	</dependencies>
+
+	<profiles>
+		<!-- This profile is added for running the web application on eclipse using "domain" classifier. -->
+		<profile>
+			<id>m2e</id>
+			<activation>
+				<property>
+					<name>m2e.version</name>
+				</property>
+			</activation>
+			<properties>
+				<domain-classifier></domain-classifier>
+			</properties>
+		</profile>
+	</profiles>
+	<build>
+		<finalName>medipiClinicianWebApp</finalName>
+		<plugins>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<source>${java.version}</source>
+					<target>${java.version}</target>
+					<fork>true</fork>
+					<meminitial>128m</meminitial>
+					<maxmem>2048m</maxmem>
+					<argLine>-Xmx2048m -XX:MaxPermSize=2048m</argLine>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+</project>
