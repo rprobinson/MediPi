@@ -15,18 +15,18 @@
  * limitations under the License.
  *
  */
-package uk.gov.nhs.digital.telehealth.clinician.service.url.mappings;
+package uk.gov.nhs.digital.telehealth.clinician.service.dao.impl;
 
-import com.dev.ops.common.constants.CommonConstants;
+import java.util.List;
 
-public interface ServiceURLMappings {
+import uk.gov.nhs.digital.telehealth.clinician.service.entities.DataValueEntity;
+import uk.gov.nhs.digital.telehealth.clinician.service.entities.RecordingDeviceDataMaster;
 
-	String APPLICATION_ROOT_MAPPING = "/clinician";
+import com.dev.ops.common.dao.generic.GenericDAO;
+import com.dev.ops.common.domain.ContextInfo;
 
-	interface PatientServiceController {
-		String CONTROLLER_MAPPING = APPLICATION_ROOT_MAPPING + "/patient";
-		String GET_ALL_PATIENTS = CommonConstants.Separators.URL_SEPARATOR;
-		String GET_PATIENT = CommonConstants.Separators.URL_SEPARATOR;
-		String GET_PATIENT_RECENT_READINGS = "/recentReadings/";
-	}
+public interface RecordingDeviceDataDAO extends GenericDAO<RecordingDeviceDataMaster> {
+	List<RecordingDeviceDataMaster> fetchRecentReadingsHQL(String patientId, ContextInfo contextInfo);
+
+	List<DataValueEntity> fetchRecentReadingsSQL(String patientId, ContextInfo contextInfo);
 }

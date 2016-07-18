@@ -18,17 +18,25 @@
 package uk.gov.nhs.digital.telehealth.clinician.service.entities;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.List;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
+//@formatter:off
 @Entity
 @Table(name = "patient")
-@NamedQueries({@NamedQuery(name = "PatientMaster.fetchAllPatients", query = "SELECT patientMaster FROM PatientMaster patientMaster")})
+@NamedQueries({
+	@NamedQuery(name = "PatientMaster.fetchAllPatients", query = "SELECT patientMaster FROM PatientMaster patientMaster ORDER BY critical DESC"),
+})
+//@formatter:on
 public class PatientMaster {
 
 	@Id
@@ -50,8 +58,11 @@ public class PatientMaster {
 	@Column(name = "is_critical")
 	private boolean critical;
 
-	public PatientMaster() {
+	@OneToMany(mappedBy = "patient", cascade = {CascadeType.ALL})
+	private List<RecordingDeviceDataMaster> recordingDeviceDataList;
 
+	public PatientMaster() {
+		recordingDeviceDataList = new ArrayList<RecordingDeviceDataMaster>();
 	}
 
 	public PatientMaster(final String patientId, final String nhsNumber, final String firstName, final String lastName, final Timestamp dateOfBirth, final boolean isCritical) {
@@ -110,6 +121,14 @@ public class PatientMaster {
 
 	public void setCritical(final boolean isCritical) {
 		this.critical = isCritical;
+	}
+
+	public List<RecordingDeviceDataMaster> getRecordingDeviceDataList() {
+		return recordingDeviceDataList;
+	}
+
+	public void addRecordingDeviceData(final RecordingDeviceDataMaster recordingDeviceData) {
+		this.recordingDeviceDataList.add(recordingDeviceData);
 	}
 
 	@Override

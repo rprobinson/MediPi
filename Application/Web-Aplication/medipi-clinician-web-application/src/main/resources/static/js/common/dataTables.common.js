@@ -156,6 +156,23 @@ function _changeDropDownValueAfterFilter(tableId) {
 	}
 };
 
+/**
+ * Sets ajax caching to false.
+ */
+$(document).ready(function() {
+	$.ajaxSetup(
+	{
+		cache: false
+	});
+});
+
+/**
+ * Handles ajax errors related to datatables.
+ */
+function handleAjaxError(e, settings, techNote, message) {
+	$("#errorMessage").html("Please try to reload the page and if the problem still persists, please contact the system administrator.")
+	$("#errorMessageDiv").removeClass("hidden");
+}
 /*******************************************************************************
  * END: Datatable related functions.
  ******************************************************************************/

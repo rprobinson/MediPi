@@ -17,7 +17,6 @@
  */
 package uk.gov.nhs.digital.telehealth.clinician.service.controllers;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 import org.apache.log4j.LogManager;
@@ -30,6 +29,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import uk.gov.nhs.digital.telehealth.clinician.service.domain.DataValue;
 import uk.gov.nhs.digital.telehealth.clinician.service.domain.Patient;
 import uk.gov.nhs.digital.telehealth.clinician.service.services.PatientService;
 import uk.gov.nhs.digital.telehealth.clinician.service.url.mappings.ServiceURLMappings;
@@ -50,7 +50,7 @@ public class PatientServiceController {
 
 	@RequestMapping(value = ServiceURLMappings.PatientServiceController.GET_PATIENT + "{patientId}", method = RequestMethod.GET)
 	@ResponseBody
-	public Patient getPatientDetails(@PathVariable final BigDecimal patientId, @RequestHeader(CommonConstants.CONTEXT_INFORMATION_REQUEST_PARAMETER) final String context) throws DefaultWrappedException {
+	public Patient getPatientDetails(@PathVariable final String patientId, @RequestHeader(CommonConstants.CONTEXT_INFORMATION_REQUEST_PARAMETER) final String context) throws DefaultWrappedException {
 		ContextThreadLocal.set(ContextInfo.toContextInfo(context));
 		LOGGER.debug("Get Patient details for:" + patientId);
 		final Patient patient = this.patientService.getPatientDetails(patientId, ContextInfo.toContextInfo(context));
@@ -65,4 +65,13 @@ public class PatientServiceController {
 		final List<Patient> patients = this.patientService.getAllPatients(ContextInfo.toContextInfo(context));
 		return patients;
 	}
+
+	@RequestMapping(value = ServiceURLMappings.PatientServiceController.GET_PATIENT_RECENT_READINGS + "{patientId}", method = RequestMethod.GET)
+	@ResponseBody
+	public List<DataValue> getPatientRecentReadings(@PathVariable final String patientId, @RequestHeader(CommonConstants.CONTEXT_INFORMATION_REQUEST_PARAMETER) final String context) throws DefaultWrappedException {
+		ContextThreadLocal.set(ContextInfo.toContextInfo(context));
+		final List<DataValue> recentReadings = this.patientService.getPatientsRecentReadings(patientId, ContextInfo.toContextInfo(context));
+		return recentReadings;
+	}
+
 }

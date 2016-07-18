@@ -85,6 +85,9 @@ body .container:nth-child(2){background-color:#FFF; padding-bottom: 20px}
 .mT0{margin-top:0px}
 
 
+.w150{width:150px}
+
+
 /* IC - Buttons */
 
 .ic-btn { width:18px; height:18px; display:inline-block}
@@ -163,6 +166,26 @@ text-align: right;
 .accordion-head .error-inline{ margin-left: 10px;}
 .accordion-head .error-inline-text{ margin-left: 10px;}
 .accordion-body-loading{ background:url(../images/misc/loader-medium.GIF) no-repeat center center; height:200px;opacity:0.4;}
+
+.summary-2-col {padding:0; margin:0;}
+.summary-2-col li {padding:0; margin:0 0 10px 0; list-style-type:none;float:left;}
+.summary-2-col li.first {width:66.66%}
+.summary-2-col li.last {width:33.33%}
+.summary-2-col li.wp50{ width:50%}
+.summary-three-col {padding:0; margin:0;}
+.summary-three-col li {width:33.33%; float:left;padding-bottom:10px}
+.summary-three-col li {padding:0; margin:0 0 10px 0; list-style-type:none;}
+.summary-three-col li label.label-display { cursor:default; font-weight:bold;margin-bottom:0; display:block; padding-right:10px}
+label.label-display { cursor:default; font-weight:bold;margin-bottom:0; display:block; padding-right:10px}
+.summary-three-col .label-text {font-size:13px; padding-right:10px; word-wrap: break-word;}
+
+.summary-three-col li.wp50 { width:50%;}
+.summary-three-col li.wp30 { width:30%;}
+.summary-three-col li.wp20 { width:20%;}
+.summary-three-col li.wp66 { width:66.67%;}
+
+.summary-three-col .user-image {width:200px;height:250px}
+.summary-three-col .status { float:left}
 
 .table-bordered{margin-bottom:0;}
 .table-striped td {font-size:12px}

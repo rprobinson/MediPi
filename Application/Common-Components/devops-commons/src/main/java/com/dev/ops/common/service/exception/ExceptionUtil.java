@@ -1,6 +1,6 @@
-/**
+/*
  *
- * Copyright 2016 Krishna Kuntala @ Mastek <krishna.kuntala@mastek.com>
+ * Copyright (C) 2016 Krishna Kuntala @ Mastek <krishna.kuntala@mastek.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ public final class ExceptionUtil {
 
 	public static DefaultWrappedException createException(final String exceptionId, final Exception exception, final Object[] param) {
 		final DefaultWrappedException wrappedException = new DefaultWrappedException(exceptionId, exception, param);
-		//logException(wrappedException, contextInfo);
+		logException(wrappedException);
 		return wrappedException;
 	}
 

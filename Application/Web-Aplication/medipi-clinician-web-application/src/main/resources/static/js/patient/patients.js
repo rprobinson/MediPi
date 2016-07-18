@@ -22,7 +22,7 @@ function initialisePatientsDatatable() {
 		"bProcessing": true,
 		"bDeferRender": true,
 		"sPaginationType": "full_numbers",
-		"aaSorting": [[0, 'desc']],
+		//"aaSorting": [[4, 'desc']],
 		"oLanguage":
 		{
 			"sLengthMenu": defaultDataTableConstants.sLengthMenu,
@@ -80,7 +80,10 @@ function initialisePatientsDatatable() {
 				}
 			}
 		}],
-		"sDom": defaultDataTableConstants.sDom
+		"sDom": defaultDataTableConstants.sDom,
+		"drawCallback": function(settings) {
+			hideErrorDiv();
+		}
 	});
 
 	setInterval( function () {

@@ -3,83 +3,81 @@
 <jsp:include page="/WEB-INF/pages/headers/datatablesInclude.jsp" />
 <script type="text/javascript" charset="utf8" src="/js/common/common.ui.util.js"></script>
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<jsp:useBean id="dateValue" class="java.util.Date"/>
 <div class="accordion-section">
 	<div class="accordion-head" id="accordion-head">
-		<a href="#" class="on" aria-expanded="true" id="employeeDetails">Personal Details</a>
+		<a href="#" class="on" aria-expanded="true" id="patientDetails">Patient Details</a>
 	</div>
 	<div class="accordion-body form-horizontal" style="display: block">
 		<div class="form-group">
-			<label class="control-label col-sm-3" for="employeeId">Employee Id:</label>
-			<label class="control-label" for="employeeId" id="employeeId">${employee.employeeId}</label>
+			<label class="control-label col-sm-2" for="nhsNumber">NHS Number:</label>
+			<label class="control-label" for="nhsNumber" id="nhsNumber">${patient.nhsNumber}</label>
 		</div>
 		<div class="form-group">
-			<label class="control-label col-sm-3" for="employeeNumber">Employee Number:</label>
-			<label class="control-label" for="employeeNumber" id="employeeNumber">${employee.employeeNumber}</label>
+			<label class="control-label col-sm-2" for="name">Name:</label>
+			<label class="control-label" for="name" id="name">${patient.firstName}&nbsp;${patient.lastName}</label>
 		</div>
 		<div class="form-group">
-			<label class="control-label col-sm-3" for="firstName">First name:</label>
-			<label class="control-label" for="firstName">${employee.firstName}</label>
+			<label class="control-label col-sm-2" for="dob">Date of Birth:</label>
+			<label class="control-label" for="dob" id="dob"><fmt:formatDate value="${patient.dateOfBirth}" pattern="dd-MMM-yyyy" /></label>
 		</div>
-		<div class="form-group">
-			<label class="control-label col-sm-3" for="lastName">Last name:</label>
-			<label class="control-label" for="lastName">${employee.lastName}</label>
-		</div>
-		<div class="form-group">
-			<label class="control-label col-sm-3" for="salary">Salary:</label>
-			<label class="control-label" for="salary">${employee.salary}</label>
-		</div>
-		<div class="form-group">
-			<label class="control-label col-sm-3" for="mobileNumber">Mobile number:</label>
-			<label class="control-label" for="mobileNumber">${employee.mobileNumber}</label>
-		</div>
-		<div class="form-group">
-			<label class="control-label col-sm-3" for="emailAddress">Email address:</label>
-			<label class="control-label" for="emailAddress">${employee.emailAddress}</label>
-		</div>
-		<div class="form-group">
-			<label class="control-label col-sm-3" for="googleAuthenticatorKey">Google Authenticator QR Code:</label>
-			<%-- <label class="control-label" for="googleAuthenticatorKey">${employee.googleAuthenticatorKey}</label> --%>
-			<img alt="" height="300px" width="300px" src="/getGoogleAuthenticatorQRCode/${employee.employeeNumber}/${employee.googleAuthenticatorKey}/${employee.firstName} ${employee.lastName}">
-		</div>
+	</div>
+	<div class="accordion-head" id="accordion-head">
+		<a href="#" class="on" aria-expanded="true" id="patientDetails">Patient Details</a>
+	</div>
+	<div class="accordion-body form-horizontal" style="display: block">
+		<ul class="summary-three-col">
+			<li><label class="label-display" for="nhsNumber">NHS Number:</label> <label class="label-text" for="nhsNumber" id="nhsNumber">${patient.nhsNumber}</label></li>
+			<li><label class="label-display" for="name">Name:</label> <label class="label-text" for="name" id="name">${patient.firstName}&nbsp;${patient.lastName}</label></li>
+			<li><label class="label-display" for="dob">Date of Birth:</label> <label class="label-text" for="dob" id="dob"><fmt:formatDate value="${patient.dateOfBirth}" pattern="dd-MMM-yyyy" /></label></li>
+		</ul>
 	</div>
 </div>
 <div class="accordion-section">
 	<div class="accordion-head" id="accordion-head">
-		<a href="#" class="on" aria-expanded="true" id="employeeDetails">Address Details</a>
+		<a href="#" class="on" aria-expanded="true" id="recentMeasurements">Recent Measurements</a>
 	</div>
 	<div class="accordion-body form-horizontal" style="display: block">
-		<div class="form-group">
-			<label class="control-label col-sm-3" for="address.addressLine1">Line 1:</label>
-			<label class="control-label" for="address.addressLine1">${employee.address.addressLine1}</label>
-		</div>
-		<div class="form-group">
-			<label class="control-label col-sm-3" for="addressLine2">Line 2:</label>
-			<label class="control-label" for="address.addressLine2">${employee.address.addressLine2}</label>
-		</div>
-		<div class="form-group">
-			<label class="control-label col-sm-3" for="address.postCode">Postcode:</label>
-			<label class="control-label" for="address.postCode">${employee.address.postCode}</label>
-		</div>
-		<div class="form-group">
-			<label class="control-label col-sm-3" for="address.city">City:</label>
-			<label class="control-label" for="address.city">${employee.address.city}</label>
-		</div>
-		<div class="form-group">
-			<label class="control-label col-sm-3" for="address.state">State/ County/ Province:</label>
-			<label class="control-label" for="address.state">${employee.address.state}</label>
-		</div>
-		<div class="form-group">
-			<label class="control-label col-sm-3" for="address.country">Country:</label>
-			<label class="control-label" for="address.country">${employee.address.country}</label>
-		</div>
-		<div class="span7 pull-right text-right">
-			<input class="btn btn-large btn-primary" id="btn_modify_employee" type="button" value="Modify Employee" name="modifyEmployee" onclick="window.location.href='/employee?employeeId=${employee.employeeId}'">
-		</div>
+		<table class="table table-striped">
+			<thead>
+				<tr>
+					<th>Reading type</th>
+					<th>Device</th>
+					<th>Recent value</th>
+					<th class="w150">Date</th>
+					<th></th>
+				</tr>
+			</thead>
+			<tbody>
+				<c:forEach items="${recentReadings}" var="recentReading">
+					<tr>
+						<td>
+							<b><c:out value="${recentReading.readingType}" /></b>
+						</td>
+						<td>
+							<b><c:out value="${recentReading.device}" /></b>
+						</td>
+						<td>
+							<c:out value="${recentReading.data}" />
+						</td>
+						<td>
+							<c:set var="dataTime" value="${recentReading.dataTime}" />
+							<jsp:setProperty name="dateValue" property="time" value="${dataTime}"/>
+							<fmt:formatDate value="${dateValue}" pattern="dd-MMM-yyyy HH:mm:ss" />
+						</td>
+						<td>
+							<a href="#">History</a>
+						</td>
+					</tr>
+				</c:forEach>
+			</tbody>
+		</table>
 	</div>
 </div>
 <jsp:include page="/WEB-INF/pages/footers/footer.jsp" />
 <script>
 	$(document).ready(function() {
-		showActiveMenu(NAVIGATION_LINK_MAP.EMPLOYEE);
+		showActiveMenu(NAVIGATION_LINK_MAP.PATIENT);
 	});
 </script>

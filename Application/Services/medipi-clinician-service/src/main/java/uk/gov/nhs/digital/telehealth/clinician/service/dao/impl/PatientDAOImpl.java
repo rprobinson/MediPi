@@ -33,4 +33,5 @@ public class PatientDAOImpl extends GenericDAOImpl<PatientMaster> implements Pat
 	public List<PatientMaster> fetchAllPatients(final ContextInfo contextInfo) {
 		return this.getEntityManager().createNamedQuery("PatientMaster.fetchAllPatients", PatientMaster.class).getResultList();
 	}
+
 }

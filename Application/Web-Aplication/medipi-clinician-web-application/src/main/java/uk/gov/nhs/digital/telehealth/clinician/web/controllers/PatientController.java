@@ -35,6 +35,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.ModelAndView;
 
+import uk.gov.nhs.digital.telehealth.clinician.service.domain.DataValue;
 import uk.gov.nhs.digital.telehealth.clinician.service.domain.Patient;
 import uk.gov.nhs.digital.telehealth.clinician.service.url.mappings.ServiceURLMappings;
 import uk.gov.nhs.digital.telehealth.clinician.web.constants.WebConstants;
@@ -72,13 +73,16 @@ public class PatientController extends BaseController {
 		return this.restTemplate.exchange(this.clinicianServiceURL + ServiceURLMappings.PatientServiceController.CONTROLLER_MAPPING + ServiceURLMappings.PatientServiceController.GET_ALL_PATIENTS, HttpMethod.GET, entity, List.class).getBody();
 	}
 
+	@SuppressWarnings({"unchecked", "rawtypes"})
 	@RequestMapping(value = "/{patientId}", method = RequestMethod.GET)
 	@ResponseBody
 	public ModelAndView getPatient(@PathVariable final String patientId, final ModelAndView modelAndView, final HttpServletRequest request) throws DefaultWrappedException, IOException {
 		LOGGER.debug("Get patient details for patient id:<" + patientId + ">.");
 		final HttpEntity<?> entity = HttpUtil.getEntityWithHeaders(WebConstants.Operations.Patient.READ, null);
 		final Patient patient = this.restTemplate.exchange(this.clinicianServiceURL + ServiceURLMappings.PatientServiceController.CONTROLLER_MAPPING + ServiceURLMappings.PatientServiceController.GET_PATIENT + patientId, HttpMethod.GET, entity, Patient.class).getBody();
+		final List<DataValue> recentReadings = this.restTemplate.exchange(this.clinicianServiceURL + ServiceURLMappings.PatientServiceController.CONTROLLER_MAPPING + ServiceURLMappings.PatientServiceController.GET_PATIENT_RECENT_READINGS + patientId, HttpMethod.GET, entity, (Class<List<DataValue>>) (Class) List.class).getBody();
 		modelAndView.addObject("patient", patient);
+		modelAndView.addObject("recentReadings", recentReadings);
 		modelAndView.setViewName("patient/viewPatient");
 		return modelAndView;
 	}
