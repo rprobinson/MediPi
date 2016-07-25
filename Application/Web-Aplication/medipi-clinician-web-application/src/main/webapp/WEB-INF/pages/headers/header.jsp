@@ -9,7 +9,7 @@
 <meta http-equiv="pragma" content="no-cache" />
 <meta name="description" content="">
 <meta name="author" content="">
-<link rel="icon" href="/images/headers/medipi_icon.png">
+<link rel="icon" href="/images/headers/medipi_logo.png">
 <!--css media queries for ie8 / ie 7-->
 <!--[if lt IE 9]>
 		<script src="plugins/respond.min.js"></script>

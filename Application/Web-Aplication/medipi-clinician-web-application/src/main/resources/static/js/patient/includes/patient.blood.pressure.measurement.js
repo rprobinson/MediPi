@@ -1,0 +1,87 @@
+var measurement = {
+    getData: function (includeObject, attributeId) {
+        var formattedstudentListArray = [];
+        var data = null;
+        $.ajax({
+            async: false,
+            url: "/clinician/patient/patientMeasurements?patientId=" + includeObject.patientId + "&attributeId=" + attributeId,
+            dataType: "json",
+            success: function (pulseData) {
+                data = pulseData;
+            }
+        });
+        return data;
+    },
+    createChartData: function (jsonData, includeObject) {
+        return {
+            labels: jsonData[0].timeMapProperty('dataTime'),
+            datasets: [
+                {
+                    label: includeObject.chartHeaders[1],
+                    fill: false,
+                    borderColor: 'rgba(0,176,80,1)',
+                    backgroundColor: 'rgba(0,176,80,1)',
+                    data: jsonData[1].mapValue('value')
+                },
+                {
+                    label: includeObject.chartHeaders[0],
+                    borderColor: 'rgba(53,94,142,1)',
+                    backgroundColor: 'rgba(53,94,142,1)',
+                    fill: false,
+                    data: jsonData[0].mapValue('value')
+                }
+            ]
+        };
+    },
+    renderChart: function (chartData, includeObject) {
+        var context2D = document.getElementById(includeObject.canvasId).getContext("2d");
+        var myChart = new Chart(context2D, {
+            type: 'line',
+            data: chartData,
+            options: {
+                responsive: true,
+                scales: {
+                    yAxes: [{
+                        display: true,
+                        scaleLabel: {
+                            show: true,
+                        },
+                        ticks: {
+                            suggestedMin: includeObject.suggestedMinValue,
+                            suggestedMax: includeObject.suggestedMaxValue,
+                        }
+                    }]
+                }
+            }
+        });
+        return myChart;
+    },
+
+    updateRecentMeasuremnts: function (recentMeasurement, includeObject) {
+        $("#" + includeObject.recentMeasurementDateId).html(recentMeasurement != null ? recentMeasurement.dataTime.getStringDate_DDMMYYYY_From_Timestamp() : "- - -");
+        $("#" + includeObject.recentMeasurementValueId).html(recentMeasurement != null ? recentMeasurement.value : "- - -");
+        /*$("#" + includeObject.measurementMinValueId).html(recentMeasurement != null ? recentMeasurement.minValue : "- - -");
+        $("#" + includeObject.measurementMaxValueId).html(recentMeasurement != null ? recentMeasurement.maxValue : "- - -");*/
+        $("#" + includeObject.measurementMinValueId).html("- - -");
+        $("#" + includeObject.measurementMaxValueId).html("- - -");
+
+        $("#" + includeObject.recentMeasurementValueId).attr("class", "green");
+        //If within min and max limits
+        /*if(recentMeasurement.minValue <= recentMeasurement.value ||  recentMeasurement.maxValue >= recentMeasurement.value) {
+        	$("#" + includeObject.recentMeasurementValueId).attr("class", "green");
+        } else {
+        	$("#" + includeObject.recentMeasurementValueId).attr("class", "red");
+        }*/
+    },
+
+    initChart: function (includeObject) {
+        var systolicData = measurement.getData(includeObject, includeObject.attributeIds[0]);
+        var diastolicData = measurement.getData(includeObject, includeObject.attributeIds[1]);
+        chartData = measurement.createChartData([systolicData, diastolicData], includeObject);
+        measurement.renderChart(chartData, includeObject);
+        var lastSystolicData = systolicData.lastObject();
+        var lastDiastolicData = diastolicData.lastObject();
+        lastSystolicData.value = "<u>" + lastSystolicData.value + "</u><br/>" + lastDiastolicData.value;
+        measurement.updateRecentMeasuremnts(lastSystolicData, includeObject);
+    }
+};

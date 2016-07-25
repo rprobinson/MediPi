@@ -32,7 +32,7 @@ import com.dev.ops.common.domain.ContextInfo;
 @Service
 public class RecordingDeviceDataDAOImpl extends GenericDAOImpl<RecordingDeviceDataMaster> implements RecordingDeviceDataDAO {
 
-	private static String FETCH_RECENT_READINGS_NATIVE_POSTGRESQL_QUERY;
+	private static String FETCH_RECENT_MEASUREMENTS_NATIVE_POSTGRESQL_QUERY;
 
 	static {
 		StringBuilder query = new StringBuilder();
@@ -46,22 +46,31 @@ public class RecordingDeviceDataDAOImpl extends GenericDAOImpl<RecordingDeviceDa
 		query.append(" WHERE rdd.patient_id = :patientId");
 		query.append(" ORDER BY rdt.type_id ASC");
 
-		FETCH_RECENT_READINGS_NATIVE_POSTGRESQL_QUERY = query.toString();
+		FETCH_RECENT_MEASUREMENTS_NATIVE_POSTGRESQL_QUERY = query.toString();
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public List<RecordingDeviceDataMaster> fetchRecentReadingsHQL(final String patientId, final ContextInfo contextInfo) {
-		final Query query = this.getEntityManager().createNamedQuery("RecordingDeviceDataMaster.fetchRecentReadings", RecordingDeviceDataMaster.class);
+	public List<RecordingDeviceDataMaster> fetchRecentMeasurementsHQL(final String patientId, final ContextInfo contextInfo) {
+		final Query query = this.getEntityManager().createNamedQuery("RecordingDeviceDataMaster.fetchRecentMeasurements", RecordingDeviceDataMaster.class);
 		query.setParameter("patientId", patientId);
 		return query.getResultList();
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public List<DataValueEntity> fetchRecentReadingsSQL(final String patientId, final ContextInfo contextInfo) {
-		final Query query = this.getEntityManager().createNativeQuery(FETCH_RECENT_READINGS_NATIVE_POSTGRESQL_QUERY, DataValueEntity.class);
+	public List<DataValueEntity> fetchRecentMeasurementsSQL(final String patientId, final ContextInfo contextInfo) {
+		final Query query = this.getEntityManager().createNativeQuery(FETCH_RECENT_MEASUREMENTS_NATIVE_POSTGRESQL_QUERY, DataValueEntity.class);
 		query.setParameter("patientId", patientId);
+		return query.getResultList();
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public List<RecordingDeviceDataMaster> fetchPatientMeasurementsByAttributeId(final String patientId, final int attributeId) {
+		final Query query = this.getEntityManager().createNamedQuery("RecordingDeviceDataMaster.fetchMeasurements", RecordingDeviceDataMaster.class);
+		query.setParameter("patientId", patientId);
+		query.setParameter("attributeId", attributeId);
 		return query.getResultList();
 	}
 }

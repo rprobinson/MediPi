@@ -1,83 +1,97 @@
 <title>MediPi : Patient</title>
 <jsp:include page="/WEB-INF/pages/headers/header.jsp" />
-<jsp:include page="/WEB-INF/pages/headers/datatablesInclude.jsp" />
 <script type="text/javascript" charset="utf8" src="/js/common/common.ui.util.js"></script>
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
-<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
-<jsp:useBean id="dateValue" class="java.util.Date"/>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt"%>
+<jsp:useBean id="dateValue" class="java.util.Date" />
 <div class="accordion-section">
-	<div class="accordion-head" id="accordion-head">
-		<a href="#" class="on" aria-expanded="true" id="patientDetails">Patient Details</a>
-	</div>
-	<div class="accordion-body form-horizontal" style="display: block">
-		<div class="form-group">
-			<label class="control-label col-sm-2" for="nhsNumber">NHS Number:</label>
-			<label class="control-label" for="nhsNumber" id="nhsNumber">${patient.nhsNumber}</label>
-		</div>
-		<div class="form-group">
-			<label class="control-label col-sm-2" for="name">Name:</label>
-			<label class="control-label" for="name" id="name">${patient.firstName}&nbsp;${patient.lastName}</label>
-		</div>
-		<div class="form-group">
-			<label class="control-label col-sm-2" for="dob">Date of Birth:</label>
-			<label class="control-label" for="dob" id="dob"><fmt:formatDate value="${patient.dateOfBirth}" pattern="dd-MMM-yyyy" /></label>
-		</div>
-	</div>
 	<div class="accordion-head" id="accordion-head">
 		<a href="#" class="on" aria-expanded="true" id="patientDetails">Patient Details</a>
 	</div>
 	<div class="accordion-body form-horizontal" style="display: block">
 		<ul class="summary-three-col">
-			<li><label class="label-display" for="nhsNumber">NHS Number:</label> <label class="label-text" for="nhsNumber" id="nhsNumber">${patient.nhsNumber}</label></li>
 			<li><label class="label-display" for="name">Name:</label> <label class="label-text" for="name" id="name">${patient.firstName}&nbsp;${patient.lastName}</label></li>
-			<li><label class="label-display" for="dob">Date of Birth:</label> <label class="label-text" for="dob" id="dob"><fmt:formatDate value="${patient.dateOfBirth}" pattern="dd-MMM-yyyy" /></label></li>
+			<li><label class="label-display" for="dob">Date of Birth:</label> <label class="label-text" for="dob" id="dob">
+					<fmt:formatDate value="${patient.dateOfBirth}" pattern="dd-MMM-yyyy" />
+				</label></li>
+			<li><label class="label-display" for="nhsNumber">NHS Number:</label> <label class="label-text" for="nhsNumber" id="nhsNumber">${patient.nhsNumber}</label></li>
 		</ul>
 	</div>
 </div>
-<div class="accordion-section">
-	<div class="accordion-head" id="accordion-head">
-		<a href="#" class="on" aria-expanded="true" id="recentMeasurements">Recent Measurements</a>
-	</div>
-	<div class="accordion-body form-horizontal" style="display: block">
-		<table class="table table-striped">
-			<thead>
-				<tr>
-					<th>Reading type</th>
-					<th>Device</th>
-					<th>Recent value</th>
-					<th class="w150">Date</th>
-					<th></th>
-				</tr>
-			</thead>
-			<tbody>
-				<c:forEach items="${recentReadings}" var="recentReading">
-					<tr>
-						<td>
-							<b><c:out value="${recentReading.readingType}" /></b>
-						</td>
-						<td>
-							<b><c:out value="${recentReading.device}" /></b>
-						</td>
-						<td>
-							<c:out value="${recentReading.data}" />
-						</td>
-						<td>
-							<c:set var="dataTime" value="${recentReading.dataTime}" />
-							<jsp:setProperty name="dateValue" property="time" value="${dataTime}"/>
-							<fmt:formatDate value="${dateValue}" pattern="dd-MMM-yyyy HH:mm:ss" />
-						</td>
-						<td>
-							<a href="#">History</a>
-						</td>
-					</tr>
-				</c:forEach>
-			</tbody>
-		</table>
-	</div>
-</div>
+
+<!-- Body temperature accordion -->
+<jsp:include page="/WEB-INF/pages/patient/includes/patientMeasurement.jsp">
+	<jsp:param name="patientId" value="${patient.patientId}"/>
+	<jsp:param name="attributeId" value="20"/>
+	<jsp:param name="accordionTitle" value="Temperature"/>
+	<jsp:param name="chartHeader" value="Temperature"/>
+	<jsp:param name="canvasId" value="temperatureCanvas"/>
+	<jsp:param name="recentMeasurementDateId" value="temperatureRecentMeasurementDateId"/>
+	<jsp:param name="recentMeasurementValueId" value="temperatureRecentMeasurementValueId"/>
+	<jsp:param name="measurementMinValueId" value="temperatureMeasurementMinValueId"/>
+	<jsp:param name="measurementMaxValueId" value="temperatureMeasurementMaxValueId"/>
+	<jsp:param name="suggestedMinValue" value="34"/>
+	<jsp:param name="suggestedMaxValue" value="37"/>
+</jsp:include>
+
+<!-- Pulse rate accordion -->
+<jsp:include page="/WEB-INF/pages/patient/includes/patientMeasurement.jsp">
+	<jsp:param name="patientId" value="${patient.patientId}"/>
+	<jsp:param name="attributeId" value="1"/>
+	<jsp:param name="accordionTitle" value="Pulse Rate"/>
+	<jsp:param name="chartHeader" value="Pulse"/>
+	<jsp:param name="canvasId" value="pulseRateCanvas"/>
+	<jsp:param name="recentMeasurementDateId" value="pulseRateRecentMeasurementDateId"/>
+	<jsp:param name="recentMeasurementValueId" value="pulseRateRecentMeasurementValueId"/>
+	<jsp:param name="measurementMinValueId" value="pulseRateMeasurementMinValueId"/>
+	<jsp:param name="measurementMaxValueId" value="pulseRateMeasurementMaxValueId"/>
+	<jsp:param name="suggestedMinValue" value="70"/>
+	<jsp:param name="suggestedMaxValue" value="100"/>
+</jsp:include>
+
+<!-- Weight accordion -->
+<jsp:include page="/WEB-INF/pages/patient/includes/patientMeasurement.jsp">
+	<jsp:param name="patientId" value="${patient.patientId}"/>
+	<jsp:param name="attributeId" value="5"/>
+	<jsp:param name="accordionTitle" value="Weight"/>
+	<jsp:param name="chartHeader" value="Weight(kg)"/>
+	<jsp:param name="canvasId" value="weightCanvas"/>
+	<jsp:param name="recentMeasurementDateId" value="weightRecentMeasurementDateId"/>
+	<jsp:param name="recentMeasurementValueId" value="weightRecentMeasurementValueId"/>
+	<jsp:param name="measurementMinValueId" value="weightMeasurementMinValueId"/>
+	<jsp:param name="measurementMaxValueId" value="weightMeasurementMaxValueId"/>
+	<jsp:param name="suggestedMinValue" value="70"/>
+	<jsp:param name="suggestedMaxValue" value="100"/>
+</jsp:include>
+
+<!-- Oxygen saturation accordion -->
+<jsp:include page="/WEB-INF/pages/patient/includes/patientMeasurement.jsp">
+	<jsp:param name="patientId" value="${patient.patientId}"/>
+	<jsp:param name="attributeId" value="3"/>
+	<jsp:param name="accordionTitle" value="Oxygen Saturation"/>
+	<jsp:param name="chartHeader" value="SpO2"/>
+	<jsp:param name="canvasId" value="oxygenSaturationCanvas"/>
+	<jsp:param name="recentMeasurementDateId" value="oxygenSaturationRecentMeasurementDateId"/>
+	<jsp:param name="recentMeasurementValueId" value="oxygenSaturationRecentMeasurementValueId"/>
+	<jsp:param name="measurementMinValueId" value="oxygenSaturationMeasurementMinValueId"/>
+	<jsp:param name="measurementMaxValueId" value="oxygenSaturationMeasurementMaxValueId"/>
+	<jsp:param name="suggestedMinValue" value="90"/>
+	<jsp:param name="suggestedMaxValue" value="100"/>
+</jsp:include>
+
+<!-- Blood pressure accordion -->
+<jsp:include page="/WEB-INF/pages/patient/includes/patientBloodPressureMeasurement.jsp">
+	<jsp:param name="patientId" value="${patient.patientId}"/>
+	<jsp:param name="attributeIds" value="[9,10]"/>
+	<jsp:param name="accordionTitle" value="Blood Pressure"/>
+	<jsp:param name="chartHeaders" value="['Systolic', 'Diastolic']"/>
+	<jsp:param name="canvasId" value="bloodPressureCanvas"/>
+	<jsp:param name="recentMeasurementDateId" value="bloodPressureRecentMeasurementDateId"/>
+	<jsp:param name="recentMeasurementValueId" value="bloodPressureRecentMeasurementValueId"/>
+	<jsp:param name="measurementMinValueId" value="bloodPressureMeasurementMinValueId"/>
+	<jsp:param name="measurementMaxValueId" value="bloodPressureMeasurementMaxValueId"/>
+	<jsp:param name="suggestedMinValue" value="80"/>
+	<jsp:param name="suggestedMaxValue" value="180"/>
+</jsp:include>
+
 <jsp:include page="/WEB-INF/pages/footers/footer.jsp" />
-<script>
-	$(document).ready(function() {
-		showActiveMenu(NAVIGATION_LINK_MAP.PATIENT);
-	});
-</script>

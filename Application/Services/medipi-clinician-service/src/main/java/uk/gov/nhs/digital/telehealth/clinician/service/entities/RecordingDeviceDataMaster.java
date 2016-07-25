@@ -32,7 +32,7 @@ import javax.persistence.Table;
 @Entity
 @Table(name = "recording_device_data")
 @NamedQueries({
-	@NamedQuery(name = "RecordingDeviceDataMaster.fetchRecentReadings", query = "SELECT recordingDeviceDataMaster FROM RecordingDeviceDataMaster recordingDeviceDataMaster"
+	@NamedQuery(name = "RecordingDeviceDataMaster.fetchRecentMeasurements", query = "SELECT recordingDeviceDataMaster FROM RecordingDeviceDataMaster recordingDeviceDataMaster"
 			+ " JOIN recordingDeviceDataMaster.patient patient"
           	+ " JOIN recordingDeviceDataMaster.recordingDeviceAttribute recordingDeviceAttribute"
           	+ " JOIN recordingDeviceDataMaster.recordingDeviceAttribute.recordingDevice recordingDevice"
@@ -40,7 +40,14 @@ import javax.persistence.Table;
            		+ " WHERE rdm.patient.patientId = :patientId"
            		+ " GROUP BY rdm.recordingDeviceAttribute.attributeId)"
            	+ " AND patient.patientId = :patientId"
-           	+" ORDER BY recordingDevice.typeId ASC")
+           	+" ORDER BY recordingDevice.typeId ASC"),
+
+	@NamedQuery(name = "RecordingDeviceDataMaster.fetchMeasurements", query = "SELECT recordingDeviceDataMaster FROM RecordingDeviceDataMaster recordingDeviceDataMaster"
+			+ " JOIN recordingDeviceDataMaster.patient patient"
+          	+ " JOIN recordingDeviceDataMaster.recordingDeviceAttribute recordingDeviceAttribute"
+           	+ " WHERE patient.patientId = :patientId"
+           	+ " AND recordingDeviceAttribute.attributeId = :attributeId"
+           	+" ORDER BY recordingDeviceDataMaster.dataValueTime ASC")
 })
 //@formatter:on
 public class RecordingDeviceDataMaster {

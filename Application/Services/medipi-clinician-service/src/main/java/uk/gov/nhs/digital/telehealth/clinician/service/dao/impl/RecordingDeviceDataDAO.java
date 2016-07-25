@@ -26,7 +26,9 @@ import com.dev.ops.common.dao.generic.GenericDAO;
 import com.dev.ops.common.domain.ContextInfo;
 
 public interface RecordingDeviceDataDAO extends GenericDAO<RecordingDeviceDataMaster> {
-	List<RecordingDeviceDataMaster> fetchRecentReadingsHQL(String patientId, ContextInfo contextInfo);
+	List<RecordingDeviceDataMaster> fetchRecentMeasurementsHQL(String patientId, ContextInfo contextInfo);
 
-	List<DataValueEntity> fetchRecentReadingsSQL(String patientId, ContextInfo contextInfo);
+	List<DataValueEntity> fetchRecentMeasurementsSQL(String patientId, ContextInfo contextInfo);
+
+	List<RecordingDeviceDataMaster> fetchPatientMeasurementsByAttributeId(String patientId, int attributeId);
 }

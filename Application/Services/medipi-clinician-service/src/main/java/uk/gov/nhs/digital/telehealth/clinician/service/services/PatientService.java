@@ -29,9 +29,11 @@ import org.springframework.transaction.annotation.Transactional;
 import uk.gov.nhs.digital.telehealth.clinician.service.dao.impl.PatientDAO;
 import uk.gov.nhs.digital.telehealth.clinician.service.dao.impl.RecordingDeviceDataDAO;
 import uk.gov.nhs.digital.telehealth.clinician.service.domain.DataValue;
+import uk.gov.nhs.digital.telehealth.clinician.service.domain.Measurement;
 import uk.gov.nhs.digital.telehealth.clinician.service.domain.Patient;
 import uk.gov.nhs.digital.telehealth.clinician.service.entities.DataValueEntity;
 import uk.gov.nhs.digital.telehealth.clinician.service.entities.PatientMaster;
+import uk.gov.nhs.digital.telehealth.clinician.service.entities.RecordingDeviceDataMaster;
 
 import com.dev.ops.common.domain.ContextInfo;
 import com.dev.ops.exceptions.impl.DefaultWrappedException;
@@ -73,7 +75,7 @@ public class PatientService {
 
 	@SuppressWarnings({"unchecked", "rawtypes"})
 	@Transactional(rollbackFor = {Exception.class})
-	public List<DataValue> getPatientsRecentReadings(final String patientId, final ContextInfo contextInfo) {
+	public List<DataValue> getPatientsRecentMeasurements(final String patientId, final ContextInfo contextInfo) {
 		/*
 		 * As per the conversation with Richard on 11/07/2016 below are the 2 options suggested for fetching the recent data readings
 		 *
@@ -90,10 +92,19 @@ public class PatientService {
 		 * In case if we want to go with option 1 then just uncomment below 2 lines and comment last 2 lines.
 		 */
 
-		/*List<RecordingDeviceDataMaster> recordingDeviceDataList = recordingDeviceDataDAO.fetchRecentReadingsHQL(patientId, contextInfo);
+		/*List<RecordingDeviceDataMaster> recordingDeviceDataList = recordingDeviceDataDAO.fetchRecentMeasurementsHQL(patientId, contextInfo);
 		return this.mapperFacade.map(recordingDeviceDataList, (Class<List<DataValue>>) (Class) List.class);*/
 
-		List<DataValueEntity> recordingDeviceDataList = recordingDeviceDataDAO.fetchRecentReadingsSQL(patientId, contextInfo);
+		List<DataValueEntity> recordingDeviceDataList = recordingDeviceDataDAO.fetchRecentMeasurementsSQL(patientId, contextInfo);
 		return this.mapperFacade.map(recordingDeviceDataList, (Class<List<DataValue>>) (Class) List.class);
+	}
+
+	public List<Measurement> getPatientMeasurements(final String patientId, final int attributeId) {
+		List<RecordingDeviceDataMaster> patientData = recordingDeviceDataDAO.fetchPatientMeasurementsByAttributeId(patientId, attributeId);
+		List<Measurement> measurements = new ArrayList<Measurement>();
+		for(RecordingDeviceDataMaster data : patientData) {
+			measurements.add(this.mapperFacade.map(data, Measurement.class));
+		}
+		return measurements;
 	}
 }

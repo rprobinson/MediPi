@@ -30,6 +30,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import uk.gov.nhs.digital.telehealth.clinician.service.domain.DataValue;
+import uk.gov.nhs.digital.telehealth.clinician.service.domain.Measurement;
 import uk.gov.nhs.digital.telehealth.clinician.service.domain.Patient;
 import uk.gov.nhs.digital.telehealth.clinician.service.services.PatientService;
 import uk.gov.nhs.digital.telehealth.clinician.service.url.mappings.ServiceURLMappings;
@@ -66,12 +67,21 @@ public class PatientServiceController {
 		return patients;
 	}
 
-	@RequestMapping(value = ServiceURLMappings.PatientServiceController.GET_PATIENT_RECENT_READINGS + "{patientId}", method = RequestMethod.GET)
+	@RequestMapping(value = ServiceURLMappings.PatientServiceController.GET_PATIENT_RECENT_MEASURMENTS + "{patientId}", method = RequestMethod.GET)
 	@ResponseBody
 	public List<DataValue> getPatientRecentReadings(@PathVariable final String patientId, @RequestHeader(CommonConstants.CONTEXT_INFORMATION_REQUEST_PARAMETER) final String context) throws DefaultWrappedException {
 		ContextThreadLocal.set(ContextInfo.toContextInfo(context));
-		final List<DataValue> recentReadings = this.patientService.getPatientsRecentReadings(patientId, ContextInfo.toContextInfo(context));
+		final List<DataValue> recentReadings = this.patientService.getPatientsRecentMeasurements(patientId, ContextInfo.toContextInfo(context));
 		return recentReadings;
+	}
+
+	@RequestMapping(value = ServiceURLMappings.PatientServiceController.GET_PATIENT_MEASURMENTS + "{patientId}" + "/{attributeId}", method = RequestMethod.GET)
+	@ResponseBody
+	public List<Measurement> patientMeasurements(@PathVariable final String patientId, @PathVariable final int attributeId, @RequestHeader(CommonConstants.CONTEXT_INFORMATION_REQUEST_PARAMETER) final String context) throws DefaultWrappedException {
+		ContextThreadLocal.set(ContextInfo.toContextInfo(context));
+		LOGGER.debug("Get Patient measurements for patient id:<" + patientId + "> and attribute id:<" + attributeId + ">");
+		final List<Measurement> measurements = this.patientService.getPatientMeasurements(patientId, attributeId);
+		return measurements;
 	}
 
 }

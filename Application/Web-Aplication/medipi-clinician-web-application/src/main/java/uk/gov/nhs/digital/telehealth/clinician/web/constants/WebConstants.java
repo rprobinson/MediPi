@@ -44,6 +44,7 @@ public interface WebConstants {
 			String READ = WebConstants.Operations.READ + Patient.class.getSimpleName();
 			String READ_ALL = WebConstants.Operations.READ_ALL + Patient.class.getSimpleName();
 			String DELETE = WebConstants.Operations.DELETE + Patient.class.getSimpleName();
+			String PATIENT_MEASUREMENTS = "Patient Measurements " + Patient.class.getSimpleName();
 		}
 	}
 }

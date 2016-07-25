@@ -27,6 +27,7 @@ public interface ServiceURLMappings {
 		String CONTROLLER_MAPPING = APPLICATION_ROOT_MAPPING + "/patient";
 		String GET_ALL_PATIENTS = CommonConstants.Separators.URL_SEPARATOR;
 		String GET_PATIENT = CommonConstants.Separators.URL_SEPARATOR;
-		String GET_PATIENT_RECENT_READINGS = "/recentReadings/";
+		String GET_PATIENT_RECENT_MEASURMENTS = "/recentMeasurements/";
+		String GET_PATIENT_MEASURMENTS = "/patientMeasurements/";
 	}
 }
