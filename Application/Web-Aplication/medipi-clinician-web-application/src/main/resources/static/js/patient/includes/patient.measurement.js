@@ -8,6 +8,9 @@ var measurement = {
             dataType: "json",
             success: function (pulseData) {
                 data = pulseData;
+            },
+            error: function(request, status, error) {
+            	showDefaultErrorDiv();
             }
         });
         return data;
@@ -77,10 +80,12 @@ var measurement = {
         $("#" + includeObject.measurementMaxValueId).html(recentMeasurement != null ? recentMeasurement.maxValue : "- - -");
 
         //If within min and max limits
-        if(recentMeasurement.minValue <= recentMeasurement.value ||  recentMeasurement.maxValue >= recentMeasurement.value) {
-        	$("#" + includeObject.recentMeasurementValueId).attr("class", "green");
-        } else {
-        	$("#" + includeObject.recentMeasurementValueId).attr("class", "red");
+        if(recentMeasurement != null) {
+	        if(recentMeasurement.minValue <= recentMeasurement.value ||  recentMeasurement.maxValue >= recentMeasurement.value) {
+	        	$("#" + includeObject.recentMeasurementValueId).attr("class", "green");
+	        } else {
+	        	$("#" + includeObject.recentMeasurementValueId).attr("class", "red");
+	        }
         }
     },
 

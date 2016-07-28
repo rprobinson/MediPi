@@ -225,8 +225,23 @@ overflow-y: auto;
 }
 
 .measurement-attribute { min-width:120px; width:100%;border:1px solid #000;margin-bottom: 10px}
-.measurement-attribute .red{background-color: #FF0000;font-size: 50px}
-.measurement-attribute .green{background-color: #00FF00;font-size: 50px}
+.measurement-attribute .red{background-color: rgb(196,0,0);font-size: 50px; color: #FFFFFF;}
+.measurement-attribute .green{background-color: rgb(54,130,21);font-size: 50px; color: #FFFFFF;}
 .measurement-attribute th, .measurement-attribute td {border:1px solid #000;text-align: center; width:50%;padding:5px 7px;}
 .measurement-attribute th {font-size: 13px;}
 .measurement-attribute td {font-size: 40px;}
+
+
+.patient-detail { min-width:120px; width:100%;border:1px solid #000;margin-bottom: 10px}
+.patient-detail .red{background-color: #FF0000;font-size: 32px}
+.patient-detail .green{background-color: #00FF00;font-size: 32px}
+.patient-detail th, .patient-detail td {border:1px solid #000;text-align: center; width:50%;padding:5px 7px;}
+.patient-detail th {font-size: 13px;}
+.patient-detail td {font-size: 24px;}
+
+.tile-view {width:100%;border:1px solid #000;margin-bottom: 10px}
+.tile-view th, .tile-view td {border:1px solid #000;text-align: center; width:50%;padding:3px 7px;font-size: 12px;}
+.tile-view .limit-indicator {height:48px; width:50px; }
+.tile-view .frowney{background-image: url("/images/misc/frowney.png"); background-size: 45px 45px; background-repeat: no-repeat; background-color: #FFF; background-position: center}
+.tile-view .smiley{background-image: url("/images/misc/smiley.png"); background-size: 45px 45px; background-repeat: no-repeat; background-color: #FFF; background-position: center}
+.tile-view .schedule-miss{background-image: url("/images/misc/question.jpg"); background-size: 45px 45px; background-repeat: no-repeat; background-color: #FFF; background-position: center}

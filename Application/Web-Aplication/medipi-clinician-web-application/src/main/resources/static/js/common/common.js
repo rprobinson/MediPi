@@ -510,7 +510,7 @@ $(document).ready(function() {
  ******************************************************************************************************************/
 
 /******************************************************************************************************************
- * Functions to hide elements : START
+ * Functions to show/hide elements : START
  ******************************************************************************************************************/
 function hideElement(elementId) {
 	$("#" + elementId).addClass("hidden");
@@ -518,6 +518,15 @@ function hideElement(elementId) {
 
 function hideErrorDiv() {
 	hideElement("errorMessageDiv");
+}
+
+function showErrorDiv(message) {
+	$("#errorMessage").html(message);
+	$("#errorMessageDiv").removeClass("hidden");
+}
+
+function showDefaultErrorDiv() {
+	showErrorDiv("Please try to reload the page and if the problem still persists, please contact the system administrator.");
 }
 /******************************************************************************************************************
  * Functions to hide elements : END

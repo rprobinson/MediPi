@@ -2,8 +2,7 @@
 <jsp:include page="/WEB-INF/pages/headers/header.jsp" />
 <script type="text/javascript" charset="utf8" src="/js/common/common.ui.util.js"></script>
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
-<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt"%>
-<jsp:useBean id="dateValue" class="java.util.Date" />
+<%@taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt"%>
 <div class="accordion-section">
 	<div class="accordion-head" id="accordion-head">
 		<a href="#" class="on" aria-expanded="true" id="patientDetails">Patient Details</a>

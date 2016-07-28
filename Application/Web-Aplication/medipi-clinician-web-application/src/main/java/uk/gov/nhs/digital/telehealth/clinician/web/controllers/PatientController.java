@@ -63,7 +63,8 @@ public class PatientController extends BaseController {
 	@ResponseBody
 	public ModelAndView showPatients(final ModelAndView modelAndView, final HttpServletRequest request) {
 		modelAndView.addObject("refreshViewFrequency", Integer.valueOf(refreshViewFrequency) * 1000);
-		modelAndView.setViewName("patient/patients");
+		//modelAndView.setViewName("patient/patients");
+		modelAndView.setViewName("patient/allPatients");
 		return modelAndView;
 	}
 

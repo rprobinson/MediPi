@@ -34,7 +34,7 @@ import javax.persistence.Table;
 @Entity
 @Table(name = "patient")
 @NamedQueries({
-	@NamedQuery(name = "PatientMaster.fetchAllPatients", query = "SELECT patientMaster FROM PatientMaster patientMaster ORDER BY critical DESC"),
+	@NamedQuery(name = "PatientMaster.fetchAllPatients", query = "SELECT patientMaster FROM PatientMaster patientMaster ORDER BY lastName DESC"),
 })
 //@formatter:on
 public class PatientMaster {

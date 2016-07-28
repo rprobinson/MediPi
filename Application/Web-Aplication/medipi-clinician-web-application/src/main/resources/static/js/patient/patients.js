@@ -3,7 +3,7 @@ var refreshViewFrequency;
 $(document).ready(function() {
 	refreshViewFrequency = $("#refreshViewFrequency").val();
 	initialisePatientsDatatable();
-	showActiveMenu(NAVIGATION_LINK_MAP.patient);
+	showActiveMenu(NAVIGATION_LINK_MAP.PATIENT);
 });
 
 /*******************************************************************************

@@ -8,6 +8,9 @@ var measurement = {
             dataType: "json",
             success: function (pulseData) {
                 data = pulseData;
+            },
+            error: function(request, status, error) {
+            	showDefaultErrorDiv();
             }
         });
         return data;
@@ -65,13 +68,17 @@ var measurement = {
         $("#" + includeObject.measurementMinValueId).html("- - -");
         $("#" + includeObject.measurementMaxValueId).html("- - -");
 
-        $("#" + includeObject.recentMeasurementValueId).attr("class", "green");
-        //If within min and max limits
-        /*if(recentMeasurement.minValue <= recentMeasurement.value ||  recentMeasurement.maxValue >= recentMeasurement.value) {
+        if(recentMeasurement != null) {
         	$("#" + includeObject.recentMeasurementValueId).attr("class", "green");
-        } else {
-        	$("#" + includeObject.recentMeasurementValueId).attr("class", "red");
-        }*/
+        }
+        //If within min and max limits
+        /*if(recentMeasurement != null) {
+	        if(recentMeasurement.minValue <= recentMeasurement.value ||  recentMeasurement.maxValue >= recentMeasurement.value) {
+	        	$("#" + includeObject.recentMeasurementValueId).attr("class", "green");
+	        } else {
+	        	$("#" + includeObject.recentMeasurementValueId).attr("class", "red");
+	        }
+	    }*/
     },
 
     initChart: function (includeObject) {
@@ -81,7 +88,9 @@ var measurement = {
         measurement.renderChart(chartData, includeObject);
         var lastSystolicData = systolicData.lastObject();
         var lastDiastolicData = diastolicData.lastObject();
-        lastSystolicData.value = "<u>" + lastSystolicData.value + "</u><br/>" + lastDiastolicData.value;
+        if(lastSystolicData != null && lastDiastolicData != null) {
+        	lastSystolicData.value = "<u>" + lastSystolicData.value + "</u><br/>" + lastDiastolicData.value;
+        }
         measurement.updateRecentMeasuremnts(lastSystolicData, includeObject);
     }
 };
