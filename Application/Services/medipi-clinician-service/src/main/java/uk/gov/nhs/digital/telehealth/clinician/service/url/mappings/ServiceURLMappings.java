@@ -21,10 +21,9 @@ import com.dev.ops.common.constants.CommonConstants;
 
 public interface ServiceURLMappings {
 
-	String APPLICATION_ROOT_MAPPING = "/clinician";
 
 	interface PatientServiceController {
-		String CONTROLLER_MAPPING = APPLICATION_ROOT_MAPPING + "/patient";
+		String CONTROLLER_MAPPING = "/patient";
 		String GET_ALL_PATIENTS = CommonConstants.Separators.URL_SEPARATOR;
 		String GET_PATIENT = CommonConstants.Separators.URL_SEPARATOR;
 		String GET_PATIENT_RECENT_MEASURMENTS = "/recentMeasurements/";

@@ -19,7 +19,7 @@ $(document).ready(function() {
 			setTimeout(getPatientsDetails, refreshViewFrequency);
 		},
 		error: function(request, status, error) {
-			showDefaultErrorDiv();
+			showErrorDiv(request.responseText);
 		}
 	});
 })();

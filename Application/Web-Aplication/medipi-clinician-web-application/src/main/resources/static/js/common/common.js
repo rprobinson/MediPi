@@ -512,6 +512,8 @@ $(document).ready(function() {
 /******************************************************************************************************************
  * Functions to show/hide elements : START
  ******************************************************************************************************************/
+var DEFAULT_ERROR_MESSAGE = "Please try to reload the page and if the problem still persists, please contact the system administrator.";
+
 function hideElement(elementId) {
 	$("#" + elementId).addClass("hidden");
 }
@@ -521,12 +523,12 @@ function hideErrorDiv() {
 }
 
 function showErrorDiv(message) {
-	$("#errorMessage").html(message);
+	$("#errorMessage").html((message != null && message != "") ? message : DEFAULT_ERROR_MESSAGE);
 	$("#errorMessageDiv").removeClass("hidden");
 }
 
 function showDefaultErrorDiv() {
-	showErrorDiv("Please try to reload the page and if the problem still persists, please contact the system administrator.");
+	showErrorDiv(DEFAULT_ERROR_MESSAGE);
 }
 /******************************************************************************************************************
  * Functions to hide elements : END

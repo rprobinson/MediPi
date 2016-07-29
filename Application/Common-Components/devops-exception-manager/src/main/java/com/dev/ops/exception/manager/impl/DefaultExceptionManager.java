@@ -126,7 +126,7 @@ public final class DefaultExceptionManager implements ExceptionManager {
 	}
 
 	public static String getExceptionDescription(final String exceptionId, final Object[] messageParameters) {
-		final StringBuilder exceptionDescription = new StringBuilder(exceptionId + LoggingConstants.WhitespaceLiterals.BLANK_SPACE);
+		final StringBuilder exceptionDescription = new StringBuilder(exceptionId + LoggingConstants.WhitespaceLiterals.BLANK_SPACE + LoggingConstants.WhitespaceLiterals.HYPHEN + LoggingConstants.WhitespaceLiterals.BLANK_SPACE);
 		final ResourceBundle messageResources = DefaultExceptionManager.getExceptionManager().getMessageResourceBundle();
 		try {
 			if(messageParameters != null) {

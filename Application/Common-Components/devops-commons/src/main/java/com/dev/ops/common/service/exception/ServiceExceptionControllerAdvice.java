@@ -22,6 +22,7 @@ import java.util.List;
 
 import javax.persistence.PersistenceException;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -64,7 +65,8 @@ public class ServiceExceptionControllerAdvice extends ResponseEntityExceptionHan
 
 	@ExceptionHandler({ResourceAccessException.class, ConnectException.class})
 	protected ResponseEntity<Object> handleServiceConnectionException(final Exception ex, final WebRequest request) {
-		final Exception wrappedException = ExceptionUtil.createException(ExceptionUtil.ExceptionCodes.Connection.CONNECTION_EXCEPTION, ex, null);
+		String exceptionMessageName = getExceptionMessageName(ex.getMessage());
+		final Exception wrappedException = ExceptionUtil.createException(exceptionMessageName, ex, null);
 		return this.handleExceptionInternal(wrappedException, wrappedException.getMessage(), new HttpHeaders(), HttpStatus.INTERNAL_SERVER_ERROR, request);
 	}
 
@@ -72,6 +74,15 @@ public class ServiceExceptionControllerAdvice extends ResponseEntityExceptionHan
 	protected ResponseEntity<Object> handleDefaultWrappedException(final Exception ex, final WebRequest request) {
 		final Exception wrappedException = ExceptionUtil.createException(ex.getMessage(), ex, null);
 		return this.handleExceptionInternal(wrappedException, wrappedException.getMessage(), new HttpHeaders(), HttpStatus.INTERNAL_SERVER_ERROR, request);
+	}
+
+	private String getExceptionMessageName(final String message) {
+		try {
+			String serviceName = message.split("/")[4];
+			return StringUtils.isNotEmpty(serviceName) ? serviceName.toUpperCase() + "_SERVICE_CONNECTION_REFUSED" : message;
+		} catch(Exception e) {
+			return message;
+		}
 	}
 
 	@ExceptionHandler(HttpServerErrorException.class)
