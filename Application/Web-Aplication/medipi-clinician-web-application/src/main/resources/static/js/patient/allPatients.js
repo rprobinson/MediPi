@@ -26,7 +26,7 @@ $(document).ready(function() {
 
 function getPatientTile(patient) {
 	var tileDiv =
-		'<div class="col-sm-2">' +
+		'<div class="col-sm-2" id="patient-' + patient.patientId + '">' +
 			'<a href="/clinician/patient/' + patient.patientId +'">' +
 				'<table class="tile-view">' +
 					'<tr>' +
