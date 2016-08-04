@@ -244,4 +244,4 @@ overflow-y: auto;
 .tile-view .limit-indicator {height:48px; width:50px; }
 .tile-view .frowney{background-image: url("/images/misc/frowney.png"); background-size: 45px 45px; background-repeat: no-repeat; background-color: #FFF; background-position: center}
 .tile-view .smiley{background-image: url("/images/misc/smiley.png"); background-size: 45px 45px; background-repeat: no-repeat; background-color: #FFF; background-position: center}
-.tile-view .schedule-miss{background-image: url("/images/misc/question.jpg"); background-size: 45px 45px; background-repeat: no-repeat; background-color: #FFF; background-position: center}
+.tile-view .incomplete-schedule{background-image: url("/images/misc/question.jpg"); background-size: 45px 45px; background-repeat: no-repeat; background-color: #FFF; background-position: center}

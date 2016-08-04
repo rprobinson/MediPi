@@ -19,6 +19,8 @@ package uk.gov.nhs.digital.telehealth.clinician.service.domain;
 
 import java.sql.Timestamp;
 
+import uk.gov.nhs.digital.telehealth.clinician.service.domain.enums.PatientStatus;
+
 public class Patient {
 
 	private String patientId;
@@ -26,20 +28,20 @@ public class Patient {
 	private String firstName;
 	private String lastName;
 	private Timestamp dateOfBirth;
-	private boolean critical;
+	private PatientStatus patientStatus;
 
 	public Patient() {
-
+		setPatientStatus(PatientStatus.INCOMPLETE_SCHEDULE);
 	}
 
-	public Patient(final String patientId, final String nhsNumber, final String firstName, final String lastName, final Timestamp dateOfBirth, final boolean isCritical) {
+	public Patient(final String patientId, final String nhsNumber, final String firstName, final String lastName, final Timestamp dateOfBirth, final PatientStatus patientStatus) {
 		this();
 		this.patientId = patientId;
 		this.nhsNumber = nhsNumber;
 		this.firstName = firstName;
 		this.lastName = lastName;
 		this.dateOfBirth = dateOfBirth;
-		this.critical = isCritical;
+		setPatientStatus(patientStatus);
 	}
 
 	public String getPatientId() {
@@ -82,12 +84,16 @@ public class Patient {
 		this.dateOfBirth = dateOfBirth;
 	}
 
-	public boolean isCritical() {
-		return critical;
+	public PatientStatus getPatientStatus() {
+		return patientStatus;
 	}
 
-	public void setCritical(final boolean isCritical) {
-		this.critical = isCritical;
+	public void setPatientStatus(final PatientStatus patientStatus) {
+		if(patientStatus != null) {
+			this.patientStatus = patientStatus;
+		} else {
+			this.patientStatus = PatientStatus.INCOMPLETE_SCHEDULE;
+		}
 	}
 
 	@Override
@@ -122,6 +128,6 @@ public class Patient {
 
 	@Override
 	public String toString() {
-		return "Patient [patientId=" + patientId + ", firstName=" + firstName + ", lastName=" + lastName + ", critical=" + critical + "]";
+		return "Patient [patientId=" + patientId + ", firstName=" + firstName + ", lastName=" + lastName + ", patientStatus=" + patientStatus + "]";
 	}
 }

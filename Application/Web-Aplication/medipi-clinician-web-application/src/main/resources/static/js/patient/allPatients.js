@@ -1,6 +1,7 @@
 var refreshViewFrequency;
 $(document).ready(function() {
 	refreshViewFrequency = $("#refreshViewFrequency").val();
+	//refreshViewFrequency = 1000000;
 	showActiveMenu(NAVIGATION_LINK_MAP.PATIENT);
 });
 
@@ -35,7 +36,7 @@ function getPatientTile(patient) {
 						'</th>' +
 					'</tr>' +
 					'<tr>' +
-						(patient.critical ? '<td class="limit-indicator frowney"></td>' : '<td class="limit-indicator smiley"></td>') +
+						(patient.patientStatus === 'INCOMPLETE_SCHEDULE' ? '<td class="limit-indicator incomplete-schedule"></td>' : (patient.patientStatus === 'WITHIN_THRESHOLD' ? '<td class="limit-indicator smiley"></td>' : '<td class="limit-indicator frowney"></td>')) +
 					'</tr>' +
 					'<tr>' +
 						'<th scope="col">' +

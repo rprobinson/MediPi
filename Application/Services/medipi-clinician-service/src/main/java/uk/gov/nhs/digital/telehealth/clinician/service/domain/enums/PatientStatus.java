@@ -15,22 +15,12 @@
  * limitations under the License.
  *
  */
-package uk.gov.nhs.digital.telehealth.clinician.service.dao.impl;
+package uk.gov.nhs.digital.telehealth.clinician.service.domain.enums;
 
-import java.util.List;
-
-import org.springframework.stereotype.Service;
-
-import uk.gov.nhs.digital.telehealth.clinician.service.entities.PatientMaster;
-
-import com.dev.ops.common.dao.generic.GenericDAOImpl;
-
-@Service
-public class PatientDAOImpl extends GenericDAOImpl<PatientMaster> implements PatientDAO {
-
-	@Override
-	public List<PatientMaster> fetchAllPatients() {
-		return this.getEntityManager().createNamedQuery("PatientMaster.fetchAllPatients", PatientMaster.class).getResultList();
-	}
-
+public enum PatientStatus {
+	//@formatter:off
+	WITHIN_THRESHOLD,
+	OUT_OF_THRESHOLD,
+	INCOMPLETE_SCHEDULE;
+	//@formatter:on
 }

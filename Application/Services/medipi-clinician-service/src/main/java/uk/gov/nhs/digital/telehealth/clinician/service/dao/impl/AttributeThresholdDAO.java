@@ -19,15 +19,10 @@ package uk.gov.nhs.digital.telehealth.clinician.service.dao.impl;
 
 import java.util.List;
 
-import uk.gov.nhs.digital.telehealth.clinician.service.entities.DataValueEntity;
-import uk.gov.nhs.digital.telehealth.clinician.service.entities.RecordingDeviceDataMaster;
+import uk.gov.nhs.digital.telehealth.clinician.service.entities.AttributeThresholdMaster;
 
 import com.dev.ops.common.dao.generic.GenericDAO;
 
-public interface RecordingDeviceDataDAO extends GenericDAO<RecordingDeviceDataMaster> {
-	List<RecordingDeviceDataMaster> fetchRecentMeasurementsHQL(String patientId);
-
-	List<DataValueEntity> fetchRecentMeasurementsSQL(String patientId);
-
-	List<RecordingDeviceDataMaster> fetchPatientMeasurementsByAttributeId(String patientId, int attributeId);
+public interface AttributeThresholdDAO extends GenericDAO<AttributeThresholdMaster> {
+	List<AttributeThresholdMaster> fetchPatientAttributeThresholds(final String patientId, final Integer attributeId);
 }

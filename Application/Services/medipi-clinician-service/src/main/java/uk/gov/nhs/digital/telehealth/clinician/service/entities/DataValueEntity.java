@@ -31,29 +31,49 @@ public class DataValueEntity {
 	private Long dataId;
 	private String readingType;
 	private String device;
+	private Integer attributeId;
 	private String attributeName;
 	private String data;
 	private Integer typeId;
 	private Timestamp dataTime;
 	private Timestamp submittedTime;
+	private Timestamp scheduleEffectiveTime;
+	private Timestamp scheduleExpiryTime;
+	private String alertStatus;
 
 	public DataValueEntity() {
 		this.data = StringUtils.EMPTY;
 	}
 
-	public DataValueEntity(final String readingType, final String device, final String attributeName, final String data, final Integer typeId, final Timestamp dataTime, final Timestamp submittedTime) {
+	public DataValueEntity(final String readingType, final String device, final Integer attributeId, final String attributeName, final String data, final Integer typeId, final Timestamp dataTime, final Timestamp submittedTime, final Timestamp scheduleEffectiveTime, final Timestamp scheduleExpiryTime, final String alertStatus) {
 		this();
 		this.readingType = readingType;
 		this.device = device;
+		this.attributeId = attributeId;
 		this.attributeName = attributeName;
 		this.data = data;
 		this.typeId = typeId;
 		this.dataTime = dataTime;
 		this.submittedTime = submittedTime;
+		this.scheduleEffectiveTime = scheduleEffectiveTime;
+		this.scheduleExpiryTime = scheduleExpiryTime;
+		this.alertStatus = alertStatus;
+	}
+
+	public DataValueEntity(final String readingType, final String device, final Integer attributeId, final String attributeName, final String data, final Integer typeId, final Timestamp dataTime, final Timestamp submittedTime) {
+		this(readingType, device, attributeId, attributeName, data, typeId, dataTime, submittedTime, null, null, null);
 	}
 
 	public DataValueEntity(final String readingType, final String device) {
-		this(readingType, device, null, null, null, null, null);
+		this(readingType, device, null, null, null, null, null, null);
+	}
+
+	public Long getDataId() {
+		return dataId;
+	}
+
+	public void setDataId(final Long dataId) {
+		this.dataId = dataId;
 	}
 
 	public String getReadingType() {
@@ -78,6 +98,14 @@ public class DataValueEntity {
 
 	public void setAttributeName(final String attributeName) {
 		this.attributeName = attributeName;
+	}
+
+	public Integer getAttributeId() {
+		return attributeId;
+	}
+
+	public void setAttributeId(final Integer attributeId) {
+		this.attributeId = attributeId;
 	}
 
 	public String getData() {
@@ -110,6 +138,30 @@ public class DataValueEntity {
 
 	public void setSubmittedTime(final Timestamp submittedTime) {
 		this.submittedTime = submittedTime;
+	}
+
+	public Timestamp getScheduleEffectiveTime() {
+		return scheduleEffectiveTime;
+	}
+
+	public void setScheduleEffectiveTime(final Timestamp scheduleEffectiveTime) {
+		this.scheduleEffectiveTime = scheduleEffectiveTime;
+	}
+
+	public Timestamp getScheduleExpiryTime() {
+		return scheduleExpiryTime;
+	}
+
+	public void setScheduleExpiryTime(final Timestamp scheduleExpiryTime) {
+		this.scheduleExpiryTime = scheduleExpiryTime;
+	}
+
+	public String getAlertStatus() {
+		return alertStatus;
+	}
+
+	public void setAlertStatus(final String alertStatus) {
+		this.alertStatus = alertStatus;
 	}
 
 	@Override
@@ -152,6 +204,6 @@ public class DataValueEntity {
 
 	@Override
 	public String toString() {
-		return "DataValueEntity [readingType=" + readingType + ", device=" + device + ", attributeName=" + attributeName + ", data=" + data + ", typeId=" + typeId + ", dataTime=" + dataTime + ", submittedTime=" + submittedTime + "]";
+		return "DataValueEntity [dataId=" + dataId + ", readingType=" + readingType + ", device=" + device + ", attributeId=" + attributeId + ", attributeName=" + attributeName + ", data=" + data + ", typeId=" + typeId + ", dataTime=" + dataTime + ", submittedTime=" + submittedTime + ", scheduleEffectiveTime=" + scheduleEffectiveTime + ", scheduleExpiryTime=" + scheduleExpiryTime + ", alertStatus=" + alertStatus + "]";
 	}
 }

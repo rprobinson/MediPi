@@ -42,7 +42,7 @@ import javax.persistence.Table;
            	+ " AND patient.patientId = :patientId"
            	+" ORDER BY recordingDevice.typeId ASC"),
 
-	@NamedQuery(name = "RecordingDeviceDataMaster.fetchMeasurements", query = "SELECT recordingDeviceDataMaster FROM RecordingDeviceDataMaster recordingDeviceDataMaster"
+	@NamedQuery(name = "RecordingDeviceDataMaster.fetchPatientMeasurementsByAttributeId", query = "SELECT recordingDeviceDataMaster FROM RecordingDeviceDataMaster recordingDeviceDataMaster"
 			+ " JOIN recordingDeviceDataMaster.patient patient"
           	+ " JOIN recordingDeviceDataMaster.recordingDeviceAttribute recordingDeviceAttribute"
            	+ " WHERE patient.patientId = :patientId"
@@ -65,6 +65,15 @@ public class RecordingDeviceDataMaster {
 	@Column(name = "downloaded_time")
 	private Timestamp submittedTime;
 
+	@Column(name = "schedule_effective_time")
+	private Timestamp scheduleEffectiveTime;
+
+	@Column(name = "schedule_expiry_time")
+	private Timestamp scheduleExpiryTime;
+
+	@Column(name = "alert_status")
+	private String alertStatus;
+
 	@ManyToOne
 	@JoinColumn(name = "patient_id")
 	private PatientMaster patient;
@@ -76,26 +85,29 @@ public class RecordingDeviceDataMaster {
 	public RecordingDeviceDataMaster() {
 	}
 
-	public RecordingDeviceDataMaster(final Long dataId, final String dataValue, final Timestamp dataValueTime, final Timestamp submittedTime, final PatientMaster patient, final RecordingDeviceAttributeMaster recordingDeviceAttribute) {
+	public RecordingDeviceDataMaster(final Long dataId, final String dataValue, final Timestamp dataValueTime, final Timestamp submittedTime, final Timestamp scheduleEffectiveTime, final Timestamp scheduleExpiryTime, final String alertStatus, final PatientMaster patient, final RecordingDeviceAttributeMaster recordingDeviceAttribute) {
 		this();
 		this.dataId = dataId;
 		this.dataValue = dataValue;
 		this.dataValueTime = dataValueTime;
 		this.submittedTime = submittedTime;
+		this.scheduleEffectiveTime = scheduleEffectiveTime;
+		this.scheduleExpiryTime = scheduleExpiryTime;
+		this.alertStatus = alertStatus;
 		this.patient = patient;
 		this.recordingDeviceAttribute = recordingDeviceAttribute;
 	}
 
 	public RecordingDeviceDataMaster(final Long dataId, final String dataValue, final Timestamp dataValueTime, final Timestamp submittedTime) {
-		this(dataId, dataValue, dataValueTime, submittedTime, null, null);
+		this(dataId, dataValue, dataValueTime, submittedTime, null, null, null, null, null);
 	}
 
 	public RecordingDeviceDataMaster(final Long dataId, final String dataValue, final Timestamp dataValueTime, final Timestamp submittedTime, final PatientMaster patient) {
-		this(dataId, dataValue, dataValueTime, submittedTime, patient, null);
+		this(dataId, dataValue, dataValueTime, submittedTime, null, null, null, patient, null);
 	}
 
 	public RecordingDeviceDataMaster(final Long dataId, final String dataValue, final Timestamp dataValueTime, final Timestamp submittedTime, final RecordingDeviceAttributeMaster recordingDeviceAttribute) {
-		this(dataId, dataValue, dataValueTime, submittedTime, null, recordingDeviceAttribute);
+		this(dataId, dataValue, dataValueTime, submittedTime, null, null, null, null, recordingDeviceAttribute);
 	}
 
 	public Long getDataId() {
@@ -128,6 +140,30 @@ public class RecordingDeviceDataMaster {
 
 	public void setSubmittedTime(final Timestamp submittedTime) {
 		this.submittedTime = submittedTime;
+	}
+
+	public Timestamp getScheduleEffectiveTime() {
+		return scheduleEffectiveTime;
+	}
+
+	public void setScheduleEffectiveTime(final Timestamp scheduleEffectiveTime) {
+		this.scheduleEffectiveTime = scheduleEffectiveTime;
+	}
+
+	public Timestamp getScheduleExpiryTime() {
+		return scheduleExpiryTime;
+	}
+
+	public void setScheduleExpiryTime(final Timestamp scheduleExpiryTime) {
+		this.scheduleExpiryTime = scheduleExpiryTime;
+	}
+
+	public String getAlertStatus() {
+		return alertStatus;
+	}
+
+	public void setAlertStatus(final String alertStatus) {
+		this.alertStatus = alertStatus;
 	}
 
 	public PatientMaster getPatient() {
@@ -178,6 +214,6 @@ public class RecordingDeviceDataMaster {
 
 	@Override
 	public String toString() {
-		return "RecordingDeviceDataMaster [dataId=" + dataId + ", dataValue=" + dataValue + ", dataValueTime=" + dataValueTime + ", submittedTime=" + submittedTime + ", patient=" + patient + ", recordingDeviceAttribute=" + recordingDeviceAttribute + "]";
+		return "RecordingDeviceDataMaster [dataId=" + dataId + ", dataValue=" + dataValue + ", dataValueTime=" + dataValueTime + ", submittedTime=" + submittedTime + ", scheduleEffectiveTime=" + scheduleEffectiveTime + ", scheduleExpiryTime=" + scheduleExpiryTime + ", alertStatus=" + alertStatus + ", patient=" + patient + ", recordingDeviceAttribute=" + recordingDeviceAttribute + "]";
 	}
 }

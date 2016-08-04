@@ -23,19 +23,25 @@ import java.util.List;
 import ma.glasnost.orika.MapperFacade;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import uk.gov.nhs.digital.telehealth.clinician.service.dao.impl.AttributeThresholdDAO;
 import uk.gov.nhs.digital.telehealth.clinician.service.dao.impl.PatientDAO;
 import uk.gov.nhs.digital.telehealth.clinician.service.dao.impl.RecordingDeviceDataDAO;
+import uk.gov.nhs.digital.telehealth.clinician.service.domain.AttributeThreshold;
 import uk.gov.nhs.digital.telehealth.clinician.service.domain.DataValue;
 import uk.gov.nhs.digital.telehealth.clinician.service.domain.Measurement;
 import uk.gov.nhs.digital.telehealth.clinician.service.domain.Patient;
+import uk.gov.nhs.digital.telehealth.clinician.service.domain.enums.PatientStatus;
+import uk.gov.nhs.digital.telehealth.clinician.service.entities.AttributeThresholdMaster;
 import uk.gov.nhs.digital.telehealth.clinician.service.entities.DataValueEntity;
 import uk.gov.nhs.digital.telehealth.clinician.service.entities.PatientMaster;
 import uk.gov.nhs.digital.telehealth.clinician.service.entities.RecordingDeviceDataMaster;
 
-import com.dev.ops.common.domain.ContextInfo;
+import com.dev.ops.common.thread.local.ContextThreadLocal;
+import com.dev.ops.common.utils.TimestampUtil;
 import com.dev.ops.exceptions.impl.DefaultWrappedException;
 
 @Component
@@ -50,9 +56,15 @@ public class PatientService {
 	@Autowired
 	private RecordingDeviceDataDAO recordingDeviceDataDAO;
 
+	@Autowired
+	private AttributeThresholdDAO attributeThresholdDAO;
+
+	@Value("#{'${medipi.patient.required.device.attributes}'.split(',')}")
+	private List<Integer> requiredDeviceAttributes;
+
 	@Transactional(rollbackFor = {Exception.class})
-	public Patient getPatientDetails(final String patientId, final ContextInfo contextInfo) throws DefaultWrappedException {
-		final PatientMaster patientMaster = this.patientDAO.findByPrimaryKey(patientId, contextInfo);
+	public Patient getPatientDetails(final String patientId) throws DefaultWrappedException {
+		final PatientMaster patientMaster = this.patientDAO.findByPrimaryKey(patientId, ContextThreadLocal.get());
 		Patient patientDetails = null;
 		if(null != patientMaster) {
 			patientDetails = this.mapperFacade.map(patientMaster, Patient.class);
@@ -63,11 +75,40 @@ public class PatientService {
 	}
 
 	@Transactional(rollbackFor = {Exception.class})
-	public List<Patient> getAllPatients(final ContextInfo contextInfo) throws DefaultWrappedException {
+	public List<Patient> getAllPatients() throws DefaultWrappedException {
 		final List<Patient> patients = new ArrayList<Patient>();
-		final List<PatientMaster> patientMasters = this.patientDAO.fetchAllPatients(contextInfo);
+		final List<PatientMaster> patientMasters = this.patientDAO.fetchAllPatients();
 		for(final PatientMaster patientMaster : patientMasters) {
 			final Patient patient = this.mapperFacade.map(patientMaster, Patient.class);
+			List<DataValueEntity> patientMeasurements = recordingDeviceDataDAO.fetchRecentMeasurementsSQL(patient.getPatientId());
+
+			//Clone the required attributes so that we can compare whether all the required attributes has data against it
+			List<Integer> requiredAttributes = new ArrayList<Integer>(requiredDeviceAttributes);
+
+			//Set the default status as incomplete schedule
+			PatientStatus patientStatus = PatientStatus.INCOMPLETE_SCHEDULE;
+
+			for(DataValueEntity patientMeasurement : patientMeasurements) {
+				//Check the alert status and scheduled expiry date only if they are listed as required/mandatory attributes.
+				if(requiredAttributes.contains(patientMeasurement.getAttributeId())) {
+					requiredAttributes.remove(patientMeasurement.getAttributeId());
+
+					//break if the patient did not submit the data after the last expiry schedule time
+					if(patientMeasurement.getScheduleExpiryTime().before(TimestampUtil.getCurentTimestamp())) {
+						break;
+					} else if(patientMeasurement.getAlertStatus() != null && PatientStatus.valueOf(patientMeasurement.getAlertStatus()) == PatientStatus.OUT_OF_THRESHOLD) {
+						//if the alert status is out of threshold for any single required attribute then set patient status as OUT_OF_THRESHOLD and break. No need to check the data for next attribute
+						patientStatus = PatientStatus.OUT_OF_THRESHOLD;
+						break;
+					}
+				}
+			}
+
+			if(requiredAttributes.isEmpty()) {
+				patientStatus = PatientStatus.WITHIN_THRESHOLD;
+			}
+
+			patient.setPatientStatus(patientStatus);
 			patients.add(patient);
 		}
 		return patients;
@@ -75,7 +116,7 @@ public class PatientService {
 
 	@SuppressWarnings({"unchecked", "rawtypes"})
 	@Transactional(rollbackFor = {Exception.class})
-	public List<DataValue> getPatientsRecentMeasurements(final String patientId, final ContextInfo contextInfo) {
+	public List<DataValue> getPatientsRecentMeasurements(final String patientId) {
 		/*
 		 * As per the conversation with Richard on 11/07/2016 below are the 2 options suggested for fetching the recent data readings
 		 *
@@ -95,15 +136,23 @@ public class PatientService {
 		/*List<RecordingDeviceDataMaster> recordingDeviceDataList = recordingDeviceDataDAO.fetchRecentMeasurementsHQL(patientId, contextInfo);
 		return this.mapperFacade.map(recordingDeviceDataList, (Class<List<DataValue>>) (Class) List.class);*/
 
-		List<DataValueEntity> recordingDeviceDataList = recordingDeviceDataDAO.fetchRecentMeasurementsSQL(patientId, contextInfo);
+		List<DataValueEntity> recordingDeviceDataList = recordingDeviceDataDAO.fetchRecentMeasurementsSQL(patientId);
 		return this.mapperFacade.map(recordingDeviceDataList, (Class<List<DataValue>>) (Class) List.class);
 	}
 
 	public List<Measurement> getPatientMeasurements(final String patientId, final int attributeId) {
+		List<AttributeThresholdMaster> attributeThresholdMasterList = attributeThresholdDAO.fetchPatientAttributeThresholds(patientId, attributeId);
+		List<AttributeThreshold> attributeThresholds = new ArrayList<AttributeThreshold>();
+		for(AttributeThresholdMaster attributeThresholdMaster : attributeThresholdMasterList) {
+			attributeThresholds.add(this.mapperFacade.map(attributeThresholdMaster, AttributeThreshold.class));
+		}
+
 		List<RecordingDeviceDataMaster> patientData = recordingDeviceDataDAO.fetchPatientMeasurementsByAttributeId(patientId, attributeId);
 		List<Measurement> measurements = new ArrayList<Measurement>();
 		for(RecordingDeviceDataMaster data : patientData) {
-			measurements.add(this.mapperFacade.map(data, Measurement.class));
+			Measurement measurement = this.mapperFacade.map(data, Measurement.class);
+			measurement.setMinMaxValues(attributeThresholds);
+			measurements.add(measurement);
 		}
 		return measurements;
 	}

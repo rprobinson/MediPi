@@ -29,8 +29,8 @@
 	<jsp:param name="recentMeasurementValueId" value="temperatureRecentMeasurementValueId"/>
 	<jsp:param name="measurementMinValueId" value="temperatureMeasurementMinValueId"/>
 	<jsp:param name="measurementMaxValueId" value="temperatureMeasurementMaxValueId"/>
-	<jsp:param name="suggestedMinValue" value="34"/>
-	<jsp:param name="suggestedMaxValue" value="37"/>
+	<jsp:param name="suggestedMinValue" value="36"/>
+	<jsp:param name="suggestedMaxValue" value="38"/>
 </jsp:include>
 
 <!-- Pulse rate accordion -->
@@ -44,8 +44,8 @@
 	<jsp:param name="recentMeasurementValueId" value="pulseRateRecentMeasurementValueId"/>
 	<jsp:param name="measurementMinValueId" value="pulseRateMeasurementMinValueId"/>
 	<jsp:param name="measurementMaxValueId" value="pulseRateMeasurementMaxValueId"/>
-	<jsp:param name="suggestedMinValue" value="70"/>
-	<jsp:param name="suggestedMaxValue" value="100"/>
+	<jsp:param name="suggestedMinValue" value="50"/>
+	<jsp:param name="suggestedMaxValue" value="120"/>
 </jsp:include>
 
 <!-- Weight accordion -->
@@ -59,8 +59,8 @@
 	<jsp:param name="recentMeasurementValueId" value="weightRecentMeasurementValueId"/>
 	<jsp:param name="measurementMinValueId" value="weightMeasurementMinValueId"/>
 	<jsp:param name="measurementMaxValueId" value="weightMeasurementMaxValueId"/>
-	<jsp:param name="suggestedMinValue" value="70"/>
-	<jsp:param name="suggestedMaxValue" value="100"/>
+	<jsp:param name="suggestedMinValue" value="36"/>
+	<jsp:param name="suggestedMaxValue" value="85"/>
 </jsp:include>
 
 <!-- Oxygen saturation accordion -->
@@ -74,8 +74,8 @@
 	<jsp:param name="recentMeasurementValueId" value="oxygenSaturationRecentMeasurementValueId"/>
 	<jsp:param name="measurementMinValueId" value="oxygenSaturationMeasurementMinValueId"/>
 	<jsp:param name="measurementMaxValueId" value="oxygenSaturationMeasurementMaxValueId"/>
-	<jsp:param name="suggestedMinValue" value="90"/>
-	<jsp:param name="suggestedMaxValue" value="100"/>
+	<jsp:param name="suggestedMinValue" value="85"/>
+	<jsp:param name="suggestedMaxValue" value="110"/>
 </jsp:include>
 
 <!-- Blood pressure accordion -->

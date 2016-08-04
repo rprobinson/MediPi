@@ -18,6 +18,7 @@
 package uk.gov.nhs.digital.telehealth.clinician.service.domain;
 
 import java.sql.Timestamp;
+import java.util.List;
 
 public class Measurement implements Comparable<Measurement> {
 
@@ -75,6 +76,32 @@ public class Measurement implements Comparable<Measurement> {
 
 	public void setMaxValue(final String maxValue) {
 		this.maxValue = maxValue;
+	}
+
+	public void setMinMaxValues(final List<AttributeThreshold> attributeThresholds) {
+		AttributeThreshold oldestThreshold = null;
+		boolean isValueSet = false;
+
+		for(AttributeThreshold attributeThreshold : attributeThresholds) {
+			//Find out the oldest threshold values. This in used in case the measurements are submitted before setting the threshold.
+			if(oldestThreshold != null && attributeThreshold.getEffectiveDate().before(oldestThreshold.getEffectiveDate())) {
+				oldestThreshold = attributeThreshold;
+			} else if(oldestThreshold == null) {
+				oldestThreshold = attributeThreshold;
+			}
+
+			if(this.dataTime.after(attributeThreshold.getEffectiveDate())) {
+				this.minValue = attributeThreshold.getThresholdLowValue();
+				this.maxValue = attributeThreshold.getThresholdHighValue();
+				isValueSet = true;
+			}
+		}
+
+		//Set the oldest threshold values as min, max if the readings are taken before setting the threshold for the patient.
+		if(!isValueSet && oldestThreshold != null) {
+			this.minValue = oldestThreshold.getThresholdLowValue();
+			this.maxValue = oldestThreshold.getThresholdHighValue();
+		}
 	}
 
 	@Override

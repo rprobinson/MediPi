@@ -10,7 +10,7 @@
 	<div class="accordion-body form-horizontal" style="display: block">
 		<div class="row">
 			<div class="col-sm-10">
-				<canvas id="${param.canvasId}" width="100%" height="20%" />
+				<canvas id="${param.canvasId}" width="100%" height="30%" />
 			</div>
 			<div class="col-sm-2">
 				<table class="measurement-attribute">

@@ -22,8 +22,7 @@ import java.util.List;
 import uk.gov.nhs.digital.telehealth.clinician.service.entities.PatientMaster;
 
 import com.dev.ops.common.dao.generic.GenericDAO;
-import com.dev.ops.common.domain.ContextInfo;
 
 public interface PatientDAO extends GenericDAO<PatientMaster> {
-	List<PatientMaster> fetchAllPatients(ContextInfo contextInfo);
+	List<PatientMaster> fetchAllPatients();
 }

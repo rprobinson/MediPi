@@ -81,7 +81,7 @@ var measurement = {
 
         //If within min and max limits
         if(recentMeasurement != null) {
-	        if(recentMeasurement.minValue <= recentMeasurement.value ||  recentMeasurement.maxValue >= recentMeasurement.value) {
+	        if(recentMeasurement.minValue <= recentMeasurement.value &&  recentMeasurement.maxValue >= recentMeasurement.value) {
 	        	$("#" + includeObject.recentMeasurementValueId).attr("class", "green");
 	        } else {
 	        	$("#" + includeObject.recentMeasurementValueId).attr("class", "red");

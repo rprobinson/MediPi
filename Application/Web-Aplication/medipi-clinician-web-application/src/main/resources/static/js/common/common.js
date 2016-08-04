@@ -210,7 +210,7 @@ Number.prototype.getStringDate_DDMMYYYY_From_Timestamp = function() {
 	//if(!this.isEmpty()) {
 	var date = new Date(this);
 	var day = date.getDate().getDoubleDigitNumber();
-	var month = date.getMonth();
+	var month = date.getMonth() + 1;
 	var year = date.getFullYear();
 	returnString = day + "/" + month.getDoubleDigitNumber() + "/" + year;
 	//}

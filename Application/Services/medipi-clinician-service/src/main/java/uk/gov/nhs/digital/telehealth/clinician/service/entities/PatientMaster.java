@@ -34,7 +34,7 @@ import javax.persistence.Table;
 @Entity
 @Table(name = "patient")
 @NamedQueries({
-	@NamedQuery(name = "PatientMaster.fetchAllPatients", query = "SELECT patientMaster FROM PatientMaster patientMaster ORDER BY lastName DESC"),
+	@NamedQuery(name = "PatientMaster.fetchAllPatients", query = "SELECT patientMaster FROM PatientMaster patientMaster ORDER BY lastName DESC")
 })
 //@formatter:on
 public class PatientMaster {
@@ -55,24 +55,24 @@ public class PatientMaster {
 	@Column(name = "dob")
 	private Timestamp dateOfBirth;
 
-	@Column(name = "is_critical")
-	private boolean critical;
-
 	@OneToMany(mappedBy = "patient", cascade = {CascadeType.ALL})
 	private List<RecordingDeviceDataMaster> recordingDeviceDataList;
 
+	@OneToMany(mappedBy = "patient", cascade = {CascadeType.ALL})
+	private List<AttributeThresholdMaster> attributeThresholds;
+
 	public PatientMaster() {
 		recordingDeviceDataList = new ArrayList<RecordingDeviceDataMaster>();
+		attributeThresholds = new ArrayList<AttributeThresholdMaster>();
 	}
 
-	public PatientMaster(final String patientId, final String nhsNumber, final String firstName, final String lastName, final Timestamp dateOfBirth, final boolean isCritical) {
+	public PatientMaster(final String patientId, final String nhsNumber, final String firstName, final String lastName, final Timestamp dateOfBirth) {
 		this();
 		this.patientId = patientId;
 		this.nhsNumber = nhsNumber;
 		this.firstName = firstName;
 		this.lastName = lastName;
 		this.dateOfBirth = dateOfBirth;
-		this.critical = isCritical;
 	}
 
 	public String getPatientId() {
@@ -115,14 +115,6 @@ public class PatientMaster {
 		this.dateOfBirth = dateOfBirth;
 	}
 
-	public boolean isCritical() {
-		return critical;
-	}
-
-	public void setCritical(final boolean isCritical) {
-		this.critical = isCritical;
-	}
-
 	public List<RecordingDeviceDataMaster> getRecordingDeviceDataList() {
 		return recordingDeviceDataList;
 	}
@@ -163,6 +155,6 @@ public class PatientMaster {
 
 	@Override
 	public String toString() {
-		return "Patient [patientId=" + patientId + ", firstName=" + firstName + ", lastName=" + lastName + ", critical=" + critical + "]";
+		return "Patient [patientId=" + patientId + ", firstName=" + firstName + ", lastName=" + lastName + "]";
 	}
 }

@@ -21,22 +21,28 @@ import java.util.List;
 
 import javax.persistence.Query;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
 import org.springframework.stereotype.Service;
 
 import uk.gov.nhs.digital.telehealth.clinician.service.entities.DataValueEntity;
 import uk.gov.nhs.digital.telehealth.clinician.service.entities.RecordingDeviceDataMaster;
 
 import com.dev.ops.common.dao.generic.GenericDAOImpl;
-import com.dev.ops.common.domain.ContextInfo;
+import com.dev.ops.common.thread.local.ContextThreadLocal;
 
 @Service
 public class RecordingDeviceDataDAOImpl extends GenericDAOImpl<RecordingDeviceDataMaster> implements RecordingDeviceDataDAO {
+
+	private static final Logger LOGGER = LogManager.getLogger(RecordingDeviceDataDAOImpl.class);
 
 	private static String FETCH_RECENT_MEASUREMENTS_NATIVE_POSTGRESQL_QUERY;
 
 	static {
 		StringBuilder query = new StringBuilder();
-		query.append("SELECT rdd.data_id as \"data_id\", rdt.type as \"reading_type\", rdt.subtype as \"device\", rda.attribute_name as \"attribute_name\", rdd.data_value as \"data\", rdt.type_id as \"type_id\", rdd.data_value_time as \"data_time\", rdd.downloaded_time as \"submitted_time\"");
+		query.append("SELECT rdd.data_id as \"data_id\", rdt.type as \"reading_type\", rdt.subtype as \"device\", rda.attribute_name as \"attribute_name\", rda.attribute_id as \"attribute_id\",");
+		query.append(" rdd.data_value as \"data\", rdt.type_id as \"type_id\", rdd.data_value_time as \"data_time\", rdd.downloaded_time as \"submitted_time\",");
+		query.append(" rdd.schedule_effective_time as \"schedule_effective_time\", rdd.schedule_expiry_time as \"schedule_expiry_time\", rdd.alert_status as \"alert_status\"");
 		query.append(" FROM recording_device_data rdd");
 		query.append(" JOIN recording_device_attribute rda ON rdd.attribute_id = rda.attribute_id");
 		query.append(" JOIN recording_device_type rdt ON rda.type_id = rdt.type_id");
@@ -51,7 +57,8 @@ public class RecordingDeviceDataDAOImpl extends GenericDAOImpl<RecordingDeviceDa
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public List<RecordingDeviceDataMaster> fetchRecentMeasurementsHQL(final String patientId, final ContextInfo contextInfo) {
+	public List<RecordingDeviceDataMaster> fetchRecentMeasurementsHQL(final String patientId) {
+		LOGGER.debug("Get recent measurements for patient:" + patientId + " " + ContextThreadLocal.get());
 		final Query query = this.getEntityManager().createNamedQuery("RecordingDeviceDataMaster.fetchRecentMeasurements", RecordingDeviceDataMaster.class);
 		query.setParameter("patientId", patientId);
 		return query.getResultList();
@@ -59,7 +66,8 @@ public class RecordingDeviceDataDAOImpl extends GenericDAOImpl<RecordingDeviceDa
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public List<DataValueEntity> fetchRecentMeasurementsSQL(final String patientId, final ContextInfo contextInfo) {
+	public List<DataValueEntity> fetchRecentMeasurementsSQL(final String patientId) {
+		LOGGER.debug("Get recent measurements for patient:" + patientId + " " + ContextThreadLocal.get());
 		final Query query = this.getEntityManager().createNativeQuery(FETCH_RECENT_MEASUREMENTS_NATIVE_POSTGRESQL_QUERY, DataValueEntity.class);
 		query.setParameter("patientId", patientId);
 		return query.getResultList();
@@ -68,7 +76,7 @@ public class RecordingDeviceDataDAOImpl extends GenericDAOImpl<RecordingDeviceDa
 	@SuppressWarnings("unchecked")
 	@Override
 	public List<RecordingDeviceDataMaster> fetchPatientMeasurementsByAttributeId(final String patientId, final int attributeId) {
-		final Query query = this.getEntityManager().createNamedQuery("RecordingDeviceDataMaster.fetchMeasurements", RecordingDeviceDataMaster.class);
+		final Query query = this.getEntityManager().createNamedQuery("RecordingDeviceDataMaster.fetchPatientMeasurementsByAttributeId", RecordingDeviceDataMaster.class);
 		query.setParameter("patientId", patientId);
 		query.setParameter("attributeId", attributeId);
 		return query.getResultList();
