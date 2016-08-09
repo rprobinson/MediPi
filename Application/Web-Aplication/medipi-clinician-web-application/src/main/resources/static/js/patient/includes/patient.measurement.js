@@ -81,7 +81,10 @@ var measurement = {
 
         //If within min and max limits
         if(recentMeasurement != null) {
-	        if(recentMeasurement.minValue <= recentMeasurement.value &&  recentMeasurement.maxValue >= recentMeasurement.value) {
+        	/*if(includeObject.attributeId == 3) {
+        		console.log("recentMeasurement.value <= recentMeasurement.maxValue:" + (parseFloat(recentMeasurement.minValue) <= parseFloat(recentMeasurement.value) <= parseFloat(recentMeasurement.maxValue)));
+        	}*/
+	        if(parseFloat(recentMeasurement.minValue) <= parseFloat(recentMeasurement.value) && parseFloat(recentMeasurement.value) <= parseFloat(recentMeasurement.maxValue)) {
 	        	$("#" + includeObject.recentMeasurementValueId).attr("class", "green");
 	        } else {
 	        	$("#" + includeObject.recentMeasurementValueId).attr("class", "red");
