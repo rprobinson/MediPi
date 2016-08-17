@@ -26,17 +26,34 @@ $(document).ready(function() {
 })();
 
 function getPatientTile(patient) {
+	var tileType;
+	var tileStyle;
+	if(patient.patientStatus === "INCOMPLETE_SCHEDULE") {
+		tileStyle = "incomplete-schedule";
+		tileType = tileStyle + "-tile";
+	} else if(patient.patientStatus === "WITHIN_THRESHOLD")  {
+		tileStyle = "smiley";
+		tileType = tileStyle + "-tile";
+	} else if(patient.patientStatus === "OUT_OF_THRESHOLD")  {
+		tileStyle = "frowney";
+		tileType = tileStyle + "-tile";
+	} else {
+		tileStyle = "cannot-calculate";
+		tileType = tileStyle + "-tile";
+	}
+
+
 	var tileDiv =
 		'<div class="col-sm-2" id="patient-' + patient.patientId + '">' +
 			'<a href="/clinician/patient/' + patient.patientId +'">' +
-				'<table class="tile-view">' +
+				'<table class="tile-view ' + tileType + '">' +
 					'<tr>' +
 						'<th scope="col">' +
 							patient.dateOfBirth.getStringDate_DDmmmYYYY_From_Timestamp() +
 						'</th>' +
 					'</tr>' +
 					'<tr>' +
-						(patient.patientStatus === 'INCOMPLETE_SCHEDULE' ? '<td class="limit-indicator incomplete-schedule"></td>' : (patient.patientStatus === 'WITHIN_THRESHOLD' ? '<td class="limit-indicator smiley"></td>' : '<td class="limit-indicator frowney"></td>')) +
+						'<td class="limit-indicator ' + tileStyle + '"></td>' +
 					'</tr>' +
 					'<tr>' +
 						'<th scope="col">' +

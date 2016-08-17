@@ -239,9 +239,29 @@ overflow-y: auto;
 .patient-detail th {font-size: 13px;}
 .patient-detail td {font-size: 24px;}
 
+/*#FFF
+rgb(59,117,181)
+*/
+
 .tile-view {width:100%;border:1px solid #000;margin-bottom: 10px}
 .tile-view th, .tile-view td {border:1px solid #000;text-align: center; width:50%;padding:3px 7px;font-size: 12px;}
 .tile-view .limit-indicator {height:48px; width:50px; }
+
+.tile-view .frowney-tile{background-color: #FFF;}
 .tile-view .frowney{background-image: url("/images/misc/frowney.png"); background-size: 45px 45px; background-repeat: no-repeat; background-color: #FFF; background-position: center}
-.tile-view .smiley{background-image: url("/images/misc/smiley.png"); background-size: 45px 45px; background-repeat: no-repeat; background-color: #FFF; background-position: center}
-.tile-view .incomplete-schedule{background-image: url("/images/misc/question.jpg"); background-size: 45px 45px; background-repeat: no-repeat; background-color: #FFF; background-position: center}
+.tile-view .smiley-tile{background-color: #FFF;}
+.tile-view .smiley{background-image: url("/images/misc/smiley1.png"); background-size: 45px 45px; background-repeat: no-repeat; background-color: #FFF; background-position: center}
+.tile-view .incomplete-schedule-tile{background-color: #FFF;}
+.tile-view .incomplete-schedule{background-image: url("/images/misc/question1.png"); background-size: 45px 45px; background-repeat: no-repeat; background-color: #FFF; background-position: center}
+.tile-view .cannot-calculate-tile{background-color: #FFF;}
+.tile-view .cannot-calculate{background-image: url("/images/misc/cannot_calculate.png"); background-size: 45px 45px; background-repeat: no-repeat; background-color: #FFF; background-position: center}
+
+/* .frowney-tile{background-color: rgb(221,0,0);}
+.tile-view .frowney{background-image: url("/images/misc/frowney.png"); background-size: 45px 45px; background-repeat: no-repeat; background-color: rgb(221,0,0); background-position: center}
+.smiley-tile{background-color: rgb(32,220,4);}
+.tile-view .smiley{background-image: url("/images/misc/smiley1.png"); background-size: 45px 45px; background-repeat: no-repeat; background-color: rgb(32,220,4); background-position: center}
+.incomplete-schedule-tile{background-color: #FFF;}
+.tile-view .incomplete-schedule{background-image: url("/images/misc/question1.png"); background-size: 45px 45px; background-repeat: no-repeat; background-color: #FFF; background-position: center}
+.cannot-calculate-tile{background-color: rgb(255,120,18);}
+.tile-view .cannot-calculate{background-image: url("/images/misc/cannot_calculate.png"); background-size: 45px 45px; background-repeat: no-repeat; background-color: rgb(255,120,18); background-position: center}
+ */

@@ -21,6 +21,7 @@ public enum PatientStatus {
 	//@formatter:off
 	WITHIN_THRESHOLD,
 	OUT_OF_THRESHOLD,
-	INCOMPLETE_SCHEDULE;
+	INCOMPLETE_SCHEDULE,
+	CANNOT_CALCULATE;
 	//@formatter:on
 }

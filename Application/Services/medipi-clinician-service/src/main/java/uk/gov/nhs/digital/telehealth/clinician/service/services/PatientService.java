@@ -100,6 +100,10 @@ public class PatientService {
 						//if the alert status is out of threshold for any single required attribute then set patient status as OUT_OF_THRESHOLD and break. No need to check the data for next attribute
 						patientStatus = PatientStatus.OUT_OF_THRESHOLD;
 						break;
+					} else if(patientMeasurement.getAlertStatus() != null && PatientStatus.valueOf(patientMeasurement.getAlertStatus()) == PatientStatus.CANNOT_CALCULATE) {
+						//if the alert status is out of threshold for any single required attribute then set patient status as OUT_OF_THRESHOLD and break. No need to check the data for next attribute
+						patientStatus = PatientStatus.CANNOT_CALCULATE;
+						break;
 					}
 				}
 			}
