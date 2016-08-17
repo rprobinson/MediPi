@@ -10,7 +10,7 @@ Array.prototype.lastObject = function() {
 
 Array.prototype.timeMapProperty = function (property) {
     return this.map(function (obj) {
-    	var timestamp = obj[property].getStringDate_DDMMYYYY_From_Timestamp();
+    	var timestamp = obj[property].getStringDate_DDMMYYYY_HHmm_From_Timestamp();
         return timestamp;
     });
 };

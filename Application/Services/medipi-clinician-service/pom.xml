@@ -205,6 +205,7 @@
 							<classifier>domain</classifier>
 							<includes>
 								<include>uk/gov/nhs/digital/telehealth/clinician/service/domain/*</include>
+								<include>uk/gov/nhs/digital/telehealth/clinician/service/domain/enums/*</include>
 								<include>uk/gov/nhs/digital/telehealth/clinician/service/url/mappings/*</include>
 							</includes>
 							<archive>

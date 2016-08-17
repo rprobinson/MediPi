@@ -64,10 +64,6 @@ var measurement = {
                         }
                     }]
                 }
-                /*title: {
-                	display: true,
-                    text: "Pulse"
-                }*/
             }
         });
         return myChart;

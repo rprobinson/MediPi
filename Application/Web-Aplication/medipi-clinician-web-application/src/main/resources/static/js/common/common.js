@@ -217,6 +217,18 @@ Number.prototype.getStringDate_DDMMYYYY_From_Timestamp = function() {
 	return returnString;
 };
 
+Number.prototype.getStringDate_DDMMYYYY_HHmm_From_Timestamp = function() {
+	var returnString = DEFAULT_EMPTY_STRING;
+	var date = new Date(this);
+	var day = date.getDate().getDoubleDigitNumber();
+	var month = date.getMonth() + 1;
+	var year = date.getFullYear();
+	var hours = date.getHours().getDoubleDigitNumber();
+	var minutes = date.getMinutes().getDoubleDigitNumber();
+	returnString = day + "/" + month.getDoubleDigitNumber() + "/" + year + " " + hours + ":" + minutes;
+	return returnString;
+};
+
 /**
  * Generic method which will return the date in "dd-mmm-yyyy at hh:mm" string format.
  * Usage: var stringDate = <date>.getStringDate_DDmmmYYYY_at_HHmm();
