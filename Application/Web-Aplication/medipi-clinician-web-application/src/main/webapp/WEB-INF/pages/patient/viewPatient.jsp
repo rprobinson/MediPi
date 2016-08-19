@@ -3,10 +3,6 @@
 <script type="text/javascript" charset="utf8" src="/js/common/common.ui.util.js"></script>
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <%@taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt"%>
-<div class="accordion-section">
-	<div class="accordion-head" id="accordion-head">
-		<a href="#" class="on" aria-expanded="true" id="patientDetails">Patient Details</a>
-	</div>
 	<div class="accordion-body form-horizontal" style="display: block">
 		<ul class="summary-three-col">
 			<li><label class="label-display" for="name">Name:</label> <label class="label-text" for="name" id="name">${patient.firstName}&nbsp;${patient.lastName}</label></li>
@@ -16,7 +12,6 @@
 			<li><label class="label-display" for="nhsNumber">NHS Number:</label> <label class="label-text" for="nhsNumber" id="nhsNumber">${patient.nhsNumber}</label></li>
 		</ul>
 	</div>
-</div>
 
 <!-- Body temperature accordion -->
 <jsp:include page="/WEB-INF/pages/patient/includes/patientMeasurement.jsp">
