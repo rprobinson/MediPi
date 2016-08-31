@@ -73,7 +73,9 @@ var measurement = {
         $("#" + includeObject.recentMeasurementDateId).html(recentMeasurement != null ? recentMeasurement.dataTime.getStringDate_DDMMYYYY_From_Timestamp() : "- - -");
         $("#" + includeObject.recentMeasurementValueId).html(recentMeasurement != null ? recentMeasurement.value : "- - -");
         $("#" + includeObject.measurementMinValueId).html(recentMeasurement != null ? recentMeasurement.minValue : "- - -");
+        $("#" + includeObject.measurementMinValueId + "-value").val(recentMeasurement != null ? recentMeasurement.minValue : "");
         $("#" + includeObject.measurementMaxValueId).html(recentMeasurement != null ? recentMeasurement.maxValue : "- - -");
+        $("#" + includeObject.measurementMaxValueId + "-value").val(recentMeasurement != null ? recentMeasurement.maxValue : "");
 
         //If within min and max limits
         if(recentMeasurement != null) {

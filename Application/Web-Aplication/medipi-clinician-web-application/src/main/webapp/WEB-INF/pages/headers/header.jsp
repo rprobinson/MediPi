@@ -54,7 +54,7 @@
 					<!-- <li><a href="blog.html">Blog</a></li> -->
 					<li id="menu_manage" class="dropdown"><a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Manage <span class="caret"></span></a>
 						<ul class="dropdown-menu">
-							<li><a href="/clinician/patient/patients">Patients</a></li>
+							<li><a href="/clinician/patient/patients" id="menu_patients">Patients</a></li>
 						</ul>
 					</li>
 					<li id="menu_about"><a href="/clinician/about">About</a></li>
