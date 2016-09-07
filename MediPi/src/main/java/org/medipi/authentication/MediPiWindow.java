@@ -16,7 +16,13 @@
 package org.medipi.authentication;
 
 import java.lang.reflect.Constructor;
+import java.util.ArrayList;
+import java.util.List;
 import javafx.application.Platform;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.scene.Node;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
@@ -43,13 +49,15 @@ public class MediPiWindow extends Pane {
     private boolean stopTimer;
     private int expirePeriod = 0;
     private Thread thread;
+    private List<UnlockConsumer> unlockConsumerList = new ArrayList<>();
+    BooleanProperty lockedstatus = new SimpleBooleanProperty(true);
 
     /**
      * Constructor to establish basic parameters and start the timer. The mediPi
      * Node is passed in and the class defaults to authentication window. A
      * lifespan of 0 sets the authentication off
      *
-     * @param MediPi UI Node
+     * @param child UI Node
      * @throws Exception
      */
     public MediPiWindow(Node child) throws Exception {
@@ -78,6 +86,19 @@ public class MediPiWindow extends Pane {
         }
         super.getChildren().add(authenticationWindow);
         expireTime = System.currentTimeMillis();
+        lockedstatus.addListener(new ChangeListener<Boolean>() {
+
+            @Override
+            public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
+                for (UnlockConsumer uc : unlockConsumerList) {
+                    if(newValue){
+                        uc.locked();
+                    }else{
+                        uc.unlocked();
+                    }
+                }
+            }
+        });
         startTimer();
     }
 
@@ -92,15 +113,16 @@ public class MediPiWindow extends Pane {
                     if (expireTime > System.currentTimeMillis() || expirePeriod == 0) {
                         Platform.runLater(() -> {
                             this.getChildren().set(0, medipiWindow);
+                            lockedstatus.set(false);
                         });
-                        System.out.println("expireTime:" + expireTime + " systemTime:" + System.currentTimeMillis());
                     } else {
                         // while the authentication is expired
                         Platform.runLater(() -> {
                             this.getChildren().set(0, authenticationWindow);
+                            lockedstatus.set(true);
                         });
                     }
-                    Thread.sleep(5000);
+                    Thread.sleep(1000);
                 } catch (InterruptedException ex) {
                     //no action as this is how unlock immediately opens the medipi window
                 }
@@ -123,4 +145,7 @@ public class MediPiWindow extends Pane {
         expireTime = System.currentTimeMillis() + expirePeriod;
     }
 
+    public void registerForAuthenticationCallback(UnlockConsumer unlockConsumer) {
+        unlockConsumerList.add(unlockConsumer);
+    }
 }

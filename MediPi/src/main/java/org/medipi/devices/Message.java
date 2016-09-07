@@ -15,8 +15,9 @@
  */
 package org.medipi.devices;
 
-import java.text.ParseException;
-import java.util.Date;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import javafx.beans.property.SimpleStringProperty;
 import org.medipi.MediPiMessageBox;
 import org.medipi.utilities.Utilities;
@@ -38,11 +39,11 @@ public class Message {
         try {
             fileName = mTitle;
             String elements[] = mTitle.substring(0, mTitle.lastIndexOf(".")).split("-");
-            Date d = Utilities.INTERNAL_FORMAT.parse(elements[0]);
+            LocalDateTime d = LocalDateTime.parse(elements[0], Utilities.INTERNAL_SPINE_FORMAT_UTC);
             this.messageTitle = new SimpleStringProperty(elements[1]);
-            this.time = new SimpleStringProperty(Utilities.DISPLAY_FORMAT.format(d));
-        } catch (ParseException ex) {
-            MediPiMessageBox.getInstance().makeErrorMessage("failure to recognise the date format of the incoming message: "+fileName, ex, Thread.currentThread());
+            this.time = new SimpleStringProperty(d.format(Utilities.DISPLAY_FORMAT_LOCALTIME));
+        } catch (DateTimeParseException ex) {
+            MediPiMessageBox.getInstance().makeErrorMessage("failure to recognise the date format of the incoming message: "+fileName, ex);
         }
 
     }

@@ -28,13 +28,12 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
-import java.util.Date;
+import java.time.Instant;
 import java.util.Enumeration;
 import java.util.TooManyListenersException;
 import org.medipi.logging.MediPiLogger;
 import org.medipi.MediPi;
 import org.medipi.MediPiMessageBox;
-import org.medipi.MediPiProperties;
 import org.medipi.devices.Oximeter;
 import org.medipi.utilities.Utilities;
 
@@ -240,11 +239,11 @@ public class ContecCMS50DPlus extends Oximeter implements SerialPortEventListene
             case SerialPortEvent.DATA_AVAILABLE:
                 byte[] buffer = new byte[10];
                 int idx = 0;
-                byte[] packet = new byte[5];
+                int[] packet = new int[5];
                 try {
                     while (inputStream.available() > 10) {
                         inputStream.read(buffer);
-                        for (byte b : buffer) {
+                        for (int b : buffer) {
                             //System.out.println(String.format("%8s", Integer.toBinaryString(b & 0xFF)).replace(' ', '0'));
                             if ((b & 128) != 0) {
                                 //System.out.println((b&0x80)+" "+idx);
@@ -273,7 +272,9 @@ public class ContecCMS50DPlus extends Oximeter implements SerialPortEventListene
                                     // output[8] = String.valueOf(((packet[2] & 0x40) << 1));
                                     // # 4th byte
                                     // pulseRate
-                                    line[0] = String.valueOf(packet[3] & 127);
+                                    int i = (packet[2] & 0x40) << 1;
+                                    i |= packet[3] & 0x7f;
+                                    line[0] = String.valueOf(i);
                                     //5th byte
                                     //bloodSpO2
                                     line[1] = String.valueOf(packet[4] & 127);
@@ -290,8 +291,8 @@ public class ContecCMS50DPlus extends Oximeter implements SerialPortEventListene
                                         }
                                     }
                                     if (!stopping) {
-                                        Date time = new Date(Math.round(System.nanoTime() / 1000000d) - Math.round(nanoTime / 1000000d) + epochTimeAtStart);
-                                        StringBuilder sb = new StringBuilder(Utilities.ISO8601FORMATDATEMILLI.format(time));
+                                        Instant time = Instant.ofEpochMilli(Math.round(System.nanoTime() / 1000000L) - Math.round(nanoTime / 1000000L) + epochTimeAtStart);
+                                        StringBuilder sb = new StringBuilder(Utilities.ISO8601FORMATDATEMILLI_UTC.format(time));
                                         sb.append(separator);
                                         sb.append(line[0]);
                                         sb.append(separator);
@@ -306,7 +307,7 @@ public class ContecCMS50DPlus extends Oximeter implements SerialPortEventListene
                                         }
                                     }
                                 }
-                                packet = new byte[5];
+                                packet = new int[5];
                                 idx = 0;
                             }
                             if (idx < 5) {
@@ -317,7 +318,7 @@ public class ContecCMS50DPlus extends Oximeter implements SerialPortEventListene
                     }
                 } catch (IOException e) {
                     stopSerialDevice();
-                    MediPiMessageBox.getInstance().makeErrorMessage("Device no longer accessible", e, Thread.currentThread());
+                    MediPiMessageBox.getInstance().makeErrorMessage("Device no longer accessible", e);
                     if (medipi.getDebugMode() == MediPi.DEBUG) {
                         System.out.println(e);
                     }
@@ -325,6 +326,5 @@ public class ContecCMS50DPlus extends Oximeter implements SerialPortEventListene
                 break;
         }
     }
-
 
 }

@@ -17,9 +17,10 @@ package org.medipi.devices;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
+import java.util.UUID;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -27,7 +28,6 @@ import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
@@ -41,7 +41,7 @@ import javafx.scene.layout.VBox;
 import org.medipi.utilities.ConfigurationStringTokeniser;
 import org.medipi.DashboardTile;
 import org.medipi.MediPi;
-import org.medipi.MediPiProperties;
+import org.medipi.model.DeviceDataDO;
 import org.medipi.utilities.Utilities;
 
 /**
@@ -82,7 +82,6 @@ public class Questionnaire extends Device {
     private String questionSet;
     private Label question = new Label("");
     private String titleName;
-    private Date downloadTimestamp = null;
     private String questionnaireVersion = null;
 
     /**
@@ -213,7 +212,6 @@ public class Questionnaire extends Device {
         question.setText("");
         responseLabel.setText("");
         questionList.getChildren().clear();
-        downloadTimestamp = null;
         data.clear();
     }
 
@@ -238,7 +236,7 @@ public class Questionnaire extends Device {
         //actions for clicking "yes"
         yes.setOnAction((ActionEvent t) -> {
             // add data to data arraylist for transmission later
-            data.add(new String[]{Utilities.ISO8601FORMATDATEMILLI.format(new Date()),questions.get(rule[QUESTION]), yes.getText()});
+            data.add(new String[]{Instant.now().toString(),questions.get(rule[QUESTION]), yes.getText()});
             yes.setDisable(true);
             no.setDisable(true);
             no.setVisible(false);
@@ -246,14 +244,13 @@ public class Questionnaire extends Device {
             if (response != null) {
                 // add data to data arraylist for transmission later
                 // n.b. 1 millisecond is added to the response to differentiate it and maintain unique timestamps
-                data.add(new String[]{Utilities.ISO8601FORMATDATEMILLI.format(new Date(System.currentTimeMillis()+1L)),response, ADVICE_TO_PATIENT});
+                data.add(new String[]{Instant.now().plusMillis(1).toString(),response, ADVICE_TO_PATIENT});
                 responseLabel.setText(response);
                 if (isSchedule.get()) {
                     button1.setDisable(false);
                     button3.setDisable(false);
                 }
                 // take the time of downloading the data
-                downloadTimestamp = new Date();
             } else {
                 // if there is no utimate advice to be given as a result of
                 // this question recursively execute the subsequent question(s)
@@ -264,7 +261,7 @@ public class Questionnaire extends Device {
         //actions for clicking "no"
         no.setOnAction((ActionEvent t) -> {
             // add data to data arraylist for transmission later
-            data.add(new String[]{Utilities.ISO8601FORMATDATEMILLI.format(new Date()),questions.get(rule[QUESTION]), no.getText()});
+            data.add(new String[]{Instant.now().toString(),questions.get(rule[QUESTION]), no.getText()});
             yes.setDisable(true);
             yes.setVisible(false);
             no.setDisable(true);
@@ -272,14 +269,13 @@ public class Questionnaire extends Device {
             if (response != null) {
                 // add data to data arraylist for transmission later
                 // n.b. 1 millisecond is added to the response to differentiate it and maintain unique timestamps
-                data.add(new String[]{Utilities.ISO8601FORMATDATEMILLI.format(new Date(System.currentTimeMillis()+1L)),response, ADVICE_TO_PATIENT});
+                data.add(new String[]{Instant.now().plusMillis(1).toString(),response, ADVICE_TO_PATIENT});
                 responseLabel.setText(response);
                 if (isSchedule.get()) {
                     button1.setDisable(false);
                     button3.setDisable(false);
                 }
                 // take the time of downloading the data
-                downloadTimestamp = new Date();
             } else {
                 // if there is no utimate advice to be given as a result of
                 // this question recursively execute the subsequent question(s)
@@ -459,19 +455,24 @@ public class Questionnaire extends Device {
     }
 
     /**
-     * Gets a csv representation of the data
+     * Gets a DevicedataDO containing the payload
+
      *
-     * @return csv string of each value set of data points
+     * @return DevicedataDO containing the payload
      */
     @Override
-    public String getData() {
+    public DeviceDataDO getData() {
+        DeviceDataDO payload = new DeviceDataDO(UUID.randomUUID().toString());
         StringBuilder sb = new StringBuilder();
         //Add MetaData
         sb.append("metadata->persist->medipiversion->").append(medipi.getVersion()).append("\n");
         sb.append("metadata->persist->questionnaireversion->").append(titleName).append("\n");
-        sb.append("metadata->timedownloaded->").append(Utilities.ISO8601FORMATDATEMILLI.format(downloadTimestamp)).append("\n");
         sb.append("metadata->subtype->").append(getName()).append("\n");
         sb.append("metadata->datadelimiter->").append(medipi.getDataSeparator()).append("\n");
+        if (scheduler!=null) {
+            sb.append("metadata->scheduleeffectivedate->").append(Utilities.ISO8601FORMATDATEMILLI_UTC.format(scheduler.getCurrentScheduledEventTime())).append("\n");
+            sb.append("metadata->scheduleexpirydate->").append(Utilities.ISO8601FORMATDATEMILLI_UTC.format(scheduler.getNextScheduledEventTime())).append("\n");
+        }
         sb.append("metadata->columns->")
                 .append("iso8601time").append(medipi.getDataSeparator())
                 .append("question").append(medipi.getDataSeparator())
@@ -480,6 +481,10 @@ public class Questionnaire extends Device {
                 .append("DATE").append(medipi.getDataSeparator())
                 .append("STRING").append(medipi.getDataSeparator())
                 .append("STRING").append("\n");
+        sb.append("metadata->units->")
+                .append("NONE").append(medipi.getDataSeparator())
+                .append("NONE").append(medipi.getDataSeparator())
+                .append("NONE").append("\n");
         // Add Downloaded data
         for (String[] s : data) {
             sb.append(s[0]);
@@ -489,7 +494,9 @@ public class Questionnaire extends Device {
             sb.append(s[2]);
             sb.append("\n");
         }
-        return sb.toString();
+        payload.setProfileId(PROFILEID);
+        payload.setPayload(sb.toString());
+        return payload;
     }
 
     @Override

@@ -24,8 +24,6 @@ import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
-
-import javafx.event.ActionEvent;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
@@ -34,7 +32,6 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.TilePane;
 import javafx.scene.layout.VBox;
-
 import org.medipi.MediPiProperties;
 
 /**
@@ -105,7 +102,7 @@ public class Keypad implements AuthenticationInterface {
                     l.setText("*");
                 }
             });
-            numBut.setOnAction((ActionEvent t) -> {
+            numBut.setOnMouseClicked((MouseEvent t) -> {
                 try {
                     int num = Integer.parseInt(numBut.getText());
                     passDigits[currentInputDigit] = num;
@@ -122,7 +119,6 @@ public class Keypad implements AuthenticationInterface {
                     }
 
                 }
-                System.out.println(numBut.getText());
             });
             keypad.add(numBut, x, y);
             if (x < 2) {
@@ -178,6 +174,8 @@ public class Keypad implements AuthenticationInterface {
                 Enumeration<String> aliases = keyStore.aliases();
                 // the keystore will only ever contain one key -so take the 1st one
                 System.setProperty("medipi.patient.cert.name", aliases.nextElement());
+                // Not sure if this is kosher and may changing in the future but store password in a system property in order that the message can later be signed
+                System.setProperty("medipi.patient.cert.password", new String(pass));
             }
         } catch (KeyStoreException | IOException | NoSuchAlgorithmException | CertificateException e) {
             System.err.println(e.toString());

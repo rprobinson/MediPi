@@ -15,7 +15,6 @@
  */
 package org.medipi.devices.drivers;
 
-import java.util.Date;
 
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
@@ -170,10 +169,8 @@ public class BeurerBM55 extends BloodPressure {
 			protected void succeeded() {
 				super.succeeded();
 				if(getValue().equals("SUCCESS")) {
-					// take the time of downloading the data
-					downloadTimestamp = new Date();
 				} else {
-					MediPiMessageBox.getInstance().makeErrorMessage(getValue(), null, Thread.currentThread());
+					MediPiMessageBox.getInstance().makeErrorMessage(getValue(), null);
 				}
 			}
 
@@ -185,13 +182,13 @@ public class BeurerBM55 extends BloodPressure {
 			@Override
 			protected void failed() {
 				super.failed();
-				MediPiMessageBox.getInstance().makeErrorMessage(getValue(), null, Thread.currentThread());
+				MediPiMessageBox.getInstance().makeErrorMessage(getValue(), null);
 			}
 
 			@Override
 			protected void cancelled() {
 				super.failed();
-				MediPiMessageBox.getInstance().makeErrorMessage(getValue(), null, Thread.currentThread());
+				MediPiMessageBox.getInstance().makeErrorMessage(getValue(), null);
 			}
 		};
 

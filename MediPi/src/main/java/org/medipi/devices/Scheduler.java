@@ -27,10 +27,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.ParseException;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.UUID;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -68,7 +69,7 @@ import javafx.scene.paint.Color;
 import org.medipi.utilities.ConfigurationStringTokeniser;
 import org.medipi.DashboardTile;
 import org.medipi.MediPi;
-import org.medipi.MediPiProperties;
+import org.medipi.model.DeviceDataDO;
 import org.medipi.utilities.Utilities;
 
 /**
@@ -133,7 +134,8 @@ public class Scheduler extends Device {
     private final BooleanProperty hasData = new SimpleBooleanProperty(false);
 
     private ObservableList<Schedule> items;
-    private Date nextScheduledEventTime = new Date(0L);
+    private Instant currentScheduledEventTime = Instant.EPOCH;
+    private Instant nextScheduledEventTime = Instant.EPOCH;
     private int missedReadings = 0;
     private final BooleanProperty alertBooleanProperty = new SimpleBooleanProperty(false);
 
@@ -286,12 +288,24 @@ public class Scheduler extends Device {
         window.setCenter(schedulerWindow);
         setButton2(left);
         refreshSchedule();
-        // refresh the schedule every time the Schedule window is called
+        //set the scheduler on all devices(elements)
+        // This relies on the fact that the scheduler is called AFTER all the measurement devices
+        for (String s : lastSchedule.getDeviceSched()) {
+            Element e = medipi.getElement(s);
+            if (e != null) {
+                // set this Schedule in each of the devices to be run for callbacks
+                e.setScheduler(this);
+            }
+        }
+        setScheduler(this);
+
+        // refresh the schedule every time the Scheduler window is called
         window.visibleProperty().addListener((ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) -> {
             if (newValue) {
                 refreshSchedule();
             }
         });
+
         // Start the scheduler timer. This wakes up every definable period (default set to 10s) 
         // and refreshes the schedule to see if the scheduler is up to date
         try {
@@ -304,7 +318,7 @@ public class Scheduler extends Device {
             // This means that any scheduled activity will be up to x seconds late where x= the pollscheduletimer from the mediPi properties
             ScheduledThreadPoolExecutor timer = new ScheduledThreadPoolExecutor(TIMER_THREAD_POOL_SIZE);
             timer.scheduleWithFixedDelay(() -> {
-                if (nextScheduledEventTime.before(new Date()) && lastSchedule != null) {
+                if (nextScheduledEventTime.isBefore(Instant.now()) && lastSchedule != null) {
                     if (!alertBooleanProperty.get()) {
                         alertBooleanProperty.set(true);
                         refreshSchedule();
@@ -329,6 +343,26 @@ public class Scheduler extends Device {
 
         // successful initiation of the this class results in a null return
         return null;
+    }
+
+    /**
+     * Method to return the time at which the current schedule started
+     *
+     * @return Date representation of the time at which the current schedule
+     * started
+     */
+    public Instant getCurrentScheduledEventTime() {
+        return currentScheduledEventTime;
+    }
+
+    /**
+     * Method to return the time at which the next schedule will start
+     *
+     * @return Date representation of the time at which the next schedule will
+     * start
+     */
+    public Instant getNextScheduledEventTime() {
+        return nextScheduledEventTime;
     }
 
     @Override
@@ -428,7 +462,7 @@ public class Scheduler extends Device {
                     lastTransmittedLabel,
                     transmitted,
                     new Separator(Orientation.HORIZONTAL),
-                    getLabel("Next Scheduled Event: " + Utilities.DISPLAY_SCHEDULE_FORMAT.format(nextScheduledEventTime), "schedule-text"),
+                    getLabel("Next Scheduled Event: " + Utilities.DISPLAY_SCHEDULE_FORMAT_LOCALTIME.format(nextScheduledEventTime), "schedule-text"),
                     scheduled,
                     new Separator(Orientation.HORIZONTAL)
             );
@@ -490,7 +524,11 @@ public class Scheduler extends Device {
      */
     protected void refreshSchedule() {
         if (medipi.getDebugMode() == MediPi.DEBUG) {
-            System.out.println("Schedule file changed @" + new Date());
+            System.out.println("Schedule file changed @" + Instant.now().toString());
+        }
+        // Dont update schedule if part way through recording a Scheduled event
+        if (isSchedule.getValue()) {
+            return;
         }
         //If scheduler file has changed or it's the first time this loop has executed load everything
         //clear the table
@@ -502,8 +540,8 @@ public class Scheduler extends Device {
         try (InputStream is = Files.newInputStream(Paths.get(schedulerFile));
                 BufferedReader br = new BufferedReader(new InputStreamReader(is))) {
             String line = null;
-            Date latestSchedDate = new Date(0L);
-            Date latestTransDate = new Date(0L);
+            Instant latestSchedDate = Instant.EPOCH;
+            Instant latestTransDate = Instant.EPOCH;
             while ((line = br.readLine()) != null) {
                 if (line.trim().startsWith("#")) {
                     continue;
@@ -519,7 +557,7 @@ public class Scheduler extends Device {
                 String status = st.nextToken().toUpperCase();
                 //schedule time
                 String d = st.nextToken();
-                Date time = Utilities.ISO8601FORMATDATESECONDS.parse(d);
+                Instant time = Instant.parse(d);
 
                 //repeat time in mins
                 int repeat = Integer.parseInt(st.nextToken());
@@ -530,12 +568,12 @@ public class Scheduler extends Device {
                     deviceList.add(s);
                 }
                 // find the latest scheduled time and save the data
-                if (time.after(latestSchedDate) && status.equals(SCHEDULED)) {
+                if (time.isAfter(latestSchedDate) && status.equals(SCHEDULED)) {
                     latestSchedDate = time;
                     latestSched = new Schedule(uuid, status, time, repeat, deviceList);
                 }
                 // find the latest transmitted time and save the data
-                if (time.after(latestTransDate) && status.equals(TRANSMITTED)) {
+                if (time.isAfter(latestTransDate) && status.equals(TRANSMITTED)) {
                     latestTransDate = time;
                     latestTrans = new Schedule(uuid, status, time, repeat, deviceList);
                 }
@@ -543,7 +581,7 @@ public class Scheduler extends Device {
                 items.add(new Schedule(uuid, status, time, repeat, deviceList));
             }
             //Empty schedule file or no entries with type SCHEDULED or latest date in the future
-            if (latestSched == null || latestSchedDate.after(new Date())) {
+            if (latestSched == null || latestSchedDate.isAfter(Instant.now())) {
                 Platform.runLater(() -> {
                     scheduleStatus.setText("Loading the schedule file has encountered problems. It is empty, contains no scheduled events or corrupt");
                     left.setDisable(true);
@@ -551,15 +589,15 @@ public class Scheduler extends Device {
             } else {
                 lastSchedule = latestSched;
                 //check to see if the latest entry is valid
-                Date lastTime = new Date(lastSchedule.getTime());
+                Instant lastTime = Instant.ofEpochMilli(lastSchedule.getTime());
                 left.setDisable(false);
                 // find next scheduled measurements
-                nextScheduledEventTime = findNextSchedule(lastSchedule, latestTrans);
+                findNextSchedule(lastSchedule, latestTrans);
                 // No missed readings = due to be run now
                 if (missedReadings == 0) {
                     alertBooleanProperty.set(false);
                     Platform.runLater(() -> {
-                        scheduleStatus.setText("You are up to date with your scheduled measurements. The next scheduled measurement is due at " + Utilities.DISPLAY_SCHEDULE_FORMAT.format(nextScheduledEventTime) + ". If you would like to perform measurements now press the run measurements now button");
+                        scheduleStatus.setText("You are up to date with your scheduled measurements. The next scheduled measurement is due at " + Utilities.DISPLAY_SCHEDULE_FORMAT_LOCALTIME.format(nextScheduledEventTime) + ". If you would like to perform measurements now press the run measurements now button");
                     });
                 } else {
                     // more than 1 missed reading
@@ -567,7 +605,7 @@ public class Scheduler extends Device {
                     Platform.runLater(new Runnable() {
                         @Override
                         public void run() {
-                            scheduleStatus.setText("You have missed " + missedReadings + " scheduled measurements. The next scheduled measurement is due at " + Utilities.DISPLAY_SCHEDULE_FORMAT.format(nextScheduledEventTime) + ". If you would like to perform measurements now press the run measurements now button");
+                            scheduleStatus.setText("You have missed " + missedReadings + " scheduled measurements. The next scheduled measurement is due at " + Utilities.DISPLAY_SCHEDULE_FORMAT_LOCALTIME.format(nextScheduledEventTime) + ". If you would like to perform measurements now press the run measurements now button");
                         }
                     });
                 }
@@ -586,31 +624,31 @@ public class Scheduler extends Device {
     }
 
     // Method to find the time the next schedule should start based upon the last recorded SCHEDULED line in .scheduler
-    private Date findNextSchedule(Schedule latestSched, Schedule latestTrans) throws Exception {
-        Date transTime;
+    private void findNextSchedule(Schedule latestSched, Schedule latestTrans) throws Exception {
+        Instant transTime;
         //if there is no transmitter time previously recorded then set as Epoch time
         if (latestTrans == null) {
-            transTime = new Date(0L);
+            transTime = Instant.EPOCH;
         } else {
-            transTime = new Date(latestTrans.getTime());
+            transTime = Instant.ofEpochMilli(latestTrans.getTime());
         }
-        Date schedTime = new Date(latestSched.getTime());
+        Instant schedTime = Instant.ofEpochMilli(latestSched.getTime());
         int repeat = latestSched.getRepeat();
-        Calendar schedCal = Calendar.getInstance();
-        schedCal.setTime(schedTime);
+        Instant schedCal = schedTime.plus(repeat, ChronoUnit.MINUTES);
         //knowing that the time is in the past get next scheduled time before we test if it has been missed
-        schedCal.add(Calendar.MINUTE, repeat);
         missedReadings = 0;
         while (true) {
-            if (schedCal.getTime().after(new Date())) {
+            if (schedCal.isAfter(Instant.now())) {
+                nextScheduledEventTime = schedCal;
+                schedCal = schedCal.minus(repeat, ChronoUnit.MINUTES);
+                currentScheduledEventTime = schedCal;
                 break;
             }
-            if (transTime.before(schedCal.getTime())) {
+            if (transTime.isBefore(schedCal)) {
                 missedReadings++;
             }
-            schedCal.add(Calendar.MINUTE, repeat);
+            schedCal = schedCal.plus(repeat, ChronoUnit.MINUTES);
         }
-        return schedCal.getTime();
     }
 
     // Method to execute the chain of elements in a schedule. A new STARTED line
@@ -621,17 +659,15 @@ public class Scheduler extends Device {
             //encapsulate all the scheduler within a try catch so that the running scheduler boolean cannot get out of sync
             try {
                 if (medipi.getDebugMode() == MediPi.DEBUG) {
-                    System.out.println("Scheduled event @" + nextScheduledEventTime + " - now!" + new Date());
+                    System.out.println("Scheduled event @" + nextScheduledEventTime + " - now!" + Instant.now());
                 }
                 //Record the start of the run
                 nextUUID = UUID.randomUUID();
-                Schedule started = new Schedule(nextUUID, "STARTED", new Date(), lastSchedule.getRepeat(), lastSchedule.getDeviceSched());
+                Schedule started = new Schedule(nextUUID, "STARTED", Instant.now(), lastSchedule.getRepeat(), lastSchedule.getDeviceSched());
                 deviceData.add(started);
                 // Reset all the devices to be taken
                 for (String s : lastSchedule.getDeviceSched()) {
                     Element e = medipi.getElement(s);
-                    // set this Schedule in each of the devices to be run for callbacks
-                    e.setScheduler(this);
                     if (Device.class.isAssignableFrom(e.getClass())) {
                         Device d = (Device) e;
                         d.resetDevice();
@@ -664,8 +700,7 @@ public class Scheduler extends Device {
                 output.append(" ");
                 output.append(sched.getEventTypeDisp());
                 output.append(" ");
-                Date time = new Date(sched.getTime());
-                output.append(Utilities.ISO8601FORMATDATESECONDS.format(time));
+                output.append(Instant.ofEpochMilli(sched.getTime()).toString());
                 output.append(" ");
                 output.append(sched.getRepeatDisp());
                 output.append(" ");
@@ -700,14 +735,16 @@ public class Scheduler extends Device {
     }
 
     @Override
-    public String getData() {
+    public DeviceDataDO getData() {
+        DeviceDataDO payload = new DeviceDataDO(UUID.randomUUID().toString());
         String separator = medipi.getDataSeparator();
         StringBuilder sb = new StringBuilder();
         //Add MetaData
         sb.append("metadata->persist->medipiversion->").append(medipi.getVersion()).append("\n");
-        sb.append("metadata->timedownloaded->").append(Utilities.ISO8601FORMATDATEMILLI.format(new Date())).append("\n");
         sb.append("metadata->subtype->").append(getName()).append("\n");
         sb.append("metadata->datadelimiter->").append(medipi.getDataSeparator()).append("\n");
+        sb.append("metadata->scheduleeffectivedate->").append(Utilities.ISO8601FORMATDATEMILLI_UTC.format(scheduler.getCurrentScheduledEventTime())).append("\n");
+        sb.append("metadata->scheduleexpirydate->").append(Utilities.ISO8601FORMATDATEMILLI_UTC.format(scheduler.getNextScheduledEventTime())).append("\n");
         sb.append("metadata->columns->")
                 .append("iso8601time").append(medipi.getDataSeparator())
                 .append("id").append(medipi.getDataSeparator())
@@ -720,9 +757,14 @@ public class Scheduler extends Device {
                 .append("STRING").append(medipi.getDataSeparator())
                 .append("INTEGER").append(medipi.getDataSeparator())
                 .append("STRING").append("\n");
+        sb.append("metadata->units->")
+                .append("NONE").append(medipi.getDataSeparator())
+                .append("NONE").append(medipi.getDataSeparator())
+                .append("NONE").append(medipi.getDataSeparator())
+                .append("NONE").append(medipi.getDataSeparator())
+                .append("NONE").append("\n");
         for (Schedule sched : deviceData) {
-            Date time = new Date(sched.getTime());
-            sb.append(Utilities.ISO8601FORMATDATESECONDS.format(time));
+            sb.append(Instant.ofEpochMilli(sched.getTime()).toString());
             sb.append(separator);
             sb.append(sched.getUUIDDisp());
             sb.append(separator);
@@ -733,19 +775,21 @@ public class Scheduler extends Device {
             sb.append(sched.getDeviceSchedDisp());
             sb.append("\n");
         }
-        return sb.toString();
+        payload.setProfileId(PROFILEID);
+        payload.setPayload(sb.toString());
+        return payload;
     }
 
     @Override
     public void resetDevice() {
-        refreshSchedule();
         nextUUID = null;
         lastSchedule = null;
         items.clear();
+        refreshSchedule();
     }
 
     // method to add new .scheduler lines ready to be written to the .scheduler file
-    void addScheduleData(String type, Date date, ArrayList<String> devices) {
+    void addScheduleData(String type, Instant date, ArrayList<String> devices) {
         Schedule newSched = new Schedule(nextUUID, type, date, 0, devices);
         deviceData.add(newSched);
         if (type.equals(TRANSMITTED)) {

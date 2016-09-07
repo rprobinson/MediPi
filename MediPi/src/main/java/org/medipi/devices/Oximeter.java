@@ -18,9 +18,11 @@ package org.medipi.devices;
 import extfx.scene.chart.DateAxis;
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.text.ParseException;
+import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.UUID;
 import java.util.regex.Pattern;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
@@ -46,6 +48,7 @@ import javafx.util.converter.DateStringConverter;
 import org.medipi.DashboardTile;
 import org.medipi.MediPi;
 import org.medipi.MediPiMessageBox;
+import org.medipi.model.DeviceDataDO;
 import org.medipi.utilities.Utilities;
 
 /**
@@ -116,9 +119,10 @@ public abstract class Oximeter extends Device {
     private Label startTimeTF;
     private Label endTimeTF;
     private VBox resultsVBox;
+    private Instant endTime;
 
     private Node dataBox;
-    private Date downloadTimestamp = null;
+    private boolean transmitAverages = true;
 
     /**
      * This is the data separator from the MediPi.properties file
@@ -164,6 +168,14 @@ public abstract class Oximeter extends Device {
         oxiWindow.setSpacing(5);
         oxiWindow.setMinSize(800, 350);
         oxiWindow.setMaxSize(800, 350);
+        // Decide whether to transmit the full set of streamed data points or just the averages
+        String b = medipi.getProperties().getProperty(MediPi.ELEMENTNAMESPACESTEM + uniqueDeviceName + ".data.transmitaverages");
+        if (b == null || b.trim().length() == 0) {
+            transmitAverages = true;
+        } else {
+            // If not set then  start in basic view mode
+            transmitAverages = !b.toLowerCase().startsWith("n");
+        }
 
         //Decide whether to show basic or advanced view
         if (medipi.isBasicDataView()) {
@@ -173,8 +185,7 @@ public abstract class Oximeter extends Device {
             //creating the chart
             yAxis = new NumberAxis(0, 120, 10);
             xAxis = new DateAxis();
-            Date d = new Date();
-            StringConverter sc = new DateStringConverter(Utilities.DISPLAY_OXIMETER_TIME_FORMAT);
+            StringConverter sc = new DateStringConverter(Utilities.DISPLAY_OXIMETER_TIME_FORMAT_DATE);
             xAxis.setTickLabelFormatter(sc);
             xAxis.setLabel("Time");
             lineChart = new LineChart<>(xAxis, yAxis);
@@ -311,7 +322,6 @@ public abstract class Oximeter extends Device {
     public void resetDevice() {
         deviceData = new ArrayList<>();
         hasData.set(false);
-        downloadTimestamp = null;
         if (!medipi.isBasicDataView()) {
             lineChart.getData().removeAll(pulseSeries, spO2Series, waveFormSeries);
             pulseSeries = new XYChart.Series();
@@ -334,6 +344,7 @@ public abstract class Oximeter extends Device {
         maxSpO2 = 0;
         minSpO2 = 100;
         meanSpO2 = 0;
+        endTime = null;
         maxPulseTF.setText("-");
         maxSpO2TF.setText("-");
         minPulseTF.setText("-");
@@ -373,7 +384,8 @@ public abstract class Oximeter extends Device {
                             } else {
                                 updateValue("INPROGRESS");
                                 String[] line = readData.split(Pattern.quote(separator));
-                                final Date timestamp = Utilities.ISO8601FORMATDATEMILLI.parse(line[0]);
+                                ZonedDateTime zdt = ZonedDateTime.parse(line[0], Utilities.ISO8601FORMATDATEMILLI_UTC);
+                                final Instant timestamp = zdt.toInstant();
                                 final int pulse = Integer.parseInt(line[1]);
                                 final int spO2 = Integer.parseInt(line[2]);
                                 final int wave = Integer.parseInt(line[3]);
@@ -403,11 +415,9 @@ public abstract class Oximeter extends Device {
                 if (getValue().equals("INPROGRESS")) {
                     if (!deviceData.isEmpty()) {
                         hasData.set(true);
-                        // take the time of downloading the data
-                        downloadTimestamp = new Date();
                     }
                 } else {
-                    MediPiMessageBox.getInstance().makeErrorMessage(getValue(), null, Thread.currentThread());
+                    MediPiMessageBox.getInstance().makeErrorMessage(getValue(), null);
                 }
 
             }
@@ -420,7 +430,7 @@ public abstract class Oximeter extends Device {
             @Override
             protected void failed() {
                 super.failed();
-                MediPiMessageBox.getInstance().makeErrorMessage(getValue(), null, Thread.currentThread());
+                MediPiMessageBox.getInstance().makeErrorMessage(getValue(), null);
             }
 
             @Override
@@ -430,11 +440,9 @@ public abstract class Oximeter extends Device {
                 if (getValue().equals("INPROGRESS")) {
                     if (!deviceData.isEmpty()) {
                         hasData.set(true);
-                        // take the time of downloading the data
-                        downloadTimestamp = new Date();
                     }
                 } else {
-                    MediPiMessageBox.getInstance().makeErrorMessage(getValue(), null, Thread.currentThread());
+                    MediPiMessageBox.getInstance().makeErrorMessage(getValue(), null);
                 }
             }
         };
@@ -471,41 +479,73 @@ public abstract class Oximeter extends Device {
     }
 
     /**
-     * Gets a csv representation of the data
+     * Gets a DeviceDO representation of the data
      *
-     * @return csv string of each value set of data points
+     * @return DevicedataDO containing the payload
      */
     @Override
-    public String getData() {
+    public DeviceDataDO getData() {
+        DeviceDataDO payload = new DeviceDataDO(UUID.randomUUID().toString());
         StringBuilder sb = new StringBuilder();
 
         //Add MetaData
         sb.append("metadata->persist->medipiversion->").append(medipi.getVersion()).append("\n");
-        sb.append("metadata->timedownloaded->").append(Utilities.ISO8601FORMATDATEMILLI.format(downloadTimestamp)).append("\n");
         sb.append("metadata->subtype->").append(getName()).append("\n");
         sb.append("metadata->datadelimiter->").append(medipi.getDataSeparator()).append("\n");
-        sb.append("metadata->columns->")
-                .append("iso8601time").append(medipi.getDataSeparator())
-                .append("pulse").append(medipi.getDataSeparator())
-                .append("spo2").append(medipi.getDataSeparator())
-                .append("wave").append("\n");
-        sb.append("metadata->format->")
-                .append("DATE").append(medipi.getDataSeparator())
-                .append("INTEGER").append(medipi.getDataSeparator())
-                .append("INTEGER").append(medipi.getDataSeparator())
-                .append("DOUBLE").append("\n");
-        // Add Downloaded data
-        for (String[] s : deviceData) {
-            sb.append(s[0]);
-            sb.append(separator);
-            sb.append(s[1]);
-            sb.append(separator);
-            sb.append(s[2]);
-            sb.append(separator);
-            sb.append(s[3]);
-            sb.append("\n");
+        if (scheduler != null) {
+            sb.append("metadata->scheduleeffectivedate->").append(Utilities.ISO8601FORMATDATEMILLI_UTC.format(scheduler.getCurrentScheduledEventTime())).append("\n");
+            sb.append("metadata->scheduleexpirydate->").append(Utilities.ISO8601FORMATDATEMILLI_UTC.format(scheduler.getNextScheduledEventTime())).append("\n");
         }
-        return sb.toString();
+        // Add Downloaded data
+        if (transmitAverages) {
+            sb.append("metadata->columns->")
+                    .append("iso8601time").append(medipi.getDataSeparator())
+                    .append("pulse").append(medipi.getDataSeparator())
+                    .append("spo2").append("\n");
+            sb.append("metadata->format->")
+                    .append("DATE").append(medipi.getDataSeparator())
+                    .append("INTEGER").append(medipi.getDataSeparator())
+                    .append("INTEGER").append("\n");
+            sb.append("metadata->units->")
+                    .append("NONE").append(medipi.getDataSeparator())
+                    .append("BPM").append(medipi.getDataSeparator())
+                    .append("%").append("\n");
+            sb.append(Utilities.ISO8601FORMATDATEMILLI_UTC.format(endTime));
+            sb.append(separator);
+            sb.append(meanPulse);
+            sb.append(separator);
+            sb.append(meanSpO2);
+            sb.append("\n");
+        } else {
+            sb.append("metadata->columns->")
+                    .append("iso8601time").append(medipi.getDataSeparator())
+                    .append("pulse").append(medipi.getDataSeparator())
+                    .append("spo2").append(medipi.getDataSeparator())
+                    .append("wave").append("\n");
+            sb.append("metadata->format->")
+                    .append("DATE").append(medipi.getDataSeparator())
+                    .append("INTEGER").append(medipi.getDataSeparator())
+                    .append("INTEGER").append(medipi.getDataSeparator())
+                    .append("DOUBLE").append("\n");
+            sb.append("metadata->units->")
+                    .append("").append(medipi.getDataSeparator())
+                    .append("BPM").append(medipi.getDataSeparator())
+                    .append("%").append(medipi.getDataSeparator())
+                    .append("").append("\n");
+            for (String[] s : deviceData) {
+                sb.append(s[0]);
+                sb.append(separator);
+                sb.append(s[1]);
+                sb.append(separator);
+                sb.append(s[2]);
+                sb.append(separator);
+                sb.append(s[3]);
+                sb.append("\n");
+            }
+        }
+        payload.setProfileId(PROFILEID);
+        payload.setPayload(sb.toString());
+        return payload;
     }
 
     /**
@@ -516,18 +556,19 @@ public abstract class Oximeter extends Device {
      * @param spO2 in %
      * @param waveForm
      */
-    public void addDataPoint(Date time, int pulseRate, int spO2, int waveForm) {
+    public void addDataPoint(Instant time, int pulseRate, int spO2, int waveForm) {
 
         if (startTimeTF.getText().equals("-")) {
-            startTimeTF.setText(Utilities.DISPLAY_FORMAT.format(time));
+            startTimeTF.setText(Utilities.DISPLAY_FORMAT_LOCALTIME.format(time));
         }
-        endTimeTF.setText(Utilities.DISPLAY_FORMAT.format(time));
+        endTimeTF.setText(Utilities.DISPLAY_FORMAT_LOCALTIME.format(time));
+        endTime = time;
         if (!medipi.isBasicDataView()) {
-            XYChart.Data<Date, Number> pulseXYData = new XYChart.Data<>(time, pulseRate);
+            XYChart.Data<Date, Number> pulseXYData = new XYChart.Data<>(Date.from(time), pulseRate);
             pulseSeries.getData().add(pulseXYData);
-            XYChart.Data<Date, Number> spO2XYData = new XYChart.Data<>(time, spO2);
+            XYChart.Data<Date, Number> spO2XYData = new XYChart.Data<>(Date.from(time), spO2);
             spO2Series.getData().add(spO2XYData);
-            XYChart.Data<Date, Number> waveFormXYData = new XYChart.Data<>(time, waveForm);
+            XYChart.Data<Date, Number> waveFormXYData = new XYChart.Data<>(Date.from(time), waveForm);
             waveFormSeries.getData().add(waveFormXYData);
         }
         if (pulseRate != 0) {

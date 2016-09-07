@@ -15,30 +15,28 @@
  */
 package org.medipi;
 
+import java.util.HashMap;
 import javafx.application.Platform;
-import jfx.messagebox.MessageBox;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.Label;
+import javafx.util.Callback;
 import org.medipi.logging.MediPiLogger;
 
 /**
- * Singleton Class to deliver alert messages to MediPi This class is intended to
- * be phased out in favour of alerting the user using a window integrated within
- * the application window.
+ * Singleton Class to deliver alert messages to MediPi
  *
- * This class uses the JFXMessageBox library - licensed under a LGPL/EPL/ASL
- * triple license, allowing use of the files under the terms of any one of the
- * GNU Lesser General Public License, the Eclipse Public License, or the Apache
- * License.
- *
- * However since this was developed Medipi now uses the OpenJFX which supports
- * alert boxes natively so an intermediate solution may be to introduce this.
- * 
- * These message box only display errors
+ * The alert class keeps track of any messages which are currently open (i.e.
+ * not closed down and will not attempt to add any further alerts of the same
+ * type to prevent multiple messages if a connection goes down
  *
  * @author rick@robinsonhq.com
  */
 public class MediPiMessageBox {
 
     private MediPi medipi;
+    private HashMap<String, Alert> liveMessages = new HashMap<>();
 
     private MediPiMessageBox() {
     }
@@ -62,60 +60,65 @@ public class MediPiMessageBox {
     }
 
     /**
-     * Method for displaying an error messagebox to the screen. As it takes a
-     * thread argument this displays messages from either the current thread or
-     * the display thread
+     * Method for displaying an error messagebox to the screen. 
      *
      * @param message String message
      * @param except exception which this message arose from - null if not
      * applicable
-     * @param thisThread Thread from which the message was created
      */
-    public void makeErrorMessage(String message, Exception except, Thread thisThread) {
+    public void makeErrorMessage(String message, Exception except) {
         try {
+            String uniqueString;
+            if (except == null) {
+                uniqueString = message;
+            } else {
+                uniqueString = message + except.getMessage();
+            }
             String debugString = getDebugString(except);
+
             MediPiLogger.getInstance().log(MediPiMessageBox.class.getName() + ".makeErrorMessage", "MediPi informed the user that: " + message + " " + except);
             if (medipi.getDebugMode() == MediPi.DEBUG) {
                 if (except != null) {
                     except.printStackTrace();
                 }
             }
+
             if (medipi.getDebugMode() == MediPi.ERRORSUPPRESSING) {
                 System.out.println("Error - " + message + debugString);
-            } else if (thisThread != Thread.currentThread()) {
-                Platform.runLater(() -> {
-                    MessageBox.show(medipi.getStage(),
-                            "Error - " + message + debugString,
-                            "Error dialog",
-                            MessageBox.ICON_ERROR | MessageBox.OK);
-                });
+            } else if (Platform.isFxApplicationThread()) {
+                AlertBox ab = new AlertBox();
+                ab.showAlertBox(uniqueString, message, debugString, liveMessages);
             } else {
-                MessageBox.show(medipi.getStage(),
-                        "Error - " + message + debugString,
-                        "Error dialog",
-                        MessageBox.ICON_ERROR | MessageBox.OK);
+                Platform.runLater(() -> {
+                    AlertBox ab = new AlertBox();
+                    ab.showAlertBox(uniqueString, message, debugString, liveMessages);
+                });
             }
         } catch (Exception ex) {
             medipi.makeFatalErrorMessage("Fatal Error - Unable to display error message", ex);
         }
     }
-    public void makeMessage(String message, Thread thisThread) {
+
+    /**
+     * Method to make a general information message
+     * @param message String representation of the message to be displayed
+     */
+    public void makeMessage(String message) {
         try {
+            String uniqueString = message;
+
             MediPiLogger.getInstance().log(MediPiMessageBox.class.getName() + ".makeMessage", "MediPi informed the user that: " + message);
             if (medipi.getDebugMode() == MediPi.ERRORSUPPRESSING) {
                 System.out.println("Message - " + message);
-            } else if (thisThread != Thread.currentThread()) {
-                Platform.runLater(() -> {
-                    MessageBox.show(medipi.getStage(),
-                            "Message - " + message,
-                            "Message dialog",
-                            MessageBox.ICON_INFORMATION | MessageBox.OK);
-                });
+            } else if (Platform.isFxApplicationThread()) {
+                AlertBox ab = new AlertBox();
+                ab.showMessageBox(uniqueString, message, liveMessages);
             } else {
-                    MessageBox.show(medipi.getStage(),
-                            "Message - " + message,
-                            "Message dialog",
-                            MessageBox.ICON_INFORMATION | MessageBox.OK);            }
+                Platform.runLater(() -> {
+                    AlertBox ab = new AlertBox();
+                    ab.showMessageBox(uniqueString, message, liveMessages);
+                });
+            }
         } catch (Exception ex) {
             medipi.makeFatalErrorMessage("Fatal Error - Unable to display error message", ex);
         }
@@ -136,5 +139,55 @@ public class MediPiMessageBox {
     private static class MediPiHolder {
 
         private static final MediPiMessageBox INSTANCE = new MediPiMessageBox();
+    }
+}
+
+class AlertBox {
+
+    public void showAlertBox(String uniqueString, String message, String debugString, HashMap<String, Alert> liveMessages) {
+        Alert a = liveMessages.get(uniqueString);
+        if (a == null) {
+            a = new Alert(AlertType.WARNING);
+            a.setTitle("Error dialog");
+            a.setContentText("Error - " + message + debugString);
+            a.getDialogPane().getChildren().stream().filter(node -> node instanceof Label)
+                    .forEach(node -> ((Label) node).setPrefHeight(200));
+            liveMessages.put(uniqueString, a);
+            a.setResultConverter(new Callback<ButtonType, ButtonType>() {
+                @Override
+                public ButtonType call(ButtonType param) {
+                    if (param == ButtonType.OK) {
+                        liveMessages.remove(uniqueString);
+                    }
+                    return null;
+                }
+
+            });
+            a.showAndWait();
+        } else {
+        }
+    }
+
+    public void showMessageBox(String uniqueString, String message, HashMap<String, Alert> liveMessages) {
+        Alert a = liveMessages.get(uniqueString);
+        if (a == null) {
+            a = new Alert(AlertType.INFORMATION);
+            a.getDialogPane().getChildren().stream().filter(node -> node instanceof Label).forEach(node -> ((Label) node).setPrefHeight(200));
+            a.setTitle("Message dialog");
+            a.setContentText("Message - " + message);
+            liveMessages.put(uniqueString, a);
+            a.setResultConverter(new Callback<ButtonType, ButtonType>() {
+                @Override
+                public ButtonType call(ButtonType param) {
+                    if (param == ButtonType.OK) {
+                        liveMessages.remove(uniqueString);
+                    }
+                    return null;
+                }
+
+            });
+            a.showAndWait();
+        } else {
+        }
     }
 }
