@@ -22,6 +22,7 @@
     <modules>
         <module>javax-usb</module>
         <module>MediPi</module>
+        <module>Commons/MediPiTransportTools</module>
     </modules>
 
 	<dependencyManagement>
