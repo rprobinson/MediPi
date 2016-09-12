@@ -15,21 +15,31 @@
  */
 package org.medipi;
 
+import org.medipi.authentication.MediPiWindow;
+import org.medipi.devices.Element;
 import java.awt.SplashScreen;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.net.NetworkInterface;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
-import java.text.ParseException;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.Enumeration;
+import java.util.List;
 import java.util.Properties;
-
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
@@ -46,10 +56,9 @@ import javafx.scene.layout.TilePane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
-
-import org.medipi.authentication.MediPiWindow;
 import org.medipi.devices.Device;
-import org.medipi.devices.Element;
+import org.medipi.downloadable.handlers.DownloadableHandlerManager;
+import org.medipi.downloadable.handlers.HardwareHandler;
 import org.medipi.logging.MediPiLogger;
 import org.medipi.utilities.ConfigurationStringTokeniser;
 import org.medipi.utilities.Utilities;
@@ -90,8 +99,8 @@ public class MediPi extends Application {
 
     // MediPi version Number
     private static final String MEDIPINAME = "MediPi Telehealth System";
-    private static final String VERSION = "MediPi_v1.0.7";
-    private static final String VERSIONNAME = "PILOT-20160705-1";
+    private static final String VERSION = "MediPi_v1.0.8";
+    private static final String VERSIONNAME = "PILOT-20160907-1";
 
     // Set the MediPi Log directory
     private static final String LOG = "medipi.log";
@@ -120,6 +129,10 @@ public class MediPi extends Application {
     private static final String CSS = "medipi.css";
     //List of elements e.g. Oximeter,Scales,Blood Pressure, transmitter, messenger etc to be loaded into MediPi
     private static final String ELEMENTS = "medipi.elementclasstokens";
+    // not sure what the best setting for this thread pool is but 3 seems to work - this is for the downloadable timer
+    private static final int TIMER_THREAD_POOL_SIZE = 3;
+
+    private static final String MEDIPIDOWNLOADPOLLPERIOD = "medipi.downloadable.pollperiod";
 
     private Stage primaryStage;
     private final ArrayList<Element> elements = new ArrayList<>();
@@ -136,40 +149,35 @@ public class MediPi extends Application {
     private String versionIdent;
     private String dataSeparator;
     private Properties properties;
+    private MediPiWindow mediPiWindow;
     /**
      * Debug mode governing standard output and error reporting. Debug mode can
      * take one of 3 values: "debug" mode this will report to standard out debug
      * messages. "errorsuppress" mode this will suppress all error messages to
      * the UI, instead outputting to standard out. "none" mode will not report
      * any standard output messages
-     *
      */
     private int debugMode = NONE;
+
+    // Instantiation of the download handler 
+    private DownloadableHandlerManager dhm = new DownloadableHandlerManager();
 
     /**
      * allows access to scene to allow the cursor to be set
      */
     public Scene scene;
     //DEBUG states
-    /**
-     * "NONE" mode will not report any standard output messages
-     */
+    //"NONE" mode will not report any standard output messages
     public static final int NONE = 0;
 
-    /**
-     * "DEBUG" mode this will report to standard out debug messages
-     */
+    //"DEBUG" mode this will report to standard out debug messages
     public static final int DEBUG = 1;
 
-    /**
-     * "ERRORSUPPRESS" mode this will suppress all error messages to the UI,
-     * instead outputting to standard out
-     */
+    // "ERRORSUPPRESS" mode this will suppress all error messages to the UI,
+    // instead outputting to standard out
     public static final int ERRORSUPPRESSING = 2;
 
-    /**
-     * "ELEMENTNAMESPACESTEM" a single variable to contain element stem
-     */
+    // "ELEMENTNAMESPACESTEM" a single variable to contain element stem
     public static final String ELEMENTNAMESPACESTEM = "medipi.element.";
 
     /**
@@ -243,6 +251,26 @@ public class MediPi extends Application {
     }
 
     /**
+     * Method to get the DownloadableHandlerManager in order to set any extra
+     * handlers for any element
+     *
+     * @return DownloadableHandlerManager
+     */
+    public DownloadableHandlerManager getDownloadableHandlerManager() {
+        return dhm;
+    }
+
+    /**
+     * Method to get the MediPiwindow - this is the one which sets whether the
+     * authenticated screen is shown
+     *
+     * @return MediPiWindow
+     */
+    public MediPiWindow getMediPiWindow() {
+        return mediPiWindow;
+    }
+
+    /**
      * Main javaFX start method
      *
      * @param stg Primary Stage for the JavaFX program
@@ -254,7 +282,7 @@ public class MediPi extends Application {
             primaryStage = stg;
 
             // set versioning and print to standard output
-            versionIdent = MEDIPINAME + " " + VERSION + "-" + VERSIONNAME + " starting at " + new Date();
+            versionIdent = MEDIPINAME + " " + VERSION + "-" + VERSIONNAME + " starting at " + Instant.now().toString();
             System.out.println(versionIdent);
 
             // call to the singletons which provide properties and pop-up messages
@@ -270,7 +298,7 @@ public class MediPi extends Application {
             //Set up logging
             String log = properties.getProperty(LOG);
             if (log == null || log.trim().equals("")) {
-                makeFatalErrorMessage(log + " - MediPi log directory is not set", null);
+                makeFatalErrorMessage("MediPi log directory is not set", null);
             } else if (new File(log).isDirectory()) {
                 MediPiLogger.getInstance().setAppName("MEDIPI", log);
                 MediPiLogger.getInstance().log(MediPi.class.getName() + "startup", versionIdent);
@@ -292,47 +320,104 @@ public class MediPi extends Application {
                 debugMode = ERRORSUPPRESSING;
             }
 
-            // find the Device Name
-            /*String ip;
-            try {
-                // try to find the MAC address
-                StringBuilder macAdd = new StringBuilder();
-                Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
-                while (interfaces.hasMoreElements()) {
-                    NetworkInterface iface = interfaces.nextElement();
-                    // filters out 127.0.0.1 and inactive interfaces
-                    if (iface.isLoopback() || !iface.isUp()) {
-                        continue;
-                    }
-                    byte[] mac = iface.getHardwareAddress();
-                    if(mac==null){
-                        continue;
-                    }
-                    System.out.print("Current MAC address : ");
-                    for (int i = 0; i < mac.length; i++) {
-                        macAdd.append(String.format("%02X%s", mac[i], (i < mac.length - 1) ? ":" : ""));
-                    }
-                    System.out.print(macAdd.toString().toLowerCase());
-                }
-                // Using the Mac address unlock the JKS keystore for the device
-                try {
-                    String ksf = MediPiProperties.getInstance().getProperties().getProperty("medipi.device.cert.location");
+            // It has been difficult to access all the Mac address/IP Addresses (whether they 
+            // are up or not) using NetworkInterface on Linux machines. This method does work on Linux
+            // I'm not sure if the alternative method (i.e. the non Linux method) works for all 
+            // other OS MACAddresses/IPs whether they are up or not
+            if (System.getProperty("os.name").equals("Linux")) {
 
-                    KeyStore keyStore = KeyStore.getInstance("jks");
-                    try (FileInputStream fis = new FileInputStream(ksf)) {
-                        //the MAC address used to unlock the JKS must be lowercase
-                        keyStore.load(fis, macAdd.toString().toLowerCase().toCharArray());
-                        // use a system property to save the certicicate name
-                        Enumeration<String> aliases = keyStore.aliases();
-                        // the keystore will only ever contain one key -so take the 1st one
-                        System.setProperty("medipi.device.cert.name", aliases.nextElement());
+                // Read all available device names
+                List<String> devices = new ArrayList<>();
+                Pattern pattern = Pattern.compile("^ *(.*):");
+                try (FileReader reader = new FileReader("/proc/net/dev")) {
+                    BufferedReader in = new BufferedReader(reader);
+                    String line = null;
+                    while ((line = in.readLine()) != null) {
+                        Matcher m = pattern.matcher(line);
+                        if (m.find()) {
+                            devices.add(m.group(1));
+                        }
                     }
-                } catch (KeyStoreException | IOException | NoSuchAlgorithmException | CertificateException e) {
+                } catch (IOException e) {
                     makeFatalErrorMessage("Device certificate is not correct for this device", null);
                 }
 
-            } catch (Exception e) {
-                makeFatalErrorMessage("Can't find Mac Address for the machine, therefore unable to check device certificate", null);
+                String ksf = MediPiProperties.getInstance().getProperties().getProperty("medipi.device.cert.location");
+                // read the hardware address for each device
+                for (String device : devices) {
+                    try (FileReader reader = new FileReader("/sys/class/net/" + device + "/address")) {
+                        BufferedReader in = new BufferedReader(reader);
+                        String addr = in.readLine();
+                        try {
+
+                            KeyStore keyStore = KeyStore.getInstance("jks");
+                            try (FileInputStream fis = new FileInputStream(ksf)) {
+                                //the MAC address used to unlock the JKS must be lowercase
+                                keyStore.load(fis, addr.toCharArray());
+                                // use a system property to save the certicicate name
+                                Enumeration<String> aliases = keyStore.aliases();
+                                // the keystore will only ever contain one key -so take the 1st one
+                                System.setProperty("medipi.device.cert.name", aliases.nextElement());
+                                System.setProperty("medipi.device.macaddress", addr);
+                            }
+                        } catch (KeyStoreException | IOException | NoSuchAlgorithmException | CertificateException e) {
+                        }
+
+                        System.out.println(String.format("%5s: %s", device, addr));
+                    } catch (IOException e) {
+                        makeFatalErrorMessage("Device certificate is not correct for this device", null);
+                    }
+                }
+                if (System.getProperty("medipi.device.cert.name") == null || System.getProperty("medipi.device.macaddress") == null) {
+                    makeFatalErrorMessage("Device certificate is not correct for this device", null);
+                }
+
+            } else {
+                // for all other non Linux OS systems 
+                String ip;
+                try {
+                    // try to find the MAC address
+                    String macAddress = "";
+                    Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
+                    while (interfaces.hasMoreElements()) {
+                        StringBuilder macAdd = new StringBuilder();
+                        NetworkInterface iface = interfaces.nextElement();
+                        // filters out 127.0.0.1 and inactive interfaces
+                        if (iface.isLoopback()) {
+                            continue;
+                        }
+                        byte[] mac = iface.getHardwareAddress();
+                        if (mac == null) {
+                            continue;
+                        }
+                        System.out.print("Current MAC address : ");
+                        for (int i = 0; i < mac.length; i++) {
+                            macAdd.append(String.format("%02X%s", mac[i], (i < mac.length - 1) ? ":" : ""));
+                        }
+                        macAddress = macAdd.toString().toLowerCase();
+                        System.setProperty("medipi.device.macaddress", macAddress);
+                        System.out.print(macAddress);
+                    }
+                    // Using the Mac address unlock the JKS keystore for the device
+                    try {
+                        String ksf = MediPiProperties.getInstance().getProperties().getProperty("medipi.device.cert.location");
+
+                        KeyStore keyStore = KeyStore.getInstance("jks");
+                        try (FileInputStream fis = new FileInputStream(ksf)) {
+                            //the MAC address used to unlock the JKS must be lowercase
+                            keyStore.load(fis, macAddress.toCharArray());
+                            // use a system property to save the certicicate name
+                            Enumeration<String> aliases = keyStore.aliases();
+                            // the keystore will only ever contain one key -so take the 1st one
+                            System.setProperty("medipi.device.cert.name", aliases.nextElement());
+                        }
+                    } catch (KeyStoreException | IOException | NoSuchAlgorithmException | CertificateException e) {
+                        makeFatalErrorMessage("Device certificate is not correct for this device", null);
+                    }
+
+                } catch (Exception e) {
+                    makeFatalErrorMessage("Can't find Mac Address for the machine, therefore unable to check device certificate", null);
+                }
             }*/
             System.setProperty("medipi.device.cert.name", "device.cert");
             // fundamental UI decisions made from the properties
@@ -395,9 +480,9 @@ public class MediPi extends Application {
                 makeFatalErrorMessage(PATIENTDOB + " - Patient Date of Birth is not set", null);
             } else {
                 try {
-                    Date d = Utilities.INTERNAL_DOB_FORMAT.parse(patientDOB);
-                    formatDOB = Utilities.DISPLAY_DOB_FORMAT.format(d);
-                } catch (ParseException e) {
+                    LocalDate dobld = LocalDate.parse(patientDOB, DateTimeFormatter.BASIC_ISO_DATE);
+                    formatDOB = dobld.format(Utilities.DISPLAY_DOB_FORMAT);
+                } catch (DateTimeParseException e) {
                     makeFatalErrorMessage(PATIENTDOB + " - Patient Date of Birth (" + patientDOB + ") in wrong format", null);
                 }
                 dob = new Label(formatDOB);
@@ -444,11 +529,11 @@ public class MediPi extends Application {
                     dashTile
             );
             try {
-                MediPiWindow mw = new MediPiWindow(subWindow);
+                mediPiWindow = new MediPiWindow(subWindow);
                 mainWindow.getChildren().addAll(
                         titleBP,
                         new Separator(Orientation.HORIZONTAL),
-                        mw
+                        mediPiWindow
                 );
             } catch (Exception e) {
                 makeFatalErrorMessage("Authentication cannot be loaded - " + e.getMessage(), null);
@@ -509,10 +594,10 @@ public class MediPi extends Application {
                             elements.add(elem);
                             subWindow.getChildren().add(elem.getWindowComponent());
                         } else {
-                            MediPiMessageBox.getInstance().makeErrorMessage("Cannot instantiate an element: \n" + classToken + " - " + elementClass + " - " + initError, null, Thread.currentThread());
+                            MediPiMessageBox.getInstance().makeErrorMessage("Cannot instantiate an element: \n" + classToken + " - " + elementClass + " - " + initError, null);
                         }
                     } catch (Exception ex) {
-                        MediPiMessageBox.getInstance().makeErrorMessage("Cannot instantiate an element: \n" + classToken + " - " + elementClass, ex, Thread.currentThread());
+                        MediPiMessageBox.getInstance().makeErrorMessage("Cannot instantiate an element: \n" + classToken + " - " + elementClass, ex);
                     }
                 }
             } else {
@@ -536,6 +621,24 @@ public class MediPi extends Application {
                 }
                 splash.close();
             }
+
+            dhm.addHandler("HARDWAREUPDATE", new HardwareHandler(properties));
+
+            // Start the downloadable timer. This wakes up every definable period (default set to 30s) 
+            // and performs functions to send restful messages to retreive the downloadable entities - Hardware and Patient Messages
+            try {
+                String time = getProperties().getProperty(MEDIPIDOWNLOADPOLLPERIOD);
+                if (time == null || time.trim().length() == 0) {
+                    time = "30";
+                }
+                Integer incomingMessageCheckPeriod = Integer.parseInt(time);
+                ScheduledThreadPoolExecutor timer = new ScheduledThreadPoolExecutor(TIMER_THREAD_POOL_SIZE);
+                PollDownloads pim = new PollDownloads(this);
+                timer.scheduleAtFixedRate(pim, (long) 1, (long) incomingMessageCheckPeriod, TimeUnit.SECONDS);
+            } catch (Exception nfe) {
+                makeFatalErrorMessage("Unable to start the download service - make sure that " + MEDIPIDOWNLOADPOLLPERIOD + " property is set correctly", null);
+            }
+
         } catch (Exception e) {
             makeFatalErrorMessage("A fatal and fundamental error occurred at bootup", e);
         }

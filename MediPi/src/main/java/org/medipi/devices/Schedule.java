@@ -15,9 +15,9 @@
  */
 package org.medipi.devices;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.UUID;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleLongProperty;
@@ -49,17 +49,17 @@ public class Schedule {
      *
      * @param u UUID
      * @param type Type of schedule row
-     * @param d date string
+     * @param d Instant string
      * @param r repeat string
      * @param dl list of devices to be scheduled
      */
-    public Schedule(UUID u, String type, Date d, int r, ArrayList<String> dl) {
+    public Schedule(UUID u, String type, Instant d, int r, ArrayList<String> dl) {
         try {
             //unique event number
             this.uuid = new SimpleStringProperty(u.toString());
             // event status
             this.eventType = new SimpleStringProperty(type);
-            this.time = new SimpleLongProperty(d.getTime());
+            this.time = new SimpleLongProperty(d.toEpochMilli());
             //repeat rate in mins
             this.repeat = new SimpleIntegerProperty(r);
             //devices to be called
@@ -69,7 +69,7 @@ public class Schedule {
             }
             this.deviceSched = new SimpleStringProperty(devices.toString().trim());
         } catch (Exception ex) {
-            MediPiMessageBox.getInstance().makeErrorMessage("failure to tokenise the schedule: ", ex, Thread.currentThread());
+            MediPiMessageBox.getInstance().makeErrorMessage("failure to tokenise the schedule: ", ex);
         }
 
     }
@@ -87,8 +87,8 @@ public class Schedule {
     }
 
     public String getTimeDisp() {
-        Date date = new Date(time.get());
-        return Utilities.DISPLAY_SCHEDULE_FORMAT.format(date);
+        Instant instant = Instant.ofEpochMilli(time.get());
+        return Utilities.DISPLAY_SCHEDULE_FORMAT_LOCALTIME.format(instant);
     }
     
     public Long getTime() {

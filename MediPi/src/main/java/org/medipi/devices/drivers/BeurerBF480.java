@@ -17,7 +17,6 @@ package org.medipi.devices.drivers;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 
 import javafx.application.Platform;
@@ -199,9 +198,8 @@ public class BeurerBF480 extends Scale {
 					super.succeeded();
 					if(getValue().equals("SUCCESS")) {
 						// take the time of downloading the data
-						downloadTimestamp = new Date();
 					} else {
-						MediPiMessageBox.getInstance().makeErrorMessage(getValue(), null, Thread.currentThread());
+						MediPiMessageBox.getInstance().makeErrorMessage(getValue(), null);
 					}
 				}
 
@@ -213,13 +211,13 @@ public class BeurerBF480 extends Scale {
 				@Override
 				protected void failed() {
 					super.failed();
-					MediPiMessageBox.getInstance().makeErrorMessage(getValue(), null, Thread.currentThread());
+					MediPiMessageBox.getInstance().makeErrorMessage(getValue(), null);
 				}
 
 				@Override
 				protected void cancelled() {
 					super.failed();
-					MediPiMessageBox.getInstance().makeErrorMessage(getValue(), null, Thread.currentThread());
+					MediPiMessageBox.getInstance().makeErrorMessage(getValue(), null);
 				}
 			};
 
@@ -235,7 +233,7 @@ public class BeurerBF480 extends Scale {
 			weightHBox.visibleProperty().bind(Bindings.when(task.valueProperty().isEqualTo("SUCCESS")).then(true).otherwise(false));
 			new Thread(task).start();
 		} catch(Exception ex) {
-			MediPiMessageBox.getInstance().makeErrorMessage("Download of data unsuccessful", ex, Thread.currentThread());
+			MediPiMessageBox.getInstance().makeErrorMessage("Download of data unsuccessful", ex);
 		}
 	}
 }

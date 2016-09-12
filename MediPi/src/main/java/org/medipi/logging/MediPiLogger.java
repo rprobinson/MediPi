@@ -16,7 +16,7 @@
 package org.medipi.logging;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.util.Date;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.FileHandler;
@@ -55,7 +55,7 @@ public class MediPiLogger {
     
     /** Creates a new instance of Logger */
     private MediPiLogger() {
-        dateString = Utilities.INTERNAL_FORMAT.format(new Date());
+        dateString = Utilities.INTERNAL_FORMAT_UTC.format(Instant.now());
         java.util.logging.Logger consoleLogger = java.util.logging.Logger.getLogger(CONSOLE_LOGGER);
         ConsoleHandler ch = new ConsoleHandler();
         ch.setFormatter(new SimpleFormatter());
@@ -92,7 +92,7 @@ public class MediPiLogger {
     }
         
       
-    public static String getDate() { return Utilities.INTERNAL_FORMAT.format(new Date()); }
+    public static String getDate() { return Utilities.INTERNAL_FORMAT_UTC.format(Instant.now()); }
 
     /**
      * Log the given exception.
