@@ -15,8 +15,6 @@
  */
 package org.medipi;
 
-import org.medipi.authentication.MediPiWindow;
-import org.medipi.devices.Element;
 import java.awt.SplashScreen;
 import java.io.BufferedReader;
 import java.io.File;
@@ -40,6 +38,7 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
@@ -56,7 +55,10 @@ import javafx.scene.layout.TilePane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
+
+import org.medipi.authentication.MediPiWindow;
 import org.medipi.devices.Device;
+import org.medipi.devices.Element;
 import org.medipi.downloadable.handlers.DownloadableHandlerManager;
 import org.medipi.downloadable.handlers.HardwareHandler;
 import org.medipi.logging.MediPiLogger;
@@ -159,7 +161,7 @@ public class MediPi extends Application {
      */
     private int debugMode = NONE;
 
-    // Instantiation of the download handler 
+	// Instantiation of the download handler
     private DownloadableHandlerManager dhm = new DownloadableHandlerManager();
 
     /**
@@ -277,7 +279,7 @@ public class MediPi extends Application {
      * @throws Exception
      */
     @Override
-    public void start(Stage stg) throws Exception {
+    public void start(final Stage stg) throws Exception {
         try {
             primaryStage = stg;
 
@@ -320,9 +322,9 @@ public class MediPi extends Application {
                 debugMode = ERRORSUPPRESSING;
             }
 
-            // It has been difficult to access all the Mac address/IP Addresses (whether they 
+			// It has been difficult to access all the Mac address/IP Addresses (whether they
             // are up or not) using NetworkInterface on Linux machines. This method does work on Linux
-            // I'm not sure if the alternative method (i.e. the non Linux method) works for all 
+			// I'm not sure if the alternative method (i.e. the non Linux method) works for all
             // other OS MACAddresses/IPs whether they are up or not
             if (System.getProperty("os.name").equals("Linux")) {
 
@@ -373,7 +375,7 @@ public class MediPi extends Application {
                 }
 
             } else {
-                // for all other non Linux OS systems 
+				// for all other non Linux OS systems
                 String ip;
                 try {
                     // try to find the MAC address
@@ -392,33 +394,34 @@ public class MediPi extends Application {
                         }
                         System.out.print("Current MAC address : ");
                         for (int i = 0; i < mac.length; i++) {
-                            macAdd.append(String.format("%02X%s", mac[i], (i < mac.length - 1) ? ":" : ""));
+                            macAdd.append(String.format("%02X%s", mac[i], i < mac.length - 1 ? ":" : ""));
                         }
                         macAddress = macAdd.toString().toLowerCase();
                         System.setProperty("medipi.device.macaddress", macAddress);
                         System.out.print(macAddress);
                     }
                     // Using the Mac address unlock the JKS keystore for the device
-                    try {
-                        String ksf = MediPiProperties.getInstance().getProperties().getProperty("medipi.device.cert.location");
+					/*try {
+					    String ksf = MediPiProperties.getInstance().getProperties().getProperty("medipi.device.cert.location");
 
-                        KeyStore keyStore = KeyStore.getInstance("jks");
-                        try (FileInputStream fis = new FileInputStream(ksf)) {
-                            //the MAC address used to unlock the JKS must be lowercase
-                            keyStore.load(fis, macAddress.toCharArray());
-                            // use a system property to save the certicicate name
-                            Enumeration<String> aliases = keyStore.aliases();
-                            // the keystore will only ever contain one key -so take the 1st one
-                            System.setProperty("medipi.device.cert.name", aliases.nextElement());
-                        }
-                    } catch (KeyStoreException | IOException | NoSuchAlgorithmException | CertificateException e) {
-                        makeFatalErrorMessage("Device certificate is not correct for this device", null);
-                    }
+					    KeyStore keyStore = KeyStore.getInstance("jks");
+					    try (FileInputStream fis = new FileInputStream(ksf)) {
+					        //the MAC address used to unlock the JKS must be lowercase
+					        keyStore.load(fis, macAddress.toCharArray());
+					        // use a system property to save the certicicate name
+					        Enumeration<String> aliases = keyStore.aliases();
+					        // the keystore will only ever contain one key -so take the 1st one
+					        System.setProperty("medipi.device.cert.name", aliases.nextElement());
+					    }
+					} catch (KeyStoreException | IOException | NoSuchAlgorithmException | CertificateException e) {
+					    makeFatalErrorMessage("Device certificate is not correct for this device", null);
+					}*/
 
                 } catch (Exception e) {
                     makeFatalErrorMessage("Can't find Mac Address for the machine, therefore unable to check device certificate", null);
                 }
-            }*/
+			}
+			System.setProperty("medipi.device.macaddress", "macAddress");
             System.setProperty("medipi.device.cert.name", "device.cert");
             // fundamental UI decisions made from the properties
             String b = properties.getProperty(DATAVIEWBASIC);
@@ -468,7 +471,7 @@ public class MediPi extends Application {
                 {
                     sum += (11 - k) * Character.getNumericValue(patientNHSNumber.charAt(k - 1));
                 }
-                if ((sum % 11) != 0) {
+                if (sum % 11 != 0) {
                     makeFatalErrorMessage(PATIENTNHSNUMBER + " - Patient NHS Number (" + patientNHSNumber + ") checksum is not correct", null);
                 }
                 nhsNumber = new Label(patientNHSNumber);
@@ -607,7 +610,7 @@ public class MediPi extends Application {
             //show the tiled dashboard view
             callDashboard();
             // functionality which closes the window when the x is pressed
-            primaryStage.setOnHiding((WindowEvent event) -> {
+            primaryStage.setOnHiding((final WindowEvent event) -> {
                 exit();
             });
 
@@ -624,7 +627,7 @@ public class MediPi extends Application {
 
             dhm.addHandler("HARDWAREUPDATE", new HardwareHandler(properties));
 
-            // Start the downloadable timer. This wakes up every definable period (default set to 30s) 
+			// Start the downloadable timer. This wakes up every definable period (default set to 30s)
             // and performs functions to send restful messages to retreive the downloadable entities - Hardware and Patient Messages
             try {
                 String time = getProperties().getProperty(MEDIPIDOWNLOADPOLLPERIOD);
@@ -634,7 +637,7 @@ public class MediPi extends Application {
                 Integer incomingMessageCheckPeriod = Integer.parseInt(time);
                 ScheduledThreadPoolExecutor timer = new ScheduledThreadPoolExecutor(TIMER_THREAD_POOL_SIZE);
                 PollDownloads pim = new PollDownloads(this);
-                timer.scheduleAtFixedRate(pim, (long) 1, (long) incomingMessageCheckPeriod, TimeUnit.SECONDS);
+                timer.scheduleAtFixedRate(pim, 1, incomingMessageCheckPeriod, TimeUnit.SECONDS);
             } catch (Exception nfe) {
                 makeFatalErrorMessage("Unable to start the download service - make sure that " + MEDIPIDOWNLOADPOLLPERIOD + " property is set correctly", null);
             }
@@ -668,7 +671,7 @@ public class MediPi extends Application {
      *
      * @param args the command line arguments
      */
-    public static void main(String[] args) {
+    public static void main(final String[] args) {
         if (args[0].toLowerCase().trim().equals("-version")) {
             System.out.println(MEDIPINAME + " " + VERSION + "-" + VERSIONNAME);
         } else {
@@ -730,7 +733,7 @@ public class MediPi extends Application {
      * @return The Element requested using the element class token string. Null
      * is returned if not found
      */
-    public Element getElement(String elementClassToken) {
+    public Element getElement(final String elementClassToken) {
         //loop round all the presentation elements until the required one is found
         for (Element e : elements) {
             if (e.getClassTokenName().equals(elementClassToken)) {
@@ -748,7 +751,7 @@ public class MediPi extends Application {
      * @param except exception which caused the Fatal Error - null if not
      * applicable
      */
-    public void makeFatalErrorMessage(String errorMessage, Exception except) {
+    public void makeFatalErrorMessage(final String errorMessage, final Exception except) {
         fatalError = true;
         String exString = "";
         if (except != null) {
