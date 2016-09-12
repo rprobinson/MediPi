@@ -15,12 +15,18 @@
  */
 package org.medipi.devices;
 
+import java.io.ByteArrayOutputStream;
+import org.medipi.security.UploadEncryptionAdapter;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectOutput;
+import java.io.ObjectOutputStream;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.UUID;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
@@ -40,11 +46,11 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import org.warlock.itk.distributionenvelope.DistributionEnvelope;
-import org.warlock.itk.distributionenvelope.Payload;
 import org.medipi.DashboardTile;
 import org.medipi.MediPiMessageBox;
-import org.medipi.MediPiProperties;
+import org.medipi.security.CertificateDefinitions;
+import org.medipi.model.DevicesPayloadDO;
+import org.medipi.model.EncryptedAndSignedUploadDO;
 import org.medipi.utilities.Utilities;
 
 /**
@@ -60,11 +66,11 @@ import org.medipi.utilities.Utilities;
  * medipi.elementclasstokens
  *
  * Transmitter will take all available and selected data and will use the
- * Distribution Envelope format to contain the data. The available data from
- * each of the elements is taken, compressed if applicable and individually
- * encrypted. These payloads are added to the Distribution Envelope structure
- * with their own profile Id. The Distribution Envelope is then transmitted
- * using the transport method defined
+ * EncryptedAnsSigned format to contain the data. The available data from each
+ * of the elements is taken as a DeviceDataDO and added to a DevicesPayloadDO.
+ * The data is then encrypted and signed using the patient's certificate and
+ * transmitted using the device certificate to communicate to the concentrator
+ * using TLSMA
  *
  * There is no view mode for this UI.
  *
@@ -79,10 +85,7 @@ public abstract class Transmitter extends Element {
     private VBox transmitterWindow;
 
     private static final String[] TRANSMITLABELSTATUS = {"Select data to transmit and press Transmit", "Transmitting data...", "Completed"};
-    private static final String SERVICE = "urn:nhs-itk:services:201005:MediPi";
     private static final String INTERACTION = "urn:nhs-itk:interaction:MediPi";
-    private static final String BUSINTERACTION = "urn:nhs-itk:ns:201005:ackrequested";
-    private static final String INFINTERACTION = "urn:nhs-itk:ns:201005:infackrequested";
     private static final String OUTBOUNDPAYLOAD = "medipi.outboundpayload";
     private static final String CLEARALLAFTERTRANSMISSION = "medipi.element.Transmitter.clearallaftertransmission";
     private static final String NAME = "Transmitter";
@@ -146,6 +149,7 @@ public abstract class Transmitter extends Element {
         // fundamental UI decisions made from the properties
         String b = medipi.getProperties().getProperty(CLEARALLAFTERTRANSMISSION);
         clearAllAfterTransmission = !(b == null || b.trim().length() == 0 || b.toLowerCase().startsWith("n"));
+        // fundamental UI decisions made from the properties
 
         // loop through all loaded elements and add checkboxes and images to the window
         for (Element e : medipi.getElements()) {
@@ -180,6 +184,7 @@ public abstract class Transmitter extends Element {
                 );
                 hb.setPadding(new Insets(0, 0, 0, 200));
                 // when Scheduler is loaded and transmitter is accessed as part of a schedule, show the scheduler checkbox
+                // This relies on the fact that the transmitter is called AFTER the scheduler AND all the measurement devices
                 if (Scheduler.class.isAssignableFrom(d.getClass())) {
                     Scheduler sched = (Scheduler) d;
                     scheduler = sched;
@@ -219,107 +224,128 @@ public abstract class Transmitter extends Element {
                     updateMessage(TRANSMITLABELSTATUS[1]);
                     try {
 
-                        // Create the DistributionEnvelope structure to put the data into.
-                        DistributionEnvelope dout = DistributionEnvelope.newInstance();
-                        dout.addIdentity(null, auditIdentity);
-                        dout.addRecipient(null, recipientAddress);
-                        dout.addSender(null, senderAddress);
-                        dout.setService(SERVICE);
-                        dout.addHandlingSpecification(DistributionEnvelope.INTERACTIONID, INTERACTION);
-                        // infrastructure and business acks have been commented out until it's established what the messaging details are for MediPi
-                        // dout.addHandlingSpecification(INFINTERACTION, "true");
-                        // dout.addHandlingSpecification(BUSINTERACTION, "true");
+                        // create the device payload structure for all the individual device data
+                        DevicesPayloadDO devicesPayload = new DevicesPayloadDO(UUID.randomUUID().toString());
+                        devicesPayload.setUploadedDate(Date.from(Instant.now()));
+
                         boolean doneSomething = false;
-                        //Loop round the Elements adding them to the DistributionEnvelope as separate payloads
+                        //Loop round the Elements adding them to the DevicesPayloadDO as separate data payloads
                         for (Element e : medipi.getElements()) {
                             CheckBox cb = deviceCheckBox.get(e.getClassTokenName());
                             if (cb != null && cb.isSelected() && cb.isVisible()) {
                                 if (Device.class.isAssignableFrom(e.getClass())) {
                                     Device d = (Device) e;
-                                    byte[] b = d.getData().getBytes();
-                                    //All payloads assumed to be in CSV text format
-                                    Payload p = new Payload("text/csv");
-                                    p.setContent(b, true);
-                                    p.setProfileId(d.getProfileId());
-                                    dout.addPayload(p);
-
+                                    devicesPayload.addPayload(d.getData());
                                     doneSomething = true;
                                 }
                             }
                         }
                         if (doneSomething) {
                             try {
-                                // save a copy of the data to file if required
-                                String s = medipi.getProperties().getProperty(OUTBOUNDPAYLOAD);
-                                // if there's no entry for medipi.outbound then dont save the payloads
-                                if (s != null && s.trim().length() > 0) {
-                                    FileOutputStream fop = null;
-
-                                    try {
-                                        StringBuilder fnb = new StringBuilder(s);
-                                        fnb.append(System.getProperty("file.separator"));
-                                        fnb.append(INTERACTION.replace(":", "_"));
-                                        fnb.append("_at_");
-                                        fnb.append(Utilities.INTERNAL_SPINE_FORMAT.format(new Date()));
-                                        fnb.append(".log");
-                                        File file = new File(fnb.toString());
-                                        fop = new FileOutputStream(file);
-                                        // if file doesnt exists, then create it
-                                        if (!file.exists()) {
-                                            file.createNewFile();
-                                        }
-
-                                        // get the content in bytes
-                                        byte[] contentInBytes = dout.toString().getBytes();
-
-                                        fop.write(contentInBytes);
-                                        fop.flush();
-                                        fop.close();
-
-                                    } catch (IOException e) {
-                                        MediPiMessageBox.getInstance().makeErrorMessage("Cannot save outbound message payload to local drive - check the configured directory: " + OUTBOUNDPAYLOAD, e, Thread.currentThread());
-                                    } finally {
-                                        try {
-                                            if (fop != null) {
-                                                fop.close();
-                                            }
-                                        } catch (IOException e) {
-                                            MediPiMessageBox.getInstance().makeErrorMessage("cannot close the outbound message payload file configured by: " + OUTBOUNDPAYLOAD, e, Thread.currentThread());
-                                        }
-                                    }
-
+                                //Set up the encryption and signing adaptor
+                                UploadEncryptionAdapter uploadEncryptionAdapter = new UploadEncryptionAdapter();
+                                CertificateDefinitions cd = new CertificateDefinitions(medipi.getProperties());
+                                cd.setSIGNKEYSTOREPASSWORD("medipi.patient.cert.password", CertificateDefinitions.SYSTEM);
+                                cd.setSIGNKEYSTOREALIAS("medipi.patient.cert.alias", CertificateDefinitions.INTERNAL);
+                                cd.setSIGNKEYSTORELOCATION("medipi.patient.cert.location", CertificateDefinitions.INTERNAL);
+                                String error = uploadEncryptionAdapter.init(cd,UploadEncryptionAdapter.CLIENTMODE);
+                                if (error != null) {
+                                    throw new Exception(error);
                                 }
-                                // Send message
-                                if (transmit(dout)) {
-                                    // if it is being run as part of a schedule then write TRANSMITTED line back to Schedule
-                                    if (isSchedule.get()) {
-                                        ArrayList<String> transmitList = new ArrayList<>();
-                                        for (Element e : medipi.getElements()) {
-                                            CheckBox cb = deviceCheckBox.get(e.getClassTokenName());
-                                            if (cb != null && cb.isSelected() && cb.isVisible()) {
-                                                transmitList.add(e.getClassTokenName());
+                                EncryptedAndSignedUploadDO encryptedMessage = uploadEncryptionAdapter.encryptAndSign(devicesPayload);
+                                try {
+                                    // save a copy of the data to file if required
+                                    String s = medipi.getProperties().getProperty(OUTBOUNDPAYLOAD);
+                                    // if there's no entry for medipi.outbound then dont save the payloads
+                                    if (s != null && s.trim().length() > 0) {
+                                        FileOutputStream fop = null;
+
+                                        try {
+                                            StringBuilder fnb = new StringBuilder(s);
+                                            fnb.append(System.getProperty("file.separator"));
+                                            fnb.append(INTERACTION.replace(":", "_"));
+                                            fnb.append("_at_");
+                                            fnb.append(Utilities.INTERNAL_SPINE_FORMAT_UTC.format(Instant.now()));
+                                            fnb.append(".log");
+                                            File file = new File(fnb.toString());
+                                            fop = new FileOutputStream(file);
+                                            // if file doesnt exists, then create it
+                                            if (!file.exists()) {
+                                                file.createNewFile();
+                                            }
+                                            byte[] contentInBytes;
+                                            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                                            ObjectOutput out = null;
+                                            try {
+                                                out = new ObjectOutputStream(bos);
+                                                out.writeObject(devicesPayload);
+                                                contentInBytes = bos.toByteArray();
+                                            } finally {
+                                                try {
+                                                    if (out != null) {
+                                                        out.close();
+                                                    }
+                                                } catch (IOException ex) {
+                                                    // ignore close exception
+                                                }
+                                                try {
+                                                    bos.close();
+                                                } catch (IOException ex) {
+                                                    // ignore close exception
+                                                }
+                                            }
+
+                                            fop.write(contentInBytes);
+                                            fop.flush();
+                                            fop.close();
+
+                                        } catch (IOException e) {
+                                            MediPiMessageBox.getInstance().makeErrorMessage("Cannot save outbound message payload to local drive - check the configured directory: " + OUTBOUNDPAYLOAD, e);
+                                        } finally {
+                                            try {
+                                                if (fop != null) {
+                                                    fop.close();
+                                                }
+                                            } catch (IOException e) {
+                                                MediPiMessageBox.getInstance().makeErrorMessage("cannot close the outbound message payload file configured by: " + OUTBOUNDPAYLOAD, e);
                                             }
                                         }
-                                        scheduler.addScheduleData("TRANSMITTED", new Date(), transmitList);
-                                        medipi.callDashboard();
-                                    } else {
-                                    }
-                                    Platform.runLater(() -> {
-                                        MediPiMessageBox.getInstance().makeMessage("Transmission Sucessful: " + getTransmissionResponse(), Thread.currentThread());
-                                    });
 
-                                } else {
-                                    Platform.runLater(() -> {
-                                        MediPiMessageBox.getInstance().makeErrorMessage("Transmission Failed: " + getTransmissionResponse(), null, Thread.currentThread());
-                                    });
+                                    }
+                                    // Send message
+                                    if (transmit(encryptedMessage)) {
+                                        // if it is being run as part of a schedule then write TRANSMITTED line back to Schedule
+                                        if (isSchedule.get()) {
+                                            ArrayList<String> transmitList = new ArrayList<>();
+                                            for (Element e : medipi.getElements()) {
+                                                CheckBox cb = deviceCheckBox.get(e.getClassTokenName());
+                                                if (cb != null && cb.isSelected() && cb.isVisible()) {
+                                                    transmitList.add(e.getClassTokenName());
+                                                }
+                                            }
+                                            scheduler.addScheduleData("TRANSMITTED", Instant.now(), transmitList);
+                                            medipi.callDashboard();
+                                        } else {
+                                        }
+                                        Platform.runLater(() -> {
+                                            MediPiMessageBox.getInstance().makeMessage("Transmission Sucessful: " + getTransmissionResponse());
+                                        });
+
+                                    } else {
+                                        Platform.runLater(() -> {
+                                            MediPiMessageBox.getInstance().makeErrorMessage("Transmission Failed: " + getTransmissionResponse(), null);
+                                        });
+                                    }
+                                } catch (Exception ex) {
+                                    MediPiMessageBox.getInstance().makeErrorMessage("Error transmitting message to recipient", ex);
                                 }
                             } catch (Exception ex) {
-                                MediPiMessageBox.getInstance().makeErrorMessage("Error transmitting message to recipient", ex, Thread.currentThread());
+                                MediPiMessageBox.getInstance().makeErrorMessage("Error encrypting and signing the data payload", ex);
                             }
 
                         }
                     } catch (Exception ex) {
-                        MediPiMessageBox.getInstance().makeErrorMessage("Error in creating the message to be transmitted", ex, Thread.currentThread());
+                        MediPiMessageBox.getInstance().makeErrorMessage("Error in creating the message to be transmitted", ex);
                     }
                     updateMessage(TRANSMITLABELSTATUS[2]);
                     return null;
@@ -418,7 +444,7 @@ public abstract class Transmitter extends Element {
      * @param message - payload to be wrapped and transmitted
      * @return String - if transmission was successful return null
      */
-    public abstract Boolean transmit(DistributionEnvelope message);
+    public abstract Boolean transmit(EncryptedAndSignedUploadDO message);
 
     /**
      * Get the transmission response message

@@ -15,9 +15,13 @@
  */
 package org.medipi.devices;
 
+import extfx.scene.chart.DateAxis;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.UUID;
 
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -45,12 +49,11 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.util.StringConverter;
 import javafx.util.converter.DateStringConverter;
-
 import org.medipi.DashboardTile;
 import org.medipi.MediPi;
 import org.medipi.utilities.Utilities;
+import org.medipi.model.DeviceDataDO;
 
-import extfx.scene.chart.DateAxis;
 
 /**
  * Class to display and handle the functionality for a generic Diagnostic Scale
@@ -131,7 +134,7 @@ public abstract class Scale extends Device {
 	private double previousBodyFat;
 	private double previousWater;
 	private double previousMuscle;
-	private Date previousDate = null;
+	private Instant previousDate = null;
 	protected ProgressBar downProg = new ProgressBar(0.0F);
 
 	private int weightDP = 0;
@@ -140,9 +143,8 @@ public abstract class Scale extends Device {
 	private int muscleDP = 0;
 	private final StringProperty weightProperty = new SimpleStringProperty("");
 	private Node dataBox;
-	protected HBox weightHBox;
-	protected Date downloadTimestamp = null;
-	protected ArrayList<String> metadata = new ArrayList<>();
+    protected HBox weightHBox;
+    private ArrayList<String> metadata = new ArrayList<>();
 
 	/**
 	 * This is the data separator from the MediPi.properties file
@@ -200,18 +202,18 @@ public abstract class Scale extends Device {
 			dataBox = guide.getGuide();
 		} else {
 			//Setup the results graph
-			Date d = new Date();
-			weightXAxis = new DateAxis(getDate(d, -1), getDate(d, 1));
-			StringConverter sc = new DateStringConverter(Utilities.DISPLAY_SCALE_FORMAT);
+			Instant i  = Instant.now();
+			weightXAxis = new DateAxis(Date.from(i.minus(1,ChronoUnit.DAYS)), Date.from(i.plus(1,ChronoUnit.DAYS)));
+			StringConverter sc = new DateStringConverter(Utilities.DISPLAY_SCALE_FORMAT_DATE);
 			weightXAxis.setTickLabelFormatter(sc);
 			weightXAxis.setLabel("Time");
-			bodyFatXAxis = new DateAxis(getDate(d, -1), getDate(d, 1));
+			bodyFatXAxis = new DateAxis(Date.from(i.minus(1,ChronoUnit.DAYS)), Date.from(i.plus(1,ChronoUnit.DAYS)));
 			bodyFatXAxis.setTickLabelFormatter(sc);
 			bodyFatXAxis.setLabel("Time");
-			waterXAxis = new DateAxis(getDate(d, -1), getDate(d, 1));
+			waterXAxis = new DateAxis(Date.from(i.minus(1,ChronoUnit.DAYS)), Date.from(i.plus(1,ChronoUnit.DAYS)));
 			waterXAxis.setTickLabelFormatter(sc);
 			waterXAxis.setLabel("Time");
-			muscleXAxis = new DateAxis(getDate(d, -1), getDate(d, 1));
+			muscleXAxis = new DateAxis(Date.from(i.minus(1,ChronoUnit.DAYS)), Date.from(i.plus(1,ChronoUnit.DAYS)));
 			muscleXAxis.setTickLabelFormatter(sc);
 			muscleXAxis.setLabel("Time");
 			weightYAxis = new NumberAxis("Kg", 0, 10, 0.5);
@@ -264,7 +266,9 @@ public abstract class Scale extends Device {
 			deviceWindow.setSpacing(5);
 			deviceWindow.setAlignment(Pos.CENTER);
 			deviceWindow.setMinWidth(600);
-			deviceWindow.getChildren().addAll(tp);
+            deviceWindow.getChildren().addAll(
+                    tp
+            );
 			dataBox = deviceWindow;
 		}
 		// create the large result box for the last measurement
@@ -280,11 +284,20 @@ public abstract class Scale extends Device {
 		Label kg = new Label("Kg");
 		kg.setId("resultstext");
 		kg.setStyle("-fx-font-size:10px;");
-		weightHBox.getChildren().addAll(lastWeight, kg);
+        weightHBox.getChildren().addAll(
+                lastWeight,
+                kg
+        );
 		//create the main window HBox
 		HBox dataHBox = new HBox();
-		dataHBox.getChildren().addAll(dataBox, weightHBox);
-		scaleWindow.getChildren().addAll(dataHBox, new Separator(Orientation.HORIZONTAL));
+        dataHBox.getChildren().addAll(
+                dataBox,
+                weightHBox
+        );
+        scaleWindow.getChildren().addAll(
+                dataHBox,
+                new Separator(Orientation.HORIZONTAL)
+        );
 		// set main Element window
 		window.setCenter(scaleWindow);
 		setButton2(buttonHbox);
@@ -323,7 +336,6 @@ public abstract class Scale extends Device {
 	public void resetDevice() {
 		deviceData = new ArrayList<>();
 		hasData.set(false);
-		downloadTimestamp = null;
 		metadata.clear();
 		if(!medipi.isBasicDataView()) {
 			if(weightSeries != null) {
@@ -373,21 +385,25 @@ public abstract class Scale extends Device {
 	}
 
 	/**
-	 * Gets a csv representation of the data
+     * Gets a DeviceDataDO representation of the data
 	 *
-	 * @return csv string of each value set of data points
+     * @return DevicedataDO containing the payload
 	 */
 	@Override
-	public String getData() {
+    public DeviceDataDO getData() {
+        DeviceDataDO payload = new DeviceDataDO(UUID.randomUUID().toString());
 		StringBuilder sb = new StringBuilder();
 		//Add MetaData
 		sb.append("metadata->persist->medipiversion->").append(medipi.getVersion()).append("\n");
-		for(String s : metadata) {
+        for (String s : metadata) {
 			sb.append("metadata->persist->").append(s).append("\n");
 		}
-		sb.append("metadata->timedownloaded->").append(Utilities.ISO8601FORMATDATEMILLI.format(downloadTimestamp)).append("\n");
 		sb.append("metadata->subtype->").append(getName()).append("\n");
 		sb.append("metadata->datadelimiter->").append(medipi.getDataSeparator()).append("\n");
+        if (scheduler!=null) {
+            sb.append("metadata->scheduleeffectivedate->").append(Utilities.ISO8601FORMATDATEMILLI_UTC.format(scheduler.getCurrentScheduledEventTime())).append("\n");
+            sb.append("metadata->scheduleexpirydate->").append(Utilities.ISO8601FORMATDATEMILLI_UTC.format(scheduler.getNextScheduledEventTime())).append("\n");
+        }
         sb.append("metadata->columns->")
         	.append("iso8601time").append(medipi.getDataSeparator())
         	.append("weight").append(medipi.getDataSeparator())
@@ -400,8 +416,14 @@ public abstract class Scale extends Device {
         	.append("DOUBLE").append(medipi.getDataSeparator())
         	.append("DOUBLE").append(medipi.getDataSeparator())
         	.append("DOUBLE").append("\n");
+        sb.append("metadata->units->")
+                .append("NONE").append(medipi.getDataSeparator())
+                .append("Kg").append(medipi.getDataSeparator())
+                .append("%").append(medipi.getDataSeparator())
+                .append("%").append(medipi.getDataSeparator())
+                .append("%").append("\n");
 		// Add Downloaded data
-		for(String[] s : deviceData) {
+        for (String[] s : deviceData) {
 			sb.append(s[0]);
 			sb.append(separator);
 			sb.append(s[1]);
@@ -413,7 +435,9 @@ public abstract class Scale extends Device {
 			sb.append(s[4]);
 			sb.append("\n");
 		}
-		return sb.toString();
+        payload.setProfileId(PROFILEID);
+        payload.setPayload(sb.toString());
+        return payload;
 	}
 
 	/**
@@ -435,17 +459,17 @@ public abstract class Scale extends Device {
 	 * Private method to add data to the internal structure and propogate it to
 	 * the UI
 	 *
-	 * @param d in UNIX epoch time format
+	 * @param i in UNIX epoch time format
 	 * @param weight in Kg
 	 * @param bodyFat %
 	 * @param water %
 	 * @param muscle %
 	 */
-	public void addDataPoint(Date d, double weight, double bodyFat, double water, double muscle) {
+	public void addDataPoint(Instant i, double weight, double bodyFat, double water, double muscle) {
 
 		//weight graph - this is expected for all data points
 		if(!medipi.isBasicDataView()) {
-			weightXYData = new XYChart.Data<>(d, weight);
+			weightXYData = new XYChart.Data<>(Date.from(i), weight);
 			weightXYData.setNode(new AnnotateNode(previousWeight, weight));
 			weightSeries.getData().add(weightXYData);
 			weightDP++;
@@ -456,15 +480,15 @@ public abstract class Scale extends Device {
 				minWeight = weight;
 			}
 			if(previousDate == null) {
-				weightXAxis.setLowerBound(getDate(d, -1));
-				bodyFatXAxis.setLowerBound(getDate(d, -1));
-				waterXAxis.setLowerBound(getDate(d, -1));
-				muscleXAxis.setLowerBound(getDate(d, -1));
-			} else if(d.after(previousDate)) {
-				weightXAxis.setUpperBound(getDate(d, 1));
-				bodyFatXAxis.setUpperBound(getDate(d, 1));
-				waterXAxis.setUpperBound(getDate(d, 1));
-				muscleXAxis.setUpperBound(getDate(d, 1));
+				weightXAxis.setLowerBound(Date.from(i.minus(1,ChronoUnit.DAYS)));
+				bodyFatXAxis.setLowerBound(Date.from(i.minus(1,ChronoUnit.DAYS)));
+				waterXAxis.setLowerBound(Date.from(i.minus(1,ChronoUnit.DAYS)));
+				muscleXAxis.setLowerBound(Date.from(i.minus(1,ChronoUnit.DAYS)));
+			} else if(i.isAfter(previousDate)) {
+				weightXAxis.setUpperBound(Date.from(i.minus(1,ChronoUnit.DAYS)));
+				bodyFatXAxis.setUpperBound(Date.from(i.minus(1,ChronoUnit.DAYS)));
+				waterXAxis.setUpperBound(Date.from(i.minus(1,ChronoUnit.DAYS)));
+				muscleXAxis.setUpperBound(Date.from(i.minus(1,ChronoUnit.DAYS)));
 			}
 			weightYAxis.setLowerBound(Math.round(minWeight) - 0.5);
 			weightYAxis.setUpperBound(Math.round(maxWeight) + 0.5);
@@ -480,7 +504,7 @@ public abstract class Scale extends Device {
 		// %body fat graph
 		if(!medipi.isBasicDataView()) {
 			if(bodyFat != 0) {
-				bodyFatXYData = new XYChart.Data<>(d, bodyFat);
+				bodyFatXYData = new XYChart.Data<>(Date.from(i), bodyFat);
 				bodyFatXYData.setNode(new AnnotateNode(previousBodyFat, bodyFat));
 				bodyFatSeries.getData().add(bodyFatXYData);
 				bodyFatDP++;
@@ -496,7 +520,7 @@ public abstract class Scale extends Device {
 			}
 			//%water graph
 			if(water != 0) {
-				waterXYData = new XYChart.Data<>(d, water);
+				waterXYData = new XYChart.Data<>(Date.from(i), water);
 				waterXYData.setNode(new AnnotateNode(previousWater, water));
 				waterSeries.getData().add(waterXYData);
 				waterDP++;
@@ -511,7 +535,7 @@ public abstract class Scale extends Device {
 				previousWater = water;
 			}
 			if(muscle != 0) {
-				muscleXYData = new XYChart.Data<>(d, muscle);
+				muscleXYData = new XYChart.Data<>(Date.from(i), muscle);
 				muscleXYData.setNode(new AnnotateNode(previousMuscle, muscle));
 				muscleSeries.getData().add(muscleXYData);
 				muscleDP++;
@@ -526,7 +550,7 @@ public abstract class Scale extends Device {
 				previousMuscle = muscle;
 			}
 			previousWeight = weight;
-			previousDate = d;
+			previousDate = i;
 		}
 	}
 

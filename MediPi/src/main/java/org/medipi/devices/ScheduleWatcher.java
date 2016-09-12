@@ -70,7 +70,7 @@ public class ScheduleWatcher extends Thread {
             try {
                 watchKey = watchService.take();
             } catch (InterruptedException x) {
-                    MediPiMessageBox.getInstance().makeErrorMessage("Scheduler - failed to instantiate key", x, Thread.currentThread());
+                    MediPiMessageBox.getInstance().makeErrorMessage("Scheduler - failed to instantiate key", x);
                 return;
             }
 

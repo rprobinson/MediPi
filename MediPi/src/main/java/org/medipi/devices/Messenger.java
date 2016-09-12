@@ -17,14 +17,9 @@ package org.medipi.devices;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ObservableValue;
@@ -46,8 +41,17 @@ import javafx.scene.layout.VBox;
 import org.medipi.DashboardTile;
 import org.medipi.MediPi;
 import org.medipi.MediPiMessageBox;
-import org.medipi.MediPiProperties;
-
+import org.medipi.downloadable.handlers.DownloadableHandlerManager;
+import org.medipi.downloadable.handlers.MessageHandler;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.Instant;
+import org.medipi.authentication.UnlockConsumer;
+import org.medipi.logging.MediPiLogger;
+import org.medipi.model.AlertListDO;
+import org.medipi.model.AlertDO;
+import org.medipi.security.CertificateDefinitions;
+import org.medipi.model.EncryptedAndSignedUploadDO;
+import org.medipi.security.UploadEncryptionAdapter;
 
 /**
  * Class to display and handle the functionality for a incoming read-only
@@ -65,8 +69,7 @@ import org.medipi.MediPiProperties;
  *
  * @author rick@robinsonhq.com
  */
-
-public class Messenger extends Element {
+public class Messenger extends Element implements UnlockConsumer {
 
     private static final String NAME = "Clinician's Messages";
     private static final String MEDIPIIMAGESEXCLAIM = "medipi.images.exclaim";
@@ -80,6 +83,8 @@ public class Messenger extends Element {
     private final BooleanProperty alertBooleanProperty = new SimpleBooleanProperty(false);
 
     private TableView<Message> messageList;
+    private ObservableList<Message> items = FXCollections.observableArrayList();
+    private boolean locked = false;
 
     /**
      * Constructor for Messenger
@@ -137,7 +142,6 @@ public class Messenger extends Element {
 
         //Create the table of message
         // Message title list - scrollable and selectable 
-        ObservableList<Message> items = FXCollections.observableArrayList();
         TableColumn messageTitleTC = new TableColumn("Message Title");
         messageTitleTC.setMinWidth(400);
         messageTitleTC.setCellValueFactory(
@@ -162,12 +166,17 @@ public class Messenger extends Element {
         messageList.getSelectionModel().selectedItemProperty().addListener((ObservableValue<? extends Message> ov, Message old_val, Message new_val) -> {
             try {
                 File file2 = new File(dir.toString(), new_val.getFileName());
-                messageView.setText(readFile(file2.getPath(), StandardCharsets.UTF_8));
+                // alter to allow different read formats
+                messageView.setText(readJSONAlert(file2));
             } catch (Exception ex) {
-                messageView.clear();
+                if(ex.getLocalizedMessage()==null){
+                    messageView.setText("");
+                }else{
+                    messageView.setText("Cannot read message content" + ex.getLocalizedMessage());               
+                }
             }
         });
-        messageList.setItems(items);
+//        messageList.setItems(items);
         messageList.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         messageList.getColumns().addAll(messageTitleTC, timeTC);
         ScrollPane listSP = new ScrollPane();
@@ -208,27 +217,20 @@ public class Messenger extends Element {
             }
         });
 
-        // Start the incoming message timer. This wakes up every definable period (default set to 30s) 
-        // and performs functions to interrogate a secure remote directory to check for new files(messages)
-        try {
-            String time = medipi.getProperties().getProperty(MediPi.ELEMENTNAMESPACESTEM + uniqueDeviceName + ".pollincomingmsgperiod");
-            if (time == null || time.trim().length() == 0) {
-                time = "30";
-            }
-            String url = medipi.getProperties().getProperty(MediPi.ELEMENTNAMESPACESTEM + uniqueDeviceName + ".messageserver");
-            if (url == null || url.trim().length() == 0) {
-                throw new Exception("Unable to start the incoming message service - Message server URL is not set in configuration");
-            }
-            Integer incomingMessageCheckPeriod = Integer.parseInt(time);
-            ScheduledThreadPoolExecutor timer = new ScheduledThreadPoolExecutor(TIMER_THREAD_POOL_SIZE);
-            PollIncomingMessage pim = new PollIncomingMessage(dir, medipi.getPatientNHSNumber(), url);
-            timer.scheduleAtFixedRate(pim, (long) 1, (long) incomingMessageCheckPeriod, TimeUnit.SECONDS);
-        } catch (NumberFormatException e) {
-            return "Unable to start the incoming message service - make sure that " + MediPi.ELEMENTNAMESPACESTEM + uniqueDeviceName + ".pollincomingmsgperiod property is set correctly";
-        }
-
+        // Register this device with the handler
+        DownloadableHandlerManager dhm = medipi.getDownloadableHandlerManager();
+        dhm.addHandler("PATIENTMESSAGE", new MessageHandler(medipi.getProperties(), dir));
+        medipi.getMediPiWindow().registerForAuthenticationCallback(this);
         // successful initiation of the this class results in a null return
         return null;
+    }
+
+    public void setItems(ObservableList<Message> items) {
+        this.items = items;
+        if (!locked) {
+            messageList.setItems(items);
+            messageList.getSelectionModel().select(0);
+        }
     }
 
     /**
@@ -242,17 +244,63 @@ public class Messenger extends Element {
     }
 
     /**
-     * getter method for the messageList so that the MessageWatcher can update it
+     * getter method for the messageList so that the MessageWatcher can update
+     * it
+     *
      * @return
      */
     protected TableView<Message> getMessageList() {
         return messageList;
     }
 
-    private static String readFile(String path, Charset encoding)
-            throws IOException {
-        byte[] encoded = Files.readAllBytes(Paths.get(path));
-        return new String(encoded, encoding);
+    private String readJSONAlert(File file) throws Exception {
+        ObjectMapper mapper = new ObjectMapper();
+        EncryptedAndSignedUploadDO encryptedAndSignedUploadDO = mapper.readValue(file, EncryptedAndSignedUploadDO.class);
+        // instantiate the clinician encryption adapter
+        UploadEncryptionAdapter clinicianEncryptionAdapter = new UploadEncryptionAdapter();
+
+        CertificateDefinitions clinicianCD = new CertificateDefinitions(medipi.getProperties());
+        clinicianCD.setSIGNTRUSTSTORELOCATION("medipi.json.sign.truststore.clinician.location", CertificateDefinitions.INTERNAL);
+        clinicianCD.setSIGNTRUSTSTOREPASSWORD("medipi.json.sign.truststore.clinician.password", CertificateDefinitions.INTERNAL);
+        clinicianCD.setENCRYPTKEYSTORELOCATION("medipi.patient.cert.location", CertificateDefinitions.INTERNAL);
+        clinicianCD.setENCRYPTKEYSTOREALIAS("medipi.patient.cert.alias", CertificateDefinitions.INTERNAL);
+        clinicianCD.setENCRYPTKEYSTOREPASSWORD("medipi.patient.cert.password", CertificateDefinitions.SYSTEM);
+
+        String clinicianAdapterError;
+        AlertListDO alertListDO = null;
+        try {
+            clinicianAdapterError = clinicianEncryptionAdapter.init(clinicianCD, UploadEncryptionAdapter.SERVERMODE);
+            if (clinicianAdapterError != null) {
+                MediPiLogger.getInstance().log(Messenger.class.getName() + ".error", "Failed to instantiate Clinician Encryption Adapter: " + clinicianAdapterError);
+                throw new Exception("Failed to instantiate Clinician Encryption Adapter: " + clinicianAdapterError);
+            }
+            alertListDO = (AlertListDO) clinicianEncryptionAdapter.decryptAndVerify(encryptedAndSignedUploadDO);
+        } catch (Exception e) {
+            MediPiLogger.getInstance().log(Messenger.class.getName() + ".error", "Alert Decryption exception: " + e.getLocalizedMessage());
+            throw new Exception("Alert Decryption exception: " + e.getLocalizedMessage());
+        }
+        try {
+
+            StringBuilder sb = new StringBuilder();
+            String type = "";
+            Instant time = Instant.EPOCH;
+            for (AlertDO alertDO : alertListDO.getAlert()) {
+                if (!type.equals(alertDO.getType())) {
+                    sb.append(alertDO.getType()).append(" Alert").append("\n");
+                }
+                if (!time.equals(alertDO.getAlertTime())) {
+                    sb.append("Created on ").append(alertDO.getAlertTime()).append("\n");
+                }
+                sb.append("\n").append(alertDO.getAlertText()).append("\n");
+                type = alertDO.getType();
+                time = alertDO.getAlertTime().toInstant();
+            }
+            return sb.toString();
+        } catch (Exception e) {
+            MediPiLogger.getInstance().log(Messenger.class.getName() + ".error", "Unable to save Alert exception: " + e.getLocalizedMessage());
+            throw new Exception("Unable to save Alert exception: " + e.getLocalizedMessage());
+        }
+
     }
 
     /**
@@ -264,7 +312,6 @@ public class Messenger extends Element {
     public String getName() {
         return NAME;
     }
-
 
     /**
      * method to return the component to the dashboard
@@ -286,7 +333,20 @@ public class Messenger extends Element {
      * @param e exception
      */
     protected void callFailure(String failureMessage, Exception e) {
-        MediPiMessageBox.getInstance().makeErrorMessage(failureMessage, e, Thread.currentThread());
+        MediPiMessageBox.getInstance().makeErrorMessage(failureMessage, e);
+    }
+
+    @Override
+    public void unlocked() {
+        locked = false;
+        messageList.setItems(items);
+        messageList.getSelectionModel().select(0);
+    }
+
+    @Override
+    public void locked() {
+        locked = true;
+        messageList.setItems(null);
     }
 
 }

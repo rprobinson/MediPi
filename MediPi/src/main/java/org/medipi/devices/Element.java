@@ -15,9 +15,9 @@
  */
 package org.medipi.devices;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.event.ActionEvent;
@@ -30,7 +30,6 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import org.medipi.MediPi;
-import org.medipi.MediPiProperties;
 
 /**
  * Element Class
@@ -224,7 +223,7 @@ public abstract class Element {
                     if (Device.class.isAssignableFrom(Element.this.getClass())) {
                         Device d = (Device) Element.this;
                         if (d.hasDataProperty().get()) {
-                            scheduler.addScheduleData(Scheduler.MEASURED, new Date(), new ArrayList<>(Arrays.asList(getClassTokenName())));
+                            scheduler.addScheduleData(Scheduler.MEASURED, Instant.now(), new ArrayList<>(Arrays.asList(getClassTokenName())));
                         }
                     }
                 });

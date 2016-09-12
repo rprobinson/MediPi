@@ -16,6 +16,7 @@
 package org.medipi.devices;
 
 import javafx.beans.property.BooleanProperty;
+import org.medipi.model.DeviceDataDO;
 
 /**
  * Main abstract class for Medical devices.
@@ -60,9 +61,9 @@ public abstract class Device extends Element {
     /**
      * Method to get the data payload including the metadata
      *
-     * @return String representation of the data
+     * @return DeviceDataDO representation of the data
      */
-    public abstract String getData();
+    public abstract DeviceDataDO getData();
 
     /**
      * Method which returns a booleanProperty which UI elements can be bound to,

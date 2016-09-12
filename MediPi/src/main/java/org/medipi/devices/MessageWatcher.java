@@ -119,8 +119,9 @@ public class MessageWatcher extends Thread {
                         items.add(new Message(f.getName()));
                     }
                     Platform.runLater(() -> {
-                        messenger.getMessageList().setItems(items);
-                        messenger.getMessageList().getSelectionModel().select(0);
+                        messenger.setItems(items);
+//                        messenger.getMessageList().setItems(items);
+//                        messenger.getMessageList().getSelectionModel().select(0);
                         if (event.kind().name().equals("ENTRY_CREATE")) {
                             messenger.getAlertBooleanProperty().set(true);
                         }
