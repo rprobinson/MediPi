@@ -1,15 +1,12 @@
-MediPi v1.0.0-PILOT
+MediPi_v1.0.8 PILOT-20160907-1
 
-MediPi software designed and written by Richard Robinson (rick@robinsonhq.com, rrobinson@nhs.net)
-SpineTools library written by Damian Murphy (murff@warlock.org, damian.murphy@hscic.gov.uk)
-DistributionEnvelopeTools written by Damaian Murphy (murff@warlock.org, damian.murphy@hscic.gov.uk)
+MediPi software designed and written by Richard Robinson <rick@robinsonhq.com>, <rrobinson@nhs.net> and Damian Murphy <murff@warlock.org>, <damian.murphy@hscic.gov.uk>
+O/S community contributions made by Krishna Kuntala <Krishna.Kuntala@mastek.com>
 
 MediPi uses the following opensource libraries:
-JFXMessageBox library - licensed under a LGPL/EPL/ASL triple license, allowing use of the files under the terms of any one of the GNU Lesser General Public License, the Eclipse Public License, or the Apache License.
-JavaFX has no implementation for a Date axis in its graphs so the extFX library has been used (Published under the MIT OSS licence. (https://bitbucket.org/sco0ter/extfx)
-The Pulse Oximeter streams data using a serial connection which uses the RXTX library for serial communication under the GNU Lesser General Public License
-
-MediPi Python scripts:
-Contec CMS50D+ Finger Pulse Oximeter - The interface is a Java port of the streamed serial interface developed here: https://github.com/atbrask/CMS50Dplus.
-Beurer BF480 Diagnostic Scales - The Python script is based upon https://usb2me.wordpress.com/2013/02/03/beurer-bg64/ . The BF480 is a cheaper scale and has a different data structure and the script ahs been changed accordingly
+- JavaFX has no implementation for a Date axis in its graphs so the extFX library has been used (Published under the MIT OSS licence. (https://bitbucket.org/sco0ter/extfx)
+- The Pulse Oximeter streams data using a serial connection which uses the RXTX library for serial communication under the GNU Lesser General Public License
+- nimbus-jose-jwt -for json encryption and signing - Apache 2.0
+- json-smart Apache 2.0 licence
+- Jackson core - Apache 2.0
 
