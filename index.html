@@ -22,13 +22,17 @@
       <h1>
 <a id="medipi-telehealth-system" class="anchor" href="#medipi-telehealth-system" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>MediPi Telehealth System</h1>
 
+<p><img src="https://cloud.githubusercontent.com/assets/13271321/18472733/fe3ba2e8-79b0-11e6-8097-8ebc0ed732dc.jpg" alt="Element image"></p>
+
 <h2>
 <a id="software" class="anchor" href="#software" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Software</h2>
 
-<p>This is a simple implementation of a Telehealth patient/client system. It has been developed to be flexible and extensible.</p>
+<p>This is an implementation of a Telehealth patient/client system (It is intended to be used in with the MediPi Concentrator server implementation which is published separately on this GitHub account). It has been developed to be flexible and extensible.</p>
 
-<p>This project started as a demonstration of a general telehealth system but with clinical involvement from a Trust in the South of England, it has been developed into a Heart Failure implementation.
-The project is written in Java using JavaFX but includes two python classes. The python scripts are used for convenience to interface with their respective USB medical devices, but the functionality could be incorporated into Java using an open source Java USB library.</p>
+<p>This project started as a demonstration of a general telehealth system but with clinical involvement from a Hertfordshire Community NHS Trust, it has been developed into a Heart Failure implementation.
+The project is written in Java using JavaFX which communicates with the USB medical devices using javax-usb libraries.</p>
+
+<p>It is intended to be used in with the MediPi Concentrator server implementation which is published separately on this GitHub account</p>
 
 <p>Functionality:</p>
 
@@ -43,14 +47,15 @@ The project is written in Java using JavaFX but includes two python classes. The
 </ul>
 </li>
 <li>Flexible Scheduler</li>
-<li> Direct text based message from clinician</li>
-<li>Secure Flexible Transmitter</li>
+<li>Direct per patient text based messages from clinician</li>
+<li>Alerts based upon programmable measurement thresholds transmitted from clinical system</li>
+<li>Secure Flexible Transmitter - 2way SSL/TLS mutual authenticated messaging in transit and encryption and signing of the data at rest</li>
 <li>Remotely configurable</li>
 </ul>
 
 <p>This is a list of functionality to date which has been created under guidance from clinicians. It is not an exhaustive list and is intended to be expanded.</p>
 
-<p>See the MediPi Summary Document: <a href="https://github.com/rprobinson/MediPi/blob/master/MediPi_handout-v1.2.pdf">https://github.com/rprobinson/MediPi/blob/master/MediPi_handout-v1.2.pdf</a></p>
+<p>See the MediPi Summary Document: <a href="https://github.com/rprobinson/MediPi/blob/master/MediPi_Summary-v1.3.pdf">https://github.com/rprobinson/MediPi/blob/master/MediPi_Summary-v1.3.pdf</a></p>
 
 <h2>
 <a id="architecture" class="anchor" href="#architecture" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Architecture</h2>
@@ -58,7 +63,7 @@ The project is written in Java using JavaFX but includes two python classes. The
 <h3>
 <a id="medipi-class" class="anchor" href="#medipi-class" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>MediPi Class</h3>
 
-<p>The application is managed by the main MediPi class. This orchestrates the initiation of certain resources, initialises the UI framework/primary stage, initiates each of the elements of MediPi and can return information about its version if asked.</p>
+<p>The application is managed by the main MediPi class. This orchestrates the initiation of certain resources (Authentication interface, validation of device MAC address against the device certificate) initialises the UI framework/primary stage, initiates each of the elements of MediPi and can return information about its version if asked.</p>
 
 <h3>
 <a id="element-class" class="anchor" href="#element-class" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Element Class</h3>
@@ -91,8 +96,7 @@ The project is written in Java using JavaFX but includes two python classes. The
 
 <ol>
 <li>Serially/continuously - data is taken for the duration of the device's use, passed to the generic device class and averages are shown on the interface.</li>
-<li>Downloaded - All data on the medical device is downloaded and passed to the Generic Device Class. The 2 instances of this (Beurer BF480 and BM55) call python scripts to pull the data down - however this functionality could be incorporated into Java
-This class does not provide any UI nodes - just data</li>
+<li>Downloaded - All data on the medical device is downloaded and passed to the Generic Device Class.</li>
 </ol>
 
 <h4>
@@ -128,15 +132,7 @@ This class does not provide any UI nodes - just data</li>
 
 <p>Class to display and handle the functionality for transmitting the data collected by other Elements to a known endpoint. </p>
 
-<p>The transmitter element shows a list of all the elements loaded into MediPi with checkboxes which are enabled if data is present/ready to be transmitted. Transmitter will take all available and selected data and will use the Distribution Envelope format to contain the data. The available data from each of the elements is taken, compressed if applicable and can be individually encrypted. The data from each of the Devices has it's own metadata tags. Each payload is added to a Distribution Envelope structure with their own profile Id. The Distribution Envelope is then transmitted using the transport method defined</p>
-
-<p>While SpineTools is the current transport for MediPi this is historic and due to be changed as the particular spine message choice is asynchronous and the async responses are currently ignored by MediPi. The current configuration however does “work” in so far as it transmits the payload correctly but being necessarily a synchronous entity (for sercurity purposes), MediPi does not open any ports for async response. The Transmitter element will be split into a transmitting UI and a transport specific subclass and will transmit payloads within a DistributionEnvelope using a restful interface.</p>
-</li>
-<li>
-<h4>
-<a id="practitioner-classes" class="anchor" href="#practitioner-classes" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Practitioner classes</h4>
-
-<p>Included with the MediPi classes are several “practitioner” classes within the package:org.medipi.practitionerdevices. It is possible, using the medipi.properties file to create a “practitioner” version of the application. This version will display incoming information from flat files and also has the functionality to send simple text based messages from the practitioner version to the main patient version of MediPi. These demonstration classes have been developed solely for the purpose of displaying data after it has been transmitted in order to show equivalence at either end. They have been used when demonstrating the code to peers. It is <strong>not</strong> any attempt at creating a receiving system. </p>
+<p>The transmitter element shows a list of all the elements loaded into MediPi with checkboxes which are enabled if data is present/ready to be transmitted. Transmitter will take all available and selected data and will place it in a json structure. This payload is encrypted and then signed using the patient certificate. The resulting json JWT/JWE is passed in a json message - this uses Nimbus JOSE + JWT libraries. The message is sent to a restful interface on the MediPi Concentrator encrypted in transit using 2-way SSL/TLS mutual authenticated messaging.</p>
 </li>
 </ul>
 
@@ -148,11 +144,21 @@ This class does not provide any UI nodes - just data</li>
 <h3>
 <a id="medipiproperties-and-configuration-files" class="anchor" href="#medipiproperties-and-configuration-files" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>MediPi.properties and configuration files</h3>
 
-<p>MediPi.properties file defines the properties for the configuration of MediPi. The Spine tools configuration has been left in the MediPi properties file but the source and the binaries will have to be build by the contributor - see Github link below in the software dependencies section. </p>
+<p>MediPi.properties file defines the properties for the configuration of MediPi.</p>
 
 <p>Medipi has been designed to be flexible and extensible and uses dynamically initialised Element classes from the properties file. Elements are defined in the properties file and only those Elements which appear in the medipi.elementclasstokens list will be initialised or displayed.</p>
 
-<p>The patient details are defined in the properties file.</p>
+<p>The patient details are defined in the properties file, however these are only used for display on the patient device and are not used in any communication or attached to the device data in transit. All MediPi communication uses a generated UUID to identify the patient. This UUID is used to cross reference against the patient details in the clinical system, but this is outside the scope of this project</p>
+
+<h4>
+<a id="instructions-to-update-configuration-files" class="anchor" href="#instructions-to-update-configuration-files" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Instructions to update configuration files</h4>
+
+<ol>
+<li>Copy config directory to an external location e.g. C:\MediPi\ (for windows machine) or /home/{user}/MediPi (Linux based)</li>
+<li>Open command prompt which is capable of executing .sh file. (Git bash if you are on windows. Terminal on linux installation is capable of executing sh files)</li>
+<li>Go to config directory location on command prompt e.g. C:\MediPi\config or /home/{user}/MediPi/config</li>
+<li>Execute setup-all-configurations.sh "{config-directory-location}" as './set-all-configurations.sh "C:/config"' or './set-all-configurations.sh "/home/{user}/config"'. This will replace all the relative paths in properties and guides files of the configuration.</li>
+</ol>
 
 <h3>
 <a id="software-dependencies" class="anchor" href="#software-dependencies" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Software Dependencies:</h3>
@@ -161,23 +167,20 @@ This class does not provide any UI nodes - just data</li>
 
 <ul>
 <li>
-<strong>SpineTools:</strong> <a href="https://github.com/DamianJMurphy/SpineTools-Java">https://github.com/DamianJMurphy/SpineTools-Java</a>
-</li>
+<strong>nimbus-jose-jwt</strong> - <a href="http://connect2id.com/products/nimbus-jose-jwt">http://connect2id.com/products/nimbus-jose-jwt</a> for json encryption and signing - Apache 2.0</li>
 <li>
-<strong>DistributionEnvelopeTools:</strong> <a href="https://github.com/DamianJMurphy/DistributionEnvelopeTools-Java">https://github.com/DamianJMurphy/DistributionEnvelopeTools-Java</a>
-</li>
+<strong>json-smart</strong> Apache 2.0 licence</li>
 <li>
-<strong>PyUSB:</strong> <a href="https://github.com/walac/pyusb">https://github.com/walac/pyusb</a>
+<strong>Jackson core/annotations/bind</strong> - Apache 2.0</li>
+<li>
+<strong>libUSB4Java</strong> for USB control <a href="https://github.com/usb4java/libusb4java">https://github.com/usb4java/libusb4java</a>
 </li>
 <li>
 <strong>Java RXTX libraries for serial devices:</strong> <a href="https://github.com/rxtx/rxtx">https://github.com/rxtx/rxtx</a>
 </li>
+<li>
+<strong>extFX</strong> - JavaFX has no implementation for a Date axis in its graphs so the extFX library has been used (Published under the MIT OSS licence. (<a href="https://bitbucket.org/sco0ter/extfx">https://bitbucket.org/sco0ter/extfx</a>)</li>
 </ul>
-
-<h3>
-<a id="configuration-files" class="anchor" href="#configuration-files" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Configuration files:</h3>
-
-<p>The configuration files can be downloaded as a zip from here:<a href="https://github.com/rprobinson/MediPi/files/162967/reference_Config_v1.0.0-PILOT-20160308.zip">https://github.com/rprobinson/MediPi/files/162967/reference_Config_v1.0.0-PILOT-20160308.zip</a></p>
 
 <h3>
 <a id="usb-medical-device-interfaces" class="anchor" href="#usb-medical-device-interfaces" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>USB Medical Device Interfaces:</h3>
@@ -186,20 +189,34 @@ This class does not provide any UI nodes - just data</li>
 
 <ul>
 <li>Contec CMS50D+ Finger Pulse Oximeter - The interface is a Java port of the streamed serial interface developed here: <a href="https://github.com/atbrask/CMS50Dplus">https://github.com/atbrask/CMS50Dplus</a>. The device can store up to 24 hours of data but this function has not implemented.</li>
-<li>Beurer BF480 Diagnostic Scales - The Python script is based upon <a href="https://usb2me.wordpress.com/2013/02/03/beurer-bg64/">https://usb2me.wordpress.com/2013/02/03/beurer-bg64/</a> but the BF480 is a cheaper scale and has a different data structure</li>
-<li>Beurer BG55 Upper Arm Blood Pressure Monitor: This python script was reverse engineered based upon the experience gained with the previous two devices</li>
+<li>Beurer BF480 Diagnostic Scales - The Java code is based upon <a href="https://usb2me.wordpress.com/2013/02/03/beurer-bg64/">https://usb2me.wordpress.com/2013/02/03/beurer-bg64/</a> but the BF480 is a cheaper scale and has a different data structure</li>
+<li>Beurer BG55 Upper Arm Blood Pressure Monitor: This Java code was reverse engineered based upon the experience gained with the previous two devices</li>
 </ul>
 
 <h2>
 <a id="hardware" class="anchor" href="#hardware" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Hardware:</h2>
 
-<p>As MediPi is written in Java (other than the 2 Python scripts outlined above), it can be run on any system which has an appropriate JRE and thus is cross platform. This Heart Failure implementation of MediPi has been executed using:</p>
+<p>The MediPi project is a software project but is dependent on hardware for use in a home setting. As MediPi is written in Java, it can be run on any system which has an appropriate JRE and thus is cross platform. This Heart Failure implementation of MediPi has been executed using:</p>
+
+<h4>
+<a id="medipi-patient-module" class="anchor" href="#medipi-patient-module" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>MediPi Patient Module:</h4>
 
 <ul>
-<li>Raspberry Pi 2 Model B or Raspberry Pi 3: <a href="https://www.raspberrypi.org/products/raspberry-pi-2-model-b/">https://www.raspberrypi.org/products/raspberry-pi-2-model-b/</a>
+<li>Raspberry Pi 3: <a href="https://www.raspberrypi.org/products/raspberry-pi-2-model-b/">https://www.raspberrypi.org/products/raspberry-pi-2-model-b/</a>
 </li>
 <li>Raspberry Pi Touch Display: <a href="https://www.raspberrypi.org/products/raspberry-pi-touch-display/">https://www.raspberrypi.org/products/raspberry-pi-touch-display/</a>
 </li>
+<li>MultiComp Enclosure <a href="http://uk.farnell.com/multicomp/cbrpp-ts-blk-wht/raspberry-pi-touchscreen-enclosure/dp/2494691?MER=bn_search_2TP_Echo_4">http://uk.farnell.com/multicomp/cbrpp-ts-blk-wht/raspberry-pi-touchscreen-enclosure/dp/2494691?MER=bn_search_2TP_Echo_4</a>
+</li>
+<li>Sontrinics 2.5A PSU <a href="http://uk.farnell.com/stontronics/t6090dv/psu-raspberry-pi-5v-2-5a-uk-euro/dp/2520786">http://uk.farnell.com/stontronics/t6090dv/psu-raspberry-pi-5v-2-5a-uk-euro/dp/2520786</a>
+</li>
+<li>8Gb microSD card class 10</li>
+</ul>
+
+<h4>
+<a id="physiological-measurement-devices" class="anchor" href="#physiological-measurement-devices" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Physiological Measurement Devices:</h4>
+
+<ul>
 <li>Contec CMS50D+ Finger Pulse Oximeter: <a href="http://www.contecmed.com/index.php?page=shop.product_details&amp;flypage=flypage.tpl&amp;product_id=126&amp;category_id=10&amp;option=com_virtuemart&amp;Itemid=595">http://www.contecmed.com/index.php?page=shop.product_details&amp;flypage=flypage.tpl&amp;product_id=126&amp;category_id=10&amp;option=com_virtuemart&amp;Itemid=595</a>
 </li>
 <li>Beurer BF480 Diagnostic Scales: <a href="https://www.beurer.com/web/uk/products/Beurer-Connect/HealthManager-Products/BF-480-USB">https://www.beurer.com/web/uk/products/Beurer-Connect/HealthManager-Products/BF-480-USB</a>
@@ -266,7 +283,6 @@ sudo apt-get upgrade
 </li>
 <li><p>Install OpenJFX - Since java 1.8.0_33 Java for ARM hardfloat has not shipped with JavaFX.
 Guide for building OpenJFX: <a href="https://wiki.openjdk.java.net/display/OpenJFX/Building+OpenJFX">https://wiki.openjdk.java.net/display/OpenJFX/Building+OpenJFX</a></p></li>
-<li><p>Install PyUSB: <a href="https://github.com/walac/pyusb">https://github.com/walac/pyusb</a></p></li>
 <li>
 <p>Install Java RXTX libraries for serial devices</p>
 
@@ -291,22 +307,13 @@ ACTION=="add", SUBSYSTEMS=="usb", ATTRS{idVendor}=="0c45",  ATTRS{idProduct}=="7
 
 </code></pre>
 </li>
-<li><p>Create a directory named "MediPi" in an appropriate location and unzip the reference configuration files to it.</p></li>
-<li>
-<p>Update the following files with location details - globally replace <code>"__ROOT__"</code> (double underscore) with the location of the MediPi directory created in the previous step:</p>
-
-<ul>
-<li>/MediPi.properties</li>
-<li>/guides/beurerbf480.guide</li>
-<li>/guides/beurerbm55.guide</li>
-<li>/guides/contecCMS50DPlus.guide</li>
-</ul>
-</li>
-<li><p>Build MediPi.jar and its dependencies from the source and paste it and the lib directory into MediPi directory</p></li>
+<li><p>Refer the section <code>Instructions to update configuration files</code> to update the configurations files.</p></li>
+<li><p>Build MediPi.jar using maven build. Execute <code>mvn clean install</code> from the root of MediPi repository.</p></li>
+<li><p>Copy the <code>{medipi-repo-directory}/MediPi/target/MediPi.jar</code> file to /home/{user}/MediPi/ directory</p></li>
 <li>
 <p>Execute MediPi using:</p>
 
-<pre><code>java -Djava.library.path=/usr/lib/jni -jar MediPi/MediPi.jar --propertiesFile=/home/riro/MediPi/MediPi.properties
+<pre><code>java -Djava.library.path=/usr/lib/jni -jar /home/{user}/MediPi/MediPi.jar --propertiesFile=/home/{user}/MediPi/config/MediPi.properties
 </code></pre>
 </li>
 </ol>
