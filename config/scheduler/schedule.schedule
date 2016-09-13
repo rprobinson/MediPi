@@ -1,39 +1,12 @@
 #	UUID	status_S/M/T time	mins_until_next_schedule 	devices 
 c0521ad0-6999-4b45-b154-88a60575c772 SCHEDULED 2016-02-17T01:38:00Z 30 Oximeter Scale BloodPressureCuff Questionnaire Transmitter
-e08d9bcf-68ef-4a56-98d6-27b189bc1148 STARTED 2016-02-23T11:48:57Z 115 Oximeter Scale BloodPressureCuff Questionnaire Transmitter
-e08d9bcf-68ef-4a56-98d6-27b189bc1148 MEASURED 2016-02-23T11:49:03Z 115 Questionnaire
-e08d9bcf-68ef-4a56-98d6-27b189bc1148 TRANSMITTED 2016-02-23T11:49:20Z 115 Questionnaire Scheduler
-beed3069-7660-4bde-8cf8-55b548cf5adb STARTED 2016-04-02T00:02:02Z 30 Oximeter Scale BloodPressureCuff Questionnaire Transmitter
-beed3069-7660-4bde-8cf8-55b548cf5adb MEASURED 2016-04-02T00:02:19Z 0 Oximeter
-beed3069-7660-4bde-8cf8-55b548cf5adb MEASURED 2016-04-02T00:02:25Z 0 Questionnaire
-beed3069-7660-4bde-8cf8-55b548cf5adb TRANSMITTED 2016-04-02T00:02:29Z 0 Oximeter Questionnaire Scheduler
-6333a19d-7935-4d21-83e5-649f2f995271 STARTED 2016-04-02T00:04:07Z 30 Oximeter Scale BloodPressureCuff Questionnaire Transmitter
-6333a19d-7935-4d21-83e5-649f2f995271 MEASURED 2016-04-02T00:04:14Z 0 Questionnaire
-6333a19d-7935-4d21-83e5-649f2f995271 TRANSMITTED 2016-04-02T00:04:16Z 0 Questionnaire Scheduler
-759b0e35-fdf6-42f3-a632-16183d8ceac4 STARTED 2016-04-02T00:05:08Z 30 Oximeter Scale BloodPressureCuff Questionnaire Transmitter
-759b0e35-fdf6-42f3-a632-16183d8ceac4 MEASURED 2016-04-02T00:05:13Z 0 Questionnaire
-759b0e35-fdf6-42f3-a632-16183d8ceac4 TRANSMITTED 2016-04-02T00:05:14Z 0 Questionnaire Scheduler
-d92b09dd-2f21-4e79-81fd-604510e892f0 STARTED 2016-04-02T00:07:52Z 30 Oximeter Scale BloodPressureCuff Questionnaire Transmitter
-d92b09dd-2f21-4e79-81fd-604510e892f0 MEASURED 2016-04-02T00:07:58Z 0 Questionnaire
-d92b09dd-2f21-4e79-81fd-604510e892f0 TRANSMITTED 2016-04-02T00:08:00Z 0 Questionnaire Scheduler
-2842f812-b04b-439c-9a33-a321d41d7617 STARTED 2016-04-02T00:08:27Z 30 Oximeter Scale BloodPressureCuff Questionnaire Transmitter
-2842f812-b04b-439c-9a33-a321d41d7617 MEASURED 2016-04-02T00:08:33Z 0 Questionnaire
-2842f812-b04b-439c-9a33-a321d41d7617 TRANSMITTED 2016-04-02T00:08:40Z 0 Questionnaire Scheduler
-c9d58bc3-a652-47b9-8a97-019994e1ae34 STARTED 2016-04-02T00:10:07Z 30 Oximeter Scale BloodPressureCuff Questionnaire Transmitter
-c9d58bc3-a652-47b9-8a97-019994e1ae34 MEASURED 2016-04-02T00:10:15Z 0 Questionnaire
-c9d58bc3-a652-47b9-8a97-019994e1ae34 TRANSMITTED 2016-04-02T00:10:16Z 0 Questionnaire Scheduler
-859f922c-eb01-48e5-b19b-fadc7989eed3 STARTED 2016-04-30T00:28:54Z 30 Oximeter Scale BloodPressureCuff Questionnaire Transmitter
-859f922c-eb01-48e5-b19b-fadc7989eed3 MEASURED 2016-04-30T00:29:25Z 0 Oximeter
-859f922c-eb01-48e5-b19b-fadc7989eed3 MEASURED 2016-04-30T00:30:27Z 0 Scale
-859f922c-eb01-48e5-b19b-fadc7989eed3 MEASURED 2016-04-30T00:31:07Z 0 BloodPressureCuff
-859f922c-eb01-48e5-b19b-fadc7989eed3 MEASURED 2016-04-30T00:31:15Z 0 Questionnaire
-859f922c-eb01-48e5-b19b-fadc7989eed3 TRANSMITTED 2016-04-30T00:31:22Z 0 Oximeter Scale BloodPressureCuff Questionnaire Scheduler
-997b3b25-a2cc-4e1a-8f86-63338f2bcb4e STARTED 2016-04-30T00:34:14Z 30 Oximeter Scale BloodPressureCuff Questionnaire Transmitter
-997b3b25-a2cc-4e1a-8f86-63338f2bcb4e MEASURED 2016-04-30T00:34:26Z 0 Oximeter
-997b3b25-a2cc-4e1a-8f86-63338f2bcb4e MEASURED 2016-04-30T00:34:53Z 0 Scale
-997b3b25-a2cc-4e1a-8f86-63338f2bcb4e MEASURED 2016-04-30T00:35:10Z 0 BloodPressureCuff
-997b3b25-a2cc-4e1a-8f86-63338f2bcb4e MEASURED 2016-04-30T00:35:16Z 0 Questionnaire
-997b3b25-a2cc-4e1a-8f86-63338f2bcb4e TRANSMITTED 2016-04-30T00:35:24Z 0 Oximeter Scale BloodPressureCuff Questionnaire Scheduler
-7c7a5b59-bb53-48fe-8ed8-070a9bef64d8 STARTED 2016-05-05T14:19:25Z 30 Oximeter Scale BloodPressureCuff Questionnaire Transmitter
-7c7a5b59-bb53-48fe-8ed8-070a9bef64d8 MEASURED 2016-05-05T14:22:14Z 0 Questionnaire
-7c7a5b59-bb53-48fe-8ed8-070a9bef64d8 TRANSMITTED 2016-05-05T14:22:16Z 0 Questionnaire Scheduler
+f2b9e498-f536-476a-b8cd-b3676bd6e5c9 STARTED 2016-09-07T14:01:01.415Z 30 Oximeter Scale BloodPressureCuff Questionnaire Transmitter
+f2b9e498-f536-476a-b8cd-b3676bd6e5c9 MEASURED 2016-09-07T14:01:17.295Z 0 Oximeter
+f2b9e498-f536-476a-b8cd-b3676bd6e5c9 MEASURED 2016-09-07T14:01:41.424Z 0 Scale
+f2b9e498-f536-476a-b8cd-b3676bd6e5c9 MEASURED 2016-09-07T14:01:45.999Z 0 BloodPressureCuff
+f2b9e498-f536-476a-b8cd-b3676bd6e5c9 MEASURED 2016-09-07T14:01:50.407Z 0 Questionnaire
+f2b9e498-f536-476a-b8cd-b3676bd6e5c9 TRANSMITTED 2016-09-07T14:01:52.393Z 0 Oximeter Scale BloodPressureCuff Questionnaire Scheduler
+5bd5877d-f5a9-422f-b640-48aec203bdf7 STARTED 2016-11-09T21:51:32.024Z 30 Oximeter Scale BloodPressureCuff Questionnaire Transmitter
+5bd5877d-f5a9-422f-b640-48aec203bdf7 MEASURED 2016-11-09T21:51:55.217Z 0 Oximeter
+5bd5877d-f5a9-422f-b640-48aec203bdf7 MEASURED 2016-11-09T21:52:06.532Z 0 Questionnaire
+5bd5877d-f5a9-422f-b640-48aec203bdf7 TRANSMITTED 2016-11-09T21:52:14.110Z 0 Oximeter Questionnaire Scheduler
