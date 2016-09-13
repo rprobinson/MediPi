@@ -16,27 +16,14 @@
 package org.medipi;
 
 import java.awt.SplashScreen;
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileReader;
-import java.io.IOException;
-import java.net.NetworkInterface;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.cert.CertificateException;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -325,82 +312,82 @@ public class MediPi extends Application {
             // are up or not) using NetworkInterface on Linux machines. This method does work on Linux
 			// I'm not sure if the alternative method (i.e. the non Linux method) works for all
             // other OS MACAddresses/IPs whether they are up or not
-            if (System.getProperty("os.name").equals("Linux")) {
+			/*if (System.getProperty("os.name").equals("Linux")) {
 
-                // Read all available device names
-                List<String> devices = new ArrayList<>();
-                Pattern pattern = Pattern.compile("^ *(.*):");
-                try (FileReader reader = new FileReader("/proc/net/dev")) {
-                    BufferedReader in = new BufferedReader(reader);
-                    String line = null;
-                    while ((line = in.readLine()) != null) {
-                        Matcher m = pattern.matcher(line);
-                        if (m.find()) {
-                            devices.add(m.group(1));
-                        }
-                    }
-                } catch (IOException e) {
-                    makeFatalErrorMessage("Device certificate is not correct for this device", null);
-                }
+			    // Read all available device names
+			    List<String> devices = new ArrayList<>();
+			    Pattern pattern = Pattern.compile("^ *(.*):");
+			    try (FileReader reader = new FileReader("/proc/net/dev")) {
+			        BufferedReader in = new BufferedReader(reader);
+			        String line = null;
+			        while ((line = in.readLine()) != null) {
+			            Matcher m = pattern.matcher(line);
+			            if (m.find()) {
+			                devices.add(m.group(1));
+			            }
+			        }
+			    } catch (IOException e) {
+			        makeFatalErrorMessage("Device certificate is not correct for this device", null);
+			    }
 
-                String ksf = MediPiProperties.getInstance().getProperties().getProperty("medipi.device.cert.location");
-                // read the hardware address for each device
-                for (String device : devices) {
-                    try (FileReader reader = new FileReader("/sys/class/net/" + device + "/address")) {
-                        BufferedReader in = new BufferedReader(reader);
-                        String addr = in.readLine();
-                        try {
+			    String ksf = MediPiProperties.getInstance().getProperties().getProperty("medipi.device.cert.location");
+			    // read the hardware address for each device
+			    for (String device : devices) {
+			        try (FileReader reader = new FileReader("/sys/class/net/" + device + "/address")) {
+			            BufferedReader in = new BufferedReader(reader);
+			            String addr = in.readLine();
+			            try {
 
-                            KeyStore keyStore = KeyStore.getInstance("jks");
-                            try (FileInputStream fis = new FileInputStream(ksf)) {
-                                //the MAC address used to unlock the JKS must be lowercase
-                                keyStore.load(fis, addr.toCharArray());
-                                // use a system property to save the certicicate name
-                                Enumeration<String> aliases = keyStore.aliases();
-                                // the keystore will only ever contain one key -so take the 1st one
-                                System.setProperty("medipi.device.cert.name", aliases.nextElement());
-                                System.setProperty("medipi.device.macaddress", addr);
-                            }
-                        } catch (KeyStoreException | IOException | NoSuchAlgorithmException | CertificateException e) {
-                        }
+			                KeyStore keyStore = KeyStore.getInstance("jks");
+			                try (FileInputStream fis = new FileInputStream(ksf)) {
+			                    //the MAC address used to unlock the JKS must be lowercase
+			                    keyStore.load(fis, addr.toCharArray());
+			                    // use a system property to save the certicicate name
+			                    Enumeration<String> aliases = keyStore.aliases();
+			                    // the keystore will only ever contain one key -so take the 1st one
+			                    System.setProperty("medipi.device.cert.name", aliases.nextElement());
+			                    System.setProperty("medipi.device.macaddress", addr);
+			                }
+			            } catch (KeyStoreException | IOException | NoSuchAlgorithmException | CertificateException e) {
+			            }
 
-                        System.out.println(String.format("%5s: %s", device, addr));
-                    } catch (IOException e) {
-                        makeFatalErrorMessage("Device certificate is not correct for this device", null);
-                    }
-                }
-                if (System.getProperty("medipi.device.cert.name") == null || System.getProperty("medipi.device.macaddress") == null) {
-                    makeFatalErrorMessage("Device certificate is not correct for this device", null);
-                }
+			            System.out.println(String.format("%5s: %s", device, addr));
+			        } catch (IOException e) {
+			            makeFatalErrorMessage("Device certificate is not correct for this device", null);
+			        }
+			    }
+			    if (System.getProperty("medipi.device.cert.name") == null || System.getProperty("medipi.device.macaddress") == null) {
+			        makeFatalErrorMessage("Device certificate is not correct for this device", null);
+			    }
 
-            } else {
+			} else {
 				// for all other non Linux OS systems
-                String ip;
-                try {
-                    // try to find the MAC address
-                    String macAddress = "";
-                    Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
-                    while (interfaces.hasMoreElements()) {
-                        StringBuilder macAdd = new StringBuilder();
-                        NetworkInterface iface = interfaces.nextElement();
-                        // filters out 127.0.0.1 and inactive interfaces
-                        if (iface.isLoopback()) {
-                            continue;
-                        }
-                        byte[] mac = iface.getHardwareAddress();
-                        if (mac == null) {
-                            continue;
-                        }
-                        System.out.print("Current MAC address : ");
-                        for (int i = 0; i < mac.length; i++) {
-                            macAdd.append(String.format("%02X%s", mac[i], i < mac.length - 1 ? ":" : ""));
-                        }
-                        macAddress = macAdd.toString().toLowerCase();
-                        System.setProperty("medipi.device.macaddress", macAddress);
-                        System.out.print(macAddress);
-                    }
-                    // Using the Mac address unlock the JKS keystore for the device
-					/*try {
+			    String ip;
+			    try {
+			        // try to find the MAC address
+			        String macAddress = "";
+			        Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
+			        while (interfaces.hasMoreElements()) {
+			            StringBuilder macAdd = new StringBuilder();
+			            NetworkInterface iface = interfaces.nextElement();
+			            // filters out 127.0.0.1 and inactive interfaces
+			            if (iface.isLoopback()) {
+			                continue;
+			            }
+			            byte[] mac = iface.getHardwareAddress();
+			            if (mac == null) {
+			                continue;
+			            }
+			            System.out.print("Current MAC address : ");
+			            for (int i = 0; i < mac.length; i++) {
+			                macAdd.append(String.format("%02X%s", mac[i], i < mac.length - 1 ? ":" : ""));
+			            }
+			            macAddress = macAdd.toString().toLowerCase();
+			            System.setProperty("medipi.device.macaddress", macAddress);
+			            System.out.print(macAddress);
+			        }
+			        // Using the Mac address unlock the JKS keystore for the device
+					try {
 					    String ksf = MediPiProperties.getInstance().getProperties().getProperty("medipi.device.cert.location");
 
 					    KeyStore keyStore = KeyStore.getInstance("jks");
@@ -414,12 +401,12 @@ public class MediPi extends Application {
 					    }
 					} catch (KeyStoreException | IOException | NoSuchAlgorithmException | CertificateException e) {
 					    makeFatalErrorMessage("Device certificate is not correct for this device", null);
-					}*/
+					}
 
-                } catch (Exception e) {
-                    makeFatalErrorMessage("Can't find Mac Address for the machine, therefore unable to check device certificate", null);
-                }
-			}
+			    } catch (Exception e) {
+			        makeFatalErrorMessage("Can't find Mac Address for the machine, therefore unable to check device certificate", null);
+			    }
+			}*/
 			System.setProperty("medipi.device.macaddress", "macAddress");
             System.setProperty("medipi.device.cert.name", "device.cert");
             // fundamental UI decisions made from the properties
