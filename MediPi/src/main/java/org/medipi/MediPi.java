@@ -35,7 +35,6 @@ import java.util.Enumeration;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -636,10 +635,11 @@ public class MediPi extends Application {
                 }
                 Integer incomingMessageCheckPeriod = Integer.parseInt(time);
                 ScheduledThreadPoolExecutor timer = new ScheduledThreadPoolExecutor(TIMER_THREAD_POOL_SIZE);
-                PollDownloads pim = new PollDownloads(this);
-                timer.scheduleAtFixedRate(pim, 1, incomingMessageCheckPeriod, TimeUnit.SECONDS);
+				/*PollDownloads pim = new PollDownloads(this);
+				timer.scheduleAtFixedRate(pim, 1, incomingMessageCheckPeriod, TimeUnit.SECONDS);*/
             } catch (Exception nfe) {
-                makeFatalErrorMessage("Unable to start the download service - make sure that " + MEDIPIDOWNLOADPOLLPERIOD + " property is set correctly", null);
+				nfe.printStackTrace();
+				makeFatalErrorMessage("Unable to start the download service - make sure that " + MEDIPIDOWNLOADPOLLPERIOD + " property is set correctly", null);
             }
 
         } catch (Exception e) {
