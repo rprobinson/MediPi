@@ -1,10 +1,14 @@
 # MediPi Telehealth System
 
-##Software
-This is a simple implementation of a Telehealth patient/client system. It has been developed to be flexible and extensible.
+![Element image](https://cloud.githubusercontent.com/assets/13271321/18472733/fe3ba2e8-79b0-11e6-8097-8ebc0ed732dc.jpg)
 
-This project started as a demonstration of a general telehealth system but with clinical involvement from a Trust in the South of England, it has been developed into a Heart Failure implementation.
+##Software
+This is an implementation of a Telehealth patient/client system (It is intended to be used in with the MediPi Concentrator server implementation which is published separately on this GitHub account). It has been developed to be flexible and extensible.
+
+This project started as a demonstration of a general telehealth system but with clinical involvement from a Hertfordshire Community NHS Trust, it has been developed into a Heart Failure implementation.
 The project is written in Java using JavaFX which communicates with the USB medical devices using javax-usb libraries.
+
+It is intended to be used in with the MediPi Concentrator server implementation which is published separately on this GitHub account
 
 Functionality:
 
@@ -14,8 +18,9 @@ Functionality:
   * Blood Pressure Meter (upper arm cuff)
   * Patient Yes/No Daily Questionnaire
 * Flexible Scheduler
-*  Direct text based message from clinician
-* Secure Flexible Transmitter
+* Direct per patient text based messages from clinician
+* Alerts based upon programmable measurement thresholds transmitted from clinical system
+* Secure Flexible Transmitter - 2way SSL/TLS mutual authenticated messaging in transit and encryption and signing of the data at rest
 * Remotely configurable
 
 This is a list of functionality to date which has been created under guidance from clinicians. It is not an exhaustive list and is intended to be expanded.
@@ -24,7 +29,7 @@ See the MediPi Summary Document: https://github.com/rprobinson/MediPi/blob/maste
 
 ##Architecture
 ###MediPi Class
-The application is managed by the main MediPi class. This orchestrates the initiation of certain resources, initialises the UI framework/primary stage, initiates each of the elements of MediPi and can return information about its version if asked.
+The application is managed by the main MediPi class. This orchestrates the initiation of certain resources (Authentication interface, validation of device MAC address against the device certificate) initialises the UI framework/primary stage, initiates each of the elements of MediPi and can return information about its version if asked.
 
 ###Element Class
 All main functions of MediPi are encapsulated as Elements. These are visually represented on the main screen as tiles (governed by dashboardTiles.class). Elements may be used to capture data from the patient (e.g. USB enabled devices or user interface for capturing responses to yes/no questions) or may be used for other functions (e.g. transmitting data or displaying incoming messages from the clinician).
@@ -68,26 +73,20 @@ A Device Class to schedule data recording and orchestrate the collection and tra
 * ####Transmitter Element Class
 Class to display and handle the functionality for transmitting the data collected by other Elements to a known endpoint. 
 
-	The transmitter element shows a list of all the elements loaded into MediPi with checkboxes which are enabled if data is present/ready to be transmitted. Transmitter will take all available and selected data and will use the Distribution Envelope format to contain the data. The available data from each of the elements is taken, compressed if applicable and can be individually encrypted. The data from each of the Devices has it's own metadata tags. Each payload is added to a Distribution Envelope structure with their own profile Id. The Distribution Envelope is then transmitted using the transport method defined
-
-	While SpineTools is the current transport for MediPi this is historic and due to be changed as the particular spine message choice is asynchronous and the async responses are currently ignored by MediPi. The current configuration however does “work” in so far as it transmits the payload correctly but being necessarily a synchronous entity (for sercurity purposes), MediPi does not open any ports for async response. The Transmitter element will be split into a transmitting UI and a transport specific subclass and will transmit payloads within a DistributionEnvelope using a restful interface.
-
-* ####Practitioner classes
-Included with the MediPi classes are several “practitioner” classes within the package:org.medipi.practitionerdevices. It is possible, using the medipi.properties file to create a “practitioner” version of the application. This version will display incoming information from flat files and also has the functionality to send simple text based messages from the practitioner version to the main patient version of MediPi. These demonstration classes have been developed solely for the purpose of displaying data after it has been transmitted in order to show equivalence at either end. They have been used when demonstrating the code to peers. It is **not** any attempt at creating a receiving system. 
-
+	The transmitter element shows a list of all the elements loaded into MediPi with checkboxes which are enabled if data is present/ready to be transmitted. Transmitter will take all available and selected data and will place it in a json structure. This payload is encrypted and then signed using the patient certificate. The resulting json JWT/JWE is passed in a json message - this uses Nimbus JOSE + JWT libraries. The message is sent to a restful interface on the MediPi Concentrator encrypted in transit using 2-way SSL/TLS mutual authenticated messaging.
 
 ###CSS Implementation
 MediPi uses JavaFX which can be controlled using CSS. The implementation of this is sub-optimal and has been done on a node by node basis. Whilst individual elements can be controlled, a refactoring exercise is required to properly implement it and take full advantage of the technology.
 
 ###MediPi.properties and configuration files
-MediPi.properties file defines the properties for the configuration of MediPi. The Spine tools configuration has been left in the MediPi properties file but the source and the binaries will have to be build by the contributor - see Github link below in the software dependencies section. 
+MediPi.properties file defines the properties for the configuration of MediPi.
 
 Medipi has been designed to be flexible and extensible and uses dynamically initialised Element classes from the properties file. Elements are defined in the properties file and only those Elements which appear in the medipi.elementclasstokens list will be initialised or displayed.
 
-The patient details are defined in the properties file.
+The patient details are defined in the properties file, however these are only used for display on the patient device and are not used in any communication or attached to the device data in transit. All MediPi communication uses a generated UUID to identify the patient. This UUID is used to cross reference against the patient details in the clinical system, but this is outside the scope of this project
 
 ####Instructions to update configuration files
-1. Copy config directory to some external location e.g. C:\MediPi\ (for windows machine) or /home/{user}/MediPi
+1. Copy config directory to an external location e.g. C:\MediPi\ (for windows machine) or /home/{user}/MediPi (Linux based)
 2. Open command prompt which is capable of executing .sh file. (Git bash if you are on windows. Terminal on linux installation is capable of executing sh files)
 3. Go to config directory location on command prompt e.g. C:\MediPi\config or /home/{user}/MediPi/config
 4. Execute setup-all-configurations.sh "{config-directory-location}" as './set-all-configurations.sh "C:/config"' or './set-all-configurations.sh "/home/{user}/config"'. This will replace all the relative paths in properties and guides files of the configuration.
@@ -95,26 +94,35 @@ The patient details are defined in the properties file.
 ###Software Dependencies:
 MediPi depends on the following libraries:
 
-* **SpineTools:** https://github.com/DamianJMurphy/SpineTools-Java
-* **DistributionEnvelopeTools:** https://github.com/DamianJMurphy/DistributionEnvelopeTools-Java
-* **Java RXTX libraries for serial devices:** https://github.com/rxtx/rxtx
+* **nimbus-jose-jwt** - [http://connect2id.com/products/nimbus-jose-jwt](http://connect2id.com/products/nimbus-jose-jwt) for json encryption and signing - Apache 2.0
+* **json-smart** Apache 2.0 licence
+* **Jackson core/annotations/bind** - Apache 2.0
+* **libUSB4Java** for USB control [https://github.com/usb4java/libusb4java](https://github.com/usb4java/libusb4java)
+* **Java RXTX libraries for serial devices:** [https://github.com/rxtx/rxtx](https://github.com/rxtx/rxtx)
+* **extFX** - JavaFX has no implementation for a Date axis in its graphs so the extFX library has been used (Published under the MIT OSS licence. ([https://bitbucket.org/sco0ter/extfx](https://bitbucket.org/sco0ter/extfx))
 
 ###USB Medical Device Interfaces:
 3 particular devices have been used but others can be developed.
 
 * Contec CMS50D+ Finger Pulse Oximeter - The interface is a Java port of the streamed serial interface developed here: https://github.com/atbrask/CMS50Dplus. The device can store up to 24 hours of data but this function has not implemented.
-* Beurer BF480 Diagnostic Scales - The Java code is based upon https://usb2me.wordpress.com/2013/02/03/beurer-bg64/ but the BF480 is a cheaper scale and has a different data structure
+* Beurer BF480 Diagnostic Scales - The Java code is based upon [https://usb2me.wordpress.com/2013/02/03/beurer-bg64/](https://usb2me.wordpress.com/2013/02/03/beurer-bg64/) but the BF480 is a cheaper scale and has a different data structure
 * Beurer BG55 Upper Arm Blood Pressure Monitor: This Java code was reverse engineered based upon the experience gained with the previous two devices
 
 
 ##Hardware:
-As MediPi is written in Java, it can be run on any system which has an appropriate JRE and thus is cross platform. This Heart Failure implementation of MediPi has been executed using:
+The MediPi project is a software project but is dependent on hardware for use in a home setting. As MediPi is written in Java, it can be run on any system which has an appropriate JRE and thus is cross platform. This Heart Failure implementation of MediPi has been executed using:
 
-* Raspberry Pi 2 Model B or Raspberry Pi 3: https://www.raspberrypi.org/products/raspberry-pi-2-model-b/
-* Raspberry Pi Touch Display: https://www.raspberrypi.org/products/raspberry-pi-touch-display/
-* Contec CMS50D+ Finger Pulse Oximeter: http://www.contecmed.com/index.php?page=shop.product_details&flypage=flypage.tpl&product_id=126&category_id=10&option=com_virtuemart&Itemid=595
-* Beurer BF480 Diagnostic Scales: https://www.beurer.com/web/uk/products/Beurer-Connect/HealthManager-Products/BF-480-USB
-* Beurer BG55 Upper Arm Blood Pressure Monitor: https://www.beurer.com/web/en/products/bloodpressure/upper_arm/BM-55
+####MediPi Patient Module:
+* Raspberry Pi 3: [https://www.raspberrypi.org/products/raspberry-pi-2-model-b/](https://www.raspberrypi.org/products/raspberry-pi-2-model-b/)
+* Raspberry Pi Touch Display: [https://www.raspberrypi.org/products/raspberry-pi-touch-display/](https://www.raspberrypi.org/products/raspberry-pi-touch-display/)
+* MultiComp Enclosure [http://uk.farnell.com/multicomp/cbrpp-ts-blk-wht/raspberry-pi-touchscreen-enclosure/dp/2494691?MER=bn_search_2TP_Echo_4](http://uk.farnell.com/multicomp/cbrpp-ts-blk-wht/raspberry-pi-touchscreen-enclosure/dp/2494691?MER=bn_search_2TP_Echo_4)
+* Sontrinics 2.5A PSU [http://uk.farnell.com/stontronics/t6090dv/psu-raspberry-pi-5v-2-5a-uk-euro/dp/2520786](http://uk.farnell.com/stontronics/t6090dv/psu-raspberry-pi-5v-2-5a-uk-euro/dp/2520786)
+* 8Gb microSD card class 10
+
+####Physiological Measurement Devices:
+* Contec CMS50D+ Finger Pulse Oximeter: [http://www.contecmed.com/index.php?page=shop.product_details&flypage=flypage.tpl&product_id=126&category_id=10&option=com_virtuemart&Itemid=595](http://www.contecmed.com/index.php?page=shop.product_details&flypage=flypage.tpl&product_id=126&category_id=10&option=com_virtuemart&Itemid=595)
+* Beurer BF480 Diagnostic Scales: [https://www.beurer.com/web/uk/products/Beurer-Connect/HealthManager-Products/BF-480-USB](https://www.beurer.com/web/uk/products/Beurer-Connect/HealthManager-Products/BF-480-USB)
+* Beurer BG55 Upper Arm Blood Pressure Monitor: [https://www.beurer.com/web/en/products/bloodpressure/upper_arm/BM-55](https://www.beurer.com/web/en/products/bloodpressure/upper_arm/BM-55)
 
 ##Licence
 
