@@ -36,7 +36,7 @@ import javax.persistence.Table;
 	@NamedQuery(name = "AttributeThresholdMaster.fetchPatientAttributeThresholds", query = "SELECT attributeThreshold FROM AttributeThresholdMaster attributeThreshold"
 			+ " JOIN attributeThreshold.patient patient"
 			+ " JOIN attributeThreshold.recordingDeviceAttribute recordingDeviceAttribute"
-			+ " WHERE patient.patientId = :patientId"
+			+ " WHERE patient.patientUUID = :patientUUID"
 			+ " AND recordingDeviceAttribute.attributeId = :attributeId"
 			+ " ORDER BY attributeThreshold.effectiveDate ASC")
 })
@@ -60,7 +60,7 @@ public class AttributeThresholdMaster {
 	private String thresholdLowValue;
 
 	@ManyToOne
-	@JoinColumn(name = "patient_id")
+	@JoinColumn(name = "patient_uuid")
 	private PatientMaster patient;
 
 	@ManyToOne

@@ -15,7 +15,7 @@
 
 <!-- Body temperature accordion -->
 <jsp:include page="/WEB-INF/pages/patient/includes/patientMeasurement.jsp">
-	<jsp:param name="patientId" value="${patient.patientId}"/>
+	<jsp:param name="patientUUID" value="${patient.patientUUID}"/>
 	<jsp:param name="attributeId" value="20"/>
 	<jsp:param name="accordionTitle" value="Temperature"/>
 	<jsp:param name="chartHeader" value="Temperature"/>
@@ -30,7 +30,7 @@
 
 <!-- Pulse rate accordion -->
 <jsp:include page="/WEB-INF/pages/patient/includes/patientMeasurement.jsp">
-	<jsp:param name="patientId" value="${patient.patientId}"/>
+	<jsp:param name="patientUUID" value="${patient.patientUUID}"/>
 	<jsp:param name="attributeId" value="1"/>
 	<jsp:param name="accordionTitle" value="Pulse Rate"/>
 	<jsp:param name="chartHeader" value="Pulse"/>
@@ -45,7 +45,7 @@
 
 <!-- Weight accordion -->
 <jsp:include page="/WEB-INF/pages/patient/includes/patientMeasurement.jsp">
-	<jsp:param name="patientId" value="${patient.patientId}"/>
+	<jsp:param name="patientUUID" value="${patient.patientUUID}"/>
 	<jsp:param name="attributeId" value="5"/>
 	<jsp:param name="accordionTitle" value="Weight"/>
 	<jsp:param name="chartHeader" value="Weight(kg)"/>
@@ -60,7 +60,7 @@
 
 <!-- Oxygen saturation accordion -->
 <jsp:include page="/WEB-INF/pages/patient/includes/patientMeasurement.jsp">
-	<jsp:param name="patientId" value="${patient.patientId}"/>
+	<jsp:param name="patientUUID" value="${patient.patientUUID}"/>
 	<jsp:param name="attributeId" value="3"/>
 	<jsp:param name="accordionTitle" value="Oxygen Saturation"/>
 	<jsp:param name="chartHeader" value="SpO2"/>
@@ -75,7 +75,7 @@
 
 <!-- Blood pressure accordion -->
 <jsp:include page="/WEB-INF/pages/patient/includes/patientBloodPressureMeasurement.jsp">
-	<jsp:param name="patientId" value="${patient.patientId}"/>
+	<jsp:param name="patientUUID" value="${patient.patientUUID}"/>
 	<jsp:param name="attributeIds" value="[9,10]"/>
 	<jsp:param name="accordionTitle" value="Blood Pressure"/>
 	<jsp:param name="chartHeaders" value="['Systolic', 'Diastolic']"/>

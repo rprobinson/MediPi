@@ -29,9 +29,13 @@ import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
+//@formatter:off
 @Entity
 @Table(name = "recording_device_type")
-@NamedQueries({@NamedQuery(name = "RecordingDeviceMaster.fetchAllRecordingDevices", query = "SELECT recordingDeviceMaster FROM RecordingDeviceMaster recordingDeviceMaster")})
+@NamedQueries({
+	@NamedQuery(name = "RecordingDeviceMaster.fetchAllRecordingDevices", query = "SELECT recordingDeviceMaster FROM RecordingDeviceMaster recordingDeviceMaster")
+})
+//@formatter:on
 public class RecordingDeviceMaster {
 
 	@Id

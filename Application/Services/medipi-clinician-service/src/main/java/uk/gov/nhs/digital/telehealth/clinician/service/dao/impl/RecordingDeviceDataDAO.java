@@ -25,9 +25,9 @@ import uk.gov.nhs.digital.telehealth.clinician.service.entities.RecordingDeviceD
 import com.dev.ops.common.dao.generic.GenericDAO;
 
 public interface RecordingDeviceDataDAO extends GenericDAO<RecordingDeviceDataMaster> {
-	List<RecordingDeviceDataMaster> fetchRecentMeasurementsHQL(String patientId);
+	List<RecordingDeviceDataMaster> fetchRecentMeasurementsHQL(String patientUUID);
 
-	List<DataValueEntity> fetchRecentMeasurementsSQL(String patientId);
+	List<DataValueEntity> fetchRecentMeasurementsSQL(String patientUUID);
 
-	List<RecordingDeviceDataMaster> fetchPatientMeasurementsByAttributeId(String patientId, int attributeId);
+	List<RecordingDeviceDataMaster> fetchPatientMeasurementsByAttributeId(String patientUUID, int attributeId);
 }

@@ -14,7 +14,7 @@
 			</div>
 			<div class="col-sm-2">
 				<form name="attributeThreshold" id="attributeThreshold" action="/clinician/patient/patients">
-					<input type="hidden" name="patientId" value="${param.patientId}">
+					<input type="hidden" name="patientUUID" value="${param.patientUUID}">
 					<input type="hidden" name="attributeId" value="${param.attributeId}">
 					<table class="measurement-attribute">
 						<tr>
@@ -48,13 +48,13 @@
 	</div>
 </div>
 <script type="text/javascript">
-	var includeObject = {patientId : '${param.patientId}', attributeId : '${param.attributeId}', canvasId : '${param.canvasId}', accordionTitle : '${param.accordionTitle}', chartHeader : '${param.chartHeader}', recentMeasurementDateId : '${param.recentMeasurementDateId}', recentMeasurementValueId : '${param.recentMeasurementValueId}', measurementMinValueId : '${param.measurementMinValueId}', measurementMaxValueId : '${param.measurementMaxValueId}', suggestedMinValue : '${param.suggestedMinValue}', suggestedMaxValue : '${param.suggestedMaxValue}'};
+	var includeObject = {patientUUID : '${param.patientUUID}', attributeId : '${param.attributeId}', canvasId : '${param.canvasId}', accordionTitle : '${param.accordionTitle}', chartHeader : '${param.chartHeader}', recentMeasurementDateId : '${param.recentMeasurementDateId}', recentMeasurementValueId : '${param.recentMeasurementValueId}', measurementMinValueId : '${param.measurementMinValueId}', measurementMaxValueId : '${param.measurementMaxValueId}', suggestedMinValue : '${param.suggestedMinValue}', suggestedMaxValue : '${param.suggestedMaxValue}'};
 	measurement.initChart(includeObject);
 	$("#" + includeObject.canvasId + "-modify-threshold").hide();
 	$("#" + includeObject.canvasId + "-btn_update_thresholds").hide();
 
 	var modifyThresholdButtonId = "#" + includeObject.canvasId + "-btn_modify_thresholds";
-	console.log(modifyThresholdButtonId);
+	//console.log(modifyThresholdButtonId);
 
 	$("body").on("click", modifyThresholdButtonId, function() {
 		console.log("on click called:" + modifyThresholdButtonId);
@@ -63,6 +63,6 @@
 
 		$("#" + includeObject.canvasId + "-modify-threshold").show();
 		$("#" + includeObject.canvasId + "-btn_update_thresholds").show();
-		console.log("on click called:end: " + modifyThresholdButtonId);
+		//console.log("on click called:end: " + modifyThresholdButtonId);
 	});
 </script>

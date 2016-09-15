@@ -32,17 +32,17 @@ public class AttributeThresholdDAOImpl extends GenericDAOImpl<AttributeThreshold
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public List<AttributeThresholdMaster> fetchPatientAttributeThresholds(final String patientId, final Integer attributeId) {
+	public List<AttributeThresholdMaster> fetchPatientAttributeThresholds(final String patientUUID, final Integer attributeId) {
 		/*String queryString = "SELECT attributeThreshold FROM AttributeThresholdMaster attributeThreshold"
 				+ " JOIN attributeThreshold.patient patient"
 				+ " JOIN attributeThreshold.recordingDeviceAttribute recordingDeviceAttribute"
-				+ " WHERE patient.patientId = :patientId"
+				+ " WHERE patient.patientUUID = :patientUUID"
 				+ " AND recordingDeviceAttribute.attributeId = :attributeId"
 				+ " ORDER BY attributeThreshold.effectiveDate ASC";
 		final Query query = this.getEntityManager().createNamedQuery(queryString, AttributeThresholdMaster.class);*/
 
 		final Query query = this.getEntityManager().createNamedQuery("AttributeThresholdMaster.fetchPatientAttributeThresholds", AttributeThresholdMaster.class);
-		query.setParameter("patientId", patientId);
+		query.setParameter("patientUUID", patientUUID);
 		query.setParameter("attributeId", attributeId);
 		return query.getResultList();
 	}

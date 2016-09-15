@@ -47,9 +47,9 @@ public class RecordingDeviceDataDAOImpl extends GenericDAOImpl<RecordingDeviceDa
 		query.append(" JOIN recording_device_attribute rda ON rdd.attribute_id = rda.attribute_id");
 		query.append(" JOIN recording_device_type rdt ON rda.type_id = rdt.type_id");
 		query.append(" JOIN  (SELECT MAX(rddd.data_value_time) as data_value_time, rddd.attribute_id as attribute_id FROM recording_device_data rddd");
-		query.append(" WHERE patient_id = :patientId");
+		query.append(" WHERE patient_uuid = :patientUUID");
 		query.append(" GROUP BY rddd.attribute_id) latest_device_data ON rdd.attribute_id = latest_device_data.attribute_id AND rdd.data_value_time = latest_device_data.data_value_time");
-		query.append(" WHERE rdd.patient_id = :patientId");
+		query.append(" WHERE rdd.patient_uuid = :patientUUID");
 		query.append(" ORDER BY rdt.type_id ASC");
 
 		FETCH_RECENT_MEASUREMENTS_NATIVE_POSTGRESQL_QUERY = query.toString();
@@ -57,27 +57,27 @@ public class RecordingDeviceDataDAOImpl extends GenericDAOImpl<RecordingDeviceDa
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public List<RecordingDeviceDataMaster> fetchRecentMeasurementsHQL(final String patientId) {
-		LOGGER.debug("Get recent measurements for patient:" + patientId + " " + ContextThreadLocal.get());
+	public List<RecordingDeviceDataMaster> fetchRecentMeasurementsHQL(final String patientUUID) {
+		LOGGER.debug("Get recent measurements for patient:" + patientUUID + " " + ContextThreadLocal.get());
 		final Query query = this.getEntityManager().createNamedQuery("RecordingDeviceDataMaster.fetchRecentMeasurements", RecordingDeviceDataMaster.class);
-		query.setParameter("patientId", patientId);
+		query.setParameter("patientUUID", patientUUID);
 		return query.getResultList();
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public List<DataValueEntity> fetchRecentMeasurementsSQL(final String patientId) {
-		LOGGER.debug("Get recent measurements for patient:" + patientId + " " + ContextThreadLocal.get());
+	public List<DataValueEntity> fetchRecentMeasurementsSQL(final String patientUUID) {
+		LOGGER.debug("Get recent measurements for patient:" + patientUUID + " " + ContextThreadLocal.get());
 		final Query query = this.getEntityManager().createNativeQuery(FETCH_RECENT_MEASUREMENTS_NATIVE_POSTGRESQL_QUERY, DataValueEntity.class);
-		query.setParameter("patientId", patientId);
+		query.setParameter("patientUUID", patientUUID);
 		return query.getResultList();
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public List<RecordingDeviceDataMaster> fetchPatientMeasurementsByAttributeId(final String patientId, final int attributeId) {
+	public List<RecordingDeviceDataMaster> fetchPatientMeasurementsByAttributeId(final String patientUUID, final int attributeId) {
 		final Query query = this.getEntityManager().createNamedQuery("RecordingDeviceDataMaster.fetchPatientMeasurementsByAttributeId", RecordingDeviceDataMaster.class);
-		query.setParameter("patientId", patientId);
+		query.setParameter("patientUUID", patientUUID);
 		query.setParameter("attributeId", attributeId);
 		return query.getResultList();
 	}

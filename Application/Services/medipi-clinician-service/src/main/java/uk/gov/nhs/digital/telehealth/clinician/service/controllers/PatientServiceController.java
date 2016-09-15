@@ -49,12 +49,12 @@ public class PatientServiceController {
 
 	private static final Logger LOGGER = LogManager.getLogger(PatientServiceController.class);
 
-	@RequestMapping(value = ServiceURLMappings.PatientServiceController.GET_PATIENT + "{patientId}", method = RequestMethod.GET)
+	@RequestMapping(value = ServiceURLMappings.PatientServiceController.GET_PATIENT + "{patientUUID}", method = RequestMethod.GET)
 	@ResponseBody
-	public Patient getPatientDetails(@PathVariable final String patientId, @RequestHeader(CommonConstants.CONTEXT_INFORMATION_REQUEST_PARAMETER) final String context) throws DefaultWrappedException {
+	public Patient getPatientDetails(@PathVariable final String patientUUID, @RequestHeader(CommonConstants.CONTEXT_INFORMATION_REQUEST_PARAMETER) final String context) throws DefaultWrappedException {
 		ContextThreadLocal.set(ContextInfo.toContextInfo(context));
-		LOGGER.debug("Get Patient details for:" + patientId);
-		final Patient patient = this.patientService.getPatientDetails(patientId);
+		LOGGER.debug("Get Patient details for:" + patientUUID);
+		final Patient patient = this.patientService.getPatientDetails(patientUUID);
 		LOGGER.debug("The Patient details: " + patient);
 		return patient;
 	}
@@ -67,20 +67,20 @@ public class PatientServiceController {
 		return patients;
 	}
 
-	@RequestMapping(value = ServiceURLMappings.PatientServiceController.GET_PATIENT_RECENT_MEASURMENTS + "{patientId}", method = RequestMethod.GET)
+	@RequestMapping(value = ServiceURLMappings.PatientServiceController.GET_PATIENT_RECENT_MEASURMENTS + "{patientUUID}", method = RequestMethod.GET)
 	@ResponseBody
-	public List<DataValue> getPatientRecentReadings(@PathVariable final String patientId, @RequestHeader(CommonConstants.CONTEXT_INFORMATION_REQUEST_PARAMETER) final String context) throws DefaultWrappedException {
+	public List<DataValue> getPatientRecentReadings(@PathVariable final String patientUUID, @RequestHeader(CommonConstants.CONTEXT_INFORMATION_REQUEST_PARAMETER) final String context) throws DefaultWrappedException {
 		ContextThreadLocal.set(ContextInfo.toContextInfo(context));
-		final List<DataValue> recentReadings = this.patientService.getPatientsRecentMeasurements(patientId);
+		final List<DataValue> recentReadings = this.patientService.getPatientsRecentMeasurements(patientUUID);
 		return recentReadings;
 	}
 
-	@RequestMapping(value = ServiceURLMappings.PatientServiceController.GET_PATIENT_MEASURMENTS + "{patientId}" + "/{attributeId}", method = RequestMethod.GET)
+	@RequestMapping(value = ServiceURLMappings.PatientServiceController.GET_PATIENT_MEASURMENTS + "{patientUUID}" + "/{attributeId}", method = RequestMethod.GET)
 	@ResponseBody
-	public List<Measurement> getPatientMeasurements(@PathVariable final String patientId, @PathVariable final int attributeId, @RequestHeader(CommonConstants.CONTEXT_INFORMATION_REQUEST_PARAMETER) final String context) throws DefaultWrappedException {
+	public List<Measurement> getPatientMeasurements(@PathVariable final String patientUUID, @PathVariable final int attributeId, @RequestHeader(CommonConstants.CONTEXT_INFORMATION_REQUEST_PARAMETER) final String context) throws DefaultWrappedException {
 		ContextThreadLocal.set(ContextInfo.toContextInfo(context));
-		LOGGER.debug("Get Patient measurements for patient id:<" + patientId + "> and attribute id:<" + attributeId + ">");
-		final List<Measurement> measurements = this.patientService.getPatientMeasurements(patientId, attributeId);
+		LOGGER.debug("Get Patient measurements for patient id:<" + patientUUID + "> and attribute id:<" + attributeId + ">");
+		final List<Measurement> measurements = this.patientService.getPatientMeasurements(patientUUID, attributeId);
 		return measurements;
 	}
 

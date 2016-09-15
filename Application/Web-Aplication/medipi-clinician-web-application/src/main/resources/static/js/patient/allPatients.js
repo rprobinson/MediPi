@@ -44,8 +44,8 @@ function getPatientTile(patient) {
 
 
 	var tileDiv =
-		'<div class="col-sm-2" id="patient-' + patient.patientId + '">' +
-			'<a href="/clinician/patient/' + patient.patientId +'">' +
+		'<div class="col-sm-2" id="patient-' + patient.patientUUID + '">' +
+			'<a href="/clinician/patient/' + patient.patientUUID +'">' +
 				'<table class="tile-view ' + tileType + '">' +
 					'<tr>' +
 						'<th scope="col">' +

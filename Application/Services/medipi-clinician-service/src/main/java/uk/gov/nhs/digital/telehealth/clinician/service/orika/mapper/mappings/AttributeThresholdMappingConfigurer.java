@@ -36,7 +36,7 @@ public class AttributeThresholdMappingConfigurer implements MappingConfigurer {
 
 		factory.classMap(AttributeThresholdMaster.class, AttributeThreshold.class)
 		.byDefault()
-		.field("patient.patientId", "patientId")
+		.field("patient.patientUUID", "patientUUID")
 		.field("recordingDeviceAttribute.attributeId", "attributeId")
 
 		//@formatter:on

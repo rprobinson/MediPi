@@ -37,15 +37,15 @@ import javax.persistence.Table;
           	+ " JOIN recordingDeviceDataMaster.recordingDeviceAttribute recordingDeviceAttribute"
           	+ " JOIN recordingDeviceDataMaster.recordingDeviceAttribute.recordingDevice recordingDevice"
            	+ " WHERE recordingDeviceDataMaster.dataId in (SELECT MAX(rdm.dataId) as dataId FROM RecordingDeviceDataMaster rdm"
-           		+ " WHERE rdm.patient.patientId = :patientId"
+           		+ " WHERE rdm.patient.patientUUID = :patientUUID"
            		+ " GROUP BY rdm.recordingDeviceAttribute.attributeId)"
-           	+ " AND patient.patientId = :patientId"
+           	+ " AND patient.patientUUID = :patientUUID"
            	+" ORDER BY recordingDevice.typeId ASC"),
 
 	@NamedQuery(name = "RecordingDeviceDataMaster.fetchPatientMeasurementsByAttributeId", query = "SELECT recordingDeviceDataMaster FROM RecordingDeviceDataMaster recordingDeviceDataMaster"
 			+ " JOIN recordingDeviceDataMaster.patient patient"
           	+ " JOIN recordingDeviceDataMaster.recordingDeviceAttribute recordingDeviceAttribute"
-           	+ " WHERE patient.patientId = :patientId"
+           	+ " WHERE patient.patientUUID = :patientUUID"
            	+ " AND recordingDeviceAttribute.attributeId = :attributeId"
            	+" ORDER BY recordingDeviceDataMaster.dataValueTime ASC")
 })
@@ -75,7 +75,7 @@ public class RecordingDeviceDataMaster {
 	private String alertStatus;
 
 	@ManyToOne
-	@JoinColumn(name = "patient_id")
+	@JoinColumn(name = "patient_uuid")
 	private PatientMaster patient;
 
 	@ManyToOne

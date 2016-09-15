@@ -34,13 +34,13 @@ function initialisePatientsDatatable() {
 		},
 		"aoColumns": [
 		{
-			"mData": "patientId"
+			"mData": "patientUUID"
 		},
 		{
 			"mData": null,
 			"mRender": function(data, type, patient) {
 				if(type === 'display') {
-					return '<a href="/clinician/patient/' + patient.patientId + '" >' + patient.nhsNumber + '</a>';
+					return '<a href="/clinician/patient/' + patient.patientUUID + '" >' + patient.nhsNumber + '</a>';
 				} else {
 					return patient.nhsNumber;
 				}
@@ -50,7 +50,7 @@ function initialisePatientsDatatable() {
 			"mData": null,
 			"mRender": function(data, type, patient) {
 				if(type === 'display') {
-					return '<a href="/clinician/patient/' + patient.patientId + '" >' + patient.firstName + " " + patient.lastName + '</a>';
+					return '<a href="/clinician/patient/' + patient.patientUUID + '" >' + patient.firstName + " " + patient.lastName + '</a>';
 				} else {
 					return patient.firstName + " " + patient.lastName;
 				}
@@ -71,9 +71,9 @@ function initialisePatientsDatatable() {
 			"mRender": function(data, type, patient) {
 				if(type === 'display') {
 					if(patient.critical) {
-						return '<a href="/clinician/patient/' + patient.patientId + '" ><img src="/images/misc/red.png"></a>';
+						return '<a href="/clinician/patient/' + patient.patientUUID + '" ><img src="/images/misc/red.png"></a>';
 					} else {
-						return '<a href="/clinician/patient/' + patient.patientId + '" ><img src="/images/misc/green.png"></a>';
+						return '<a href="/clinician/patient/' + patient.patientUUID + '" ><img src="/images/misc/green.png"></a>';
 					}
 				} else {
 					return patient.critical;

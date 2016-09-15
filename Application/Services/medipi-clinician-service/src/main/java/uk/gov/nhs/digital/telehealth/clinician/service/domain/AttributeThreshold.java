@@ -31,21 +31,21 @@ public class AttributeThreshold {
 
 	private String thresholdLowValue;
 
-	private String patientId;
+	private String patientUUID;
 
 	private Integer attributeId;
 
 	public AttributeThreshold() {
 	}
 
-	public AttributeThreshold(final Integer attributeThresholdId, final String thresholdType, final Timestamp effectiveDate, final String thresholdHighValue, final String thresholdLowValue, final String patientId, final Integer attributeId) {
+	public AttributeThreshold(final Integer attributeThresholdId, final String thresholdType, final Timestamp effectiveDate, final String thresholdHighValue, final String thresholdLowValue, final String patientUUID, final Integer attributeId) {
 		this();
 		this.attributeThresholdId = attributeThresholdId;
 		this.thresholdType = thresholdType;
 		this.effectiveDate = effectiveDate;
 		this.thresholdHighValue = thresholdHighValue;
 		this.thresholdLowValue = thresholdLowValue;
-		this.patientId = patientId;
+		this.patientUUID = patientUUID;
 		this.attributeId = attributeId;
 	}
 
@@ -89,12 +89,12 @@ public class AttributeThreshold {
 		this.thresholdLowValue = thresholdLowValue;
 	}
 
-	public String getPatientId() {
-		return patientId;
+	public String getPatientUUID() {
+		return patientUUID;
 	}
 
-	public void setPatientId(final String patientId) {
-		this.patientId = patientId;
+	public void setPatientUUID(final String patientUUID) {
+		this.patientUUID = patientUUID;
 	}
 
 	public Integer getAttributeId() {
@@ -111,7 +111,7 @@ public class AttributeThreshold {
 		int result = 1;
 		result = prime * result + (attributeThresholdId == null ? 0 : attributeThresholdId.hashCode());
 		result = prime * result + (effectiveDate == null ? 0 : effectiveDate.hashCode());
-		result = prime * result + (patientId == null ? 0 : patientId.hashCode());
+		result = prime * result + (patientUUID == null ? 0 : patientUUID.hashCode());
 		return result;
 	}
 
@@ -141,11 +141,11 @@ public class AttributeThreshold {
 		} else if(!effectiveDate.equals(other.effectiveDate)) {
 			return false;
 		}
-		if(patientId == null) {
-			if(other.patientId != null) {
+		if(patientUUID == null) {
+			if(other.patientUUID != null) {
 				return false;
 			}
-		} else if(!patientId.equals(other.patientId)) {
+		} else if(!patientUUID.equals(other.patientUUID)) {
 			return false;
 		}
 		return true;
@@ -153,6 +153,6 @@ public class AttributeThreshold {
 
 	@Override
 	public String toString() {
-		return "AttributeThreshold [attributeThresholdId=" + attributeThresholdId + ", thresholdType=" + thresholdType + ", effectiveDate=" + effectiveDate + ", thresholdHighValue=" + thresholdHighValue + ", thresholdLowValue=" + thresholdLowValue + ", patientId=" + patientId + ", attributeId=" + attributeId + "]";
+		return "AttributeThreshold [attributeThresholdId=" + attributeThresholdId + ", thresholdType=" + thresholdType + ", effectiveDate=" + effectiveDate + ", thresholdHighValue=" + thresholdHighValue + ", thresholdLowValue=" + thresholdLowValue + ", patientUUID=" + patientUUID + ", attributeId=" + attributeId + "]";
 	}
 }

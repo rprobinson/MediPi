@@ -23,7 +23,7 @@ import uk.gov.nhs.digital.telehealth.clinician.service.domain.enums.PatientStatu
 
 public class Patient {
 
-	private String patientId;
+	private String patientUUID;
 	private String nhsNumber;
 	private String firstName;
 	private String lastName;
@@ -34,9 +34,9 @@ public class Patient {
 		setPatientStatus(PatientStatus.INCOMPLETE_SCHEDULE);
 	}
 
-	public Patient(final String patientId, final String nhsNumber, final String firstName, final String lastName, final Timestamp dateOfBirth, final PatientStatus patientStatus) {
+	public Patient(final String patientUUID, final String nhsNumber, final String firstName, final String lastName, final Timestamp dateOfBirth, final PatientStatus patientStatus) {
 		this();
-		this.patientId = patientId;
+		this.patientUUID = patientUUID;
 		this.nhsNumber = nhsNumber;
 		this.firstName = firstName;
 		this.lastName = lastName;
@@ -44,12 +44,12 @@ public class Patient {
 		setPatientStatus(patientStatus);
 	}
 
-	public String getPatientId() {
-		return patientId;
+	public String getPatientUUID() {
+		return patientUUID;
 	}
 
-	public void setPatientId(final String patientId) {
-		this.patientId = patientId;
+	public void setPatientUUID(final String patientUUID) {
+		this.patientUUID = patientUUID;
 	}
 
 	public String getNhsNumber() {
@@ -100,7 +100,7 @@ public class Patient {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + (patientId == null ? 0 : patientId.hashCode());
+		result = prime * result + (patientUUID == null ? 0 : patientUUID.hashCode());
 		return result;
 	}
 
@@ -116,11 +116,11 @@ public class Patient {
 			return false;
 		}
 		Patient other = (Patient) obj;
-		if(patientId == null) {
-			if(other.patientId != null) {
+		if(patientUUID == null) {
+			if(other.patientUUID != null) {
 				return false;
 			}
-		} else if(!patientId.equals(other.patientId)) {
+		} else if(!patientUUID.equals(other.patientUUID)) {
 			return false;
 		}
 		return true;
@@ -128,6 +128,6 @@ public class Patient {
 
 	@Override
 	public String toString() {
-		return "Patient [patientId=" + patientId + ", firstName=" + firstName + ", lastName=" + lastName + ", patientStatus=" + patientStatus + "]";
+		return "Patient [patientUUID=" + patientUUID + ", firstName=" + firstName + ", lastName=" + lastName + ", patientStatus=" + patientStatus + "]";
 	}
 }

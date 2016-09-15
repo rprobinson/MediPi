@@ -32,7 +32,7 @@ import javax.persistence.Table;
 
 //@formatter:off
 @Entity
-@Table(name = "patient")
+@Table(name = "patient_details")
 @NamedQueries({
 	@NamedQuery(name = "PatientMaster.fetchAllPatients", query = "SELECT patientMaster FROM PatientMaster patientMaster ORDER BY lastName DESC")
 })
@@ -40,8 +40,8 @@ import javax.persistence.Table;
 public class PatientMaster {
 
 	@Id
-	@Column(name = "patient_id")
-	private String patientId;
+	@Column(name = "patient_uuid")
+	private String patientUUID;
 
 	@Column(name = "nhs_number")
 	private String nhsNumber;
@@ -66,21 +66,21 @@ public class PatientMaster {
 		attributeThresholds = new ArrayList<AttributeThresholdMaster>();
 	}
 
-	public PatientMaster(final String patientId, final String nhsNumber, final String firstName, final String lastName, final Timestamp dateOfBirth) {
+	public PatientMaster(final String patientUUID, final String nhsNumber, final String firstName, final String lastName, final Timestamp dateOfBirth) {
 		this();
-		this.patientId = patientId;
+		this.patientUUID = patientUUID;
 		this.nhsNumber = nhsNumber;
 		this.firstName = firstName;
 		this.lastName = lastName;
 		this.dateOfBirth = dateOfBirth;
 	}
 
-	public String getPatientId() {
-		return patientId;
+	public String getPatientUUID() {
+		return patientUUID;
 	}
 
-	public void setPatientId(final String patientId) {
-		this.patientId = patientId;
+	public void setPatientUUID(final String patientUUID) {
+		this.patientUUID = patientUUID;
 	}
 
 	public String getNhsNumber() {
@@ -127,7 +127,7 @@ public class PatientMaster {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + (patientId == null ? 0 : patientId.hashCode());
+		result = prime * result + (patientUUID == null ? 0 : patientUUID.hashCode());
 		return result;
 	}
 
@@ -143,11 +143,11 @@ public class PatientMaster {
 			return false;
 		}
 		PatientMaster other = (PatientMaster) obj;
-		if(patientId == null) {
-			if(other.patientId != null) {
+		if(patientUUID == null) {
+			if(other.patientUUID != null) {
 				return false;
 			}
-		} else if(!patientId.equals(other.patientId)) {
+		} else if(!patientUUID.equals(other.patientUUID)) {
 			return false;
 		}
 		return true;
@@ -155,6 +155,6 @@ public class PatientMaster {
 
 	@Override
 	public String toString() {
-		return "Patient [patientId=" + patientId + ", firstName=" + firstName + ", lastName=" + lastName + "]";
+		return "Patient [patientUUID=" + patientUUID + ", firstName=" + firstName + ", lastName=" + lastName + "]";
 	}
 }

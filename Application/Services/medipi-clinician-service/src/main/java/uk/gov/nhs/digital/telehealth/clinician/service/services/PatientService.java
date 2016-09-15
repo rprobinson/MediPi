@@ -63,13 +63,13 @@ public class PatientService {
 	private List<Integer> requiredDeviceAttributes;
 
 	@Transactional(rollbackFor = {Exception.class})
-	public Patient getPatientDetails(final String patientId) throws DefaultWrappedException {
-		final PatientMaster patientMaster = this.patientDAO.findByPrimaryKey(patientId, ContextThreadLocal.get());
+	public Patient getPatientDetails(final String patientUUID) throws DefaultWrappedException {
+		final PatientMaster patientMaster = this.patientDAO.findByPrimaryKey(patientUUID, ContextThreadLocal.get());
 		Patient patientDetails = null;
 		if(null != patientMaster) {
 			patientDetails = this.mapperFacade.map(patientMaster, Patient.class);
 		} else {
-			throw new DefaultWrappedException("PATIENT_WITH_ID_NOT_FOUND_EXCEPTION", null, new Object[] {patientId});
+			throw new DefaultWrappedException("PATIENT_WITH_ID_NOT_FOUND_EXCEPTION", null, new Object[] {patientUUID});
 		}
 		return patientDetails;
 	}
@@ -80,7 +80,7 @@ public class PatientService {
 		final List<PatientMaster> patientMasters = this.patientDAO.fetchAllPatients();
 		for(final PatientMaster patientMaster : patientMasters) {
 			final Patient patient = this.mapperFacade.map(patientMaster, Patient.class);
-			List<DataValueEntity> patientMeasurements = recordingDeviceDataDAO.fetchRecentMeasurementsSQL(patient.getPatientId());
+			List<DataValueEntity> patientMeasurements = recordingDeviceDataDAO.fetchRecentMeasurementsSQL(patient.getPatientUUID());
 
 			//Clone the required attributes so that we can compare whether all the required attributes has data against it
 			List<Integer> requiredAttributes = new ArrayList<Integer>(requiredDeviceAttributes);
@@ -120,7 +120,7 @@ public class PatientService {
 
 	@SuppressWarnings({"unchecked", "rawtypes"})
 	@Transactional(rollbackFor = {Exception.class})
-	public List<DataValue> getPatientsRecentMeasurements(final String patientId) {
+	public List<DataValue> getPatientsRecentMeasurements(final String patientUUID) {
 		/*
 		 * As per the conversation with Richard on 11/07/2016 below are the 2 options suggested for fetching the recent data readings
 		 *
@@ -137,21 +137,21 @@ public class PatientService {
 		 * In case if we want to go with option 1 then just uncomment below 2 lines and comment last 2 lines.
 		 */
 
-		/*List<RecordingDeviceDataMaster> recordingDeviceDataList = recordingDeviceDataDAO.fetchRecentMeasurementsHQL(patientId, contextInfo);
+		/*List<RecordingDeviceDataMaster> recordingDeviceDataList = recordingDeviceDataDAO.fetchRecentMeasurementsHQL(patientUUID, contextInfo);
 		return this.mapperFacade.map(recordingDeviceDataList, (Class<List<DataValue>>) (Class) List.class);*/
 
-		List<DataValueEntity> recordingDeviceDataList = recordingDeviceDataDAO.fetchRecentMeasurementsSQL(patientId);
+		List<DataValueEntity> recordingDeviceDataList = recordingDeviceDataDAO.fetchRecentMeasurementsSQL(patientUUID);
 		return this.mapperFacade.map(recordingDeviceDataList, (Class<List<DataValue>>) (Class) List.class);
 	}
 
-	public List<Measurement> getPatientMeasurements(final String patientId, final int attributeId) {
-		List<AttributeThresholdMaster> attributeThresholdMasterList = attributeThresholdDAO.fetchPatientAttributeThresholds(patientId, attributeId);
+	public List<Measurement> getPatientMeasurements(final String patientUUID, final int attributeId) {
+		List<AttributeThresholdMaster> attributeThresholdMasterList = attributeThresholdDAO.fetchPatientAttributeThresholds(patientUUID, attributeId);
 		List<AttributeThreshold> attributeThresholds = new ArrayList<AttributeThreshold>();
 		for(AttributeThresholdMaster attributeThresholdMaster : attributeThresholdMasterList) {
 			attributeThresholds.add(this.mapperFacade.map(attributeThresholdMaster, AttributeThreshold.class));
 		}
 
-		List<RecordingDeviceDataMaster> patientData = recordingDeviceDataDAO.fetchPatientMeasurementsByAttributeId(patientId, attributeId);
+		List<RecordingDeviceDataMaster> patientData = recordingDeviceDataDAO.fetchPatientMeasurementsByAttributeId(patientUUID, attributeId);
 		List<Measurement> measurements = new ArrayList<Measurement>();
 		for(RecordingDeviceDataMaster data : patientData) {
 			Measurement measurement = this.mapperFacade.map(data, Measurement.class);

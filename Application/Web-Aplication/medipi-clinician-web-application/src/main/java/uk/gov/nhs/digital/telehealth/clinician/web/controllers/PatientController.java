@@ -77,13 +77,13 @@ public class PatientController extends BaseController {
 	}
 
 	@SuppressWarnings({"unchecked", "rawtypes"})
-	@RequestMapping(value = "/{patientId}", method = RequestMethod.GET)
+	@RequestMapping(value = "/{patientUUID}", method = RequestMethod.GET)
 	@ResponseBody
-	public ModelAndView getPatient(@PathVariable final String patientId, final ModelAndView modelAndView, final HttpServletRequest request) throws DefaultWrappedException, IOException {
-		LOGGER.debug("Get patient details for patient id:<" + patientId + ">.");
+	public ModelAndView getPatient(@PathVariable final String patientUUID, final ModelAndView modelAndView, final HttpServletRequest request) throws DefaultWrappedException, IOException {
+		LOGGER.debug("Get patient details for patient id:<" + patientUUID + ">.");
 		final HttpEntity<?> entity = HttpUtil.getEntityWithHeaders(WebConstants.Operations.Patient.READ, null);
-		final Patient patient = this.restTemplate.exchange(this.clinicianServiceURL + ServiceURLMappings.PatientServiceController.CONTROLLER_MAPPING + ServiceURLMappings.PatientServiceController.GET_PATIENT + patientId, HttpMethod.GET, entity, Patient.class).getBody();
-		final List<DataValue> recentReadings = this.restTemplate.exchange(this.clinicianServiceURL + ServiceURLMappings.PatientServiceController.CONTROLLER_MAPPING + ServiceURLMappings.PatientServiceController.GET_PATIENT_RECENT_MEASURMENTS + patientId, HttpMethod.GET, entity, (Class<List<DataValue>>) (Class) List.class).getBody();
+		final Patient patient = this.restTemplate.exchange(this.clinicianServiceURL + ServiceURLMappings.PatientServiceController.CONTROLLER_MAPPING + ServiceURLMappings.PatientServiceController.GET_PATIENT + patientUUID, HttpMethod.GET, entity, Patient.class).getBody();
+		final List<DataValue> recentReadings = this.restTemplate.exchange(this.clinicianServiceURL + ServiceURLMappings.PatientServiceController.CONTROLLER_MAPPING + ServiceURLMappings.PatientServiceController.GET_PATIENT_RECENT_MEASURMENTS + patientUUID, HttpMethod.GET, entity, (Class<List<DataValue>>) (Class) List.class).getBody();
 		modelAndView.addObject("patient", patient);
 		modelAndView.addObject("recentReadings", recentReadings);
 		modelAndView.setViewName("patient/viewPatient");
@@ -93,9 +93,9 @@ public class PatientController extends BaseController {
 	@SuppressWarnings({"unchecked", "rawtypes"})
 	@RequestMapping(value = "/patientMeasurements", method = RequestMethod.GET)
 	@ResponseBody
-	public List<Measurement> patientMeasurements(@RequestParam("patientId") final String patientId, @RequestParam("attributeId") final int attributeId, final HttpServletRequest request) throws DefaultWrappedException {
+	public List<Measurement> patientMeasurements(@RequestParam("patientUUID") final String patientUUID, @RequestParam("attributeId") final int attributeId, final HttpServletRequest request) throws DefaultWrappedException {
 		final HttpEntity<?> entity = HttpUtil.getEntityWithHeaders(WebConstants.Operations.Patient.PATIENT_MEASUREMENTS, null);
-		final List<Measurement> measurements = this.restTemplate.exchange(this.clinicianServiceURL + ServiceURLMappings.PatientServiceController.CONTROLLER_MAPPING + ServiceURLMappings.PatientServiceController.GET_PATIENT_MEASURMENTS + patientId + "/" + attributeId, HttpMethod.GET, entity, (Class<List<Measurement>>) (Class) List.class).getBody();
+		final List<Measurement> measurements = this.restTemplate.exchange(this.clinicianServiceURL + ServiceURLMappings.PatientServiceController.CONTROLLER_MAPPING + ServiceURLMappings.PatientServiceController.GET_PATIENT_MEASURMENTS + patientUUID + "/" + attributeId, HttpMethod.GET, entity, (Class<List<Measurement>>) (Class) List.class).getBody();
 		return measurements;
 	}
 }

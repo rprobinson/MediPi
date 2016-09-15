@@ -4,7 +4,7 @@ var measurement = {
         var data = null;
         $.ajax({
             async: false,
-            url: "/clinician/patient/patientMeasurements?patientId=" + includeObject.patientId + "&attributeId=" + includeObject.attributeId,
+            url: "/clinician/patient/patientMeasurements?patientUUID=" + includeObject.patientUUID + "&attributeId=" + includeObject.attributeId,
             dataType: "json",
             success: function (pulseData) {
                 data = pulseData;
