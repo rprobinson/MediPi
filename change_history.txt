@@ -41,3 +41,30 @@ MediPi_v1.0.7-PILOT-20160608-1
 - Added javax-usb and config files to the repository.
 - Added parent pom to build javax-usb and MediPi with a single command.
 - Updated README.md file to remove the references of python dependencies and added instructions to update configurations and run MediPi.
+MediPi_v1.0.7a-PILOT- 20160701-1
+- Replaced the thirdparty MessageBox library with the native JavaFX one and made the detection of javaFX thread reliable. Additionally prevented multiple message reporting of the same error
+- Implemented a patient and a hardware download interface to accept patient messages and changes to the config and software. Clinician Messages completed and working but configuration update is partially complete. It will download artifacts but requires some code to act upon the instructions and make changes on the local system 
+- Removed all Spine messaging components
+- Removed all "practitioner" host stubs as we now have a concentrator host
+- Detection of local MAC address for unloacking device JKS has been made more robust for Linux OS - will still find MAC addressees when network is down
+- Addition of two-way SSL or Mutual Authentication of data in transit for connection between MediPi Patient device and MediPi Concentrator
+- Implementation of DistributionEnvelope XML Encryption of the device payloads. This is largely implemented but will be replaced (including the DistributionEnvelope structure) by json equivalents. The intention is that MediPi will move to all messaging in json format. A json encryption/signing solution will be implemented 
+- All Restful messaging has been extracted into a common interface
+- TODO - JavaDoc and Boiler plate required for new + updated classes
+
+MediPi_v1.0.7b-PILOT- 20160724-1
+- Implementation of Downloadable interface on MediPi device allowing it to receive payloads from the concentrator. This is done by polling the concentrator periodically
+- Handlers for downloadable for Hardware update and patient messages
+- Implementaion of Encryption and signing of the payload data using the patient certificate
+- refactoring of a Restful messaging engine to consolidate the functions for all messaging
+- Corrected reading heartrates >127BPM for ContecCMS50D+ 
+- Changed Keypad authentication to react only to mouse and not to keypad
+- Alert messages in MediPiMessageBox made to be standard height to avoid close button being off the bottom of the screen
+- Updated all Device classes to return scheduleEffectiveDate, schedulexpiryDate and units of measure in a DeviceDataDO data object
+- Messenger updated to display alerts from an AlertDO format- will need extending to handle diferent classes
+ - Oximeter extended to allow return of full streamed data (i.e. with waveform) or just averages of the SpO2 and Pulse
+
+MediPi_v1.0.8-PILOT- 20160907-1
+- Implementation of Java 8 DateTime
+- removal of timezone parameter in favour of auto detection from system
+- detection of user password when MediPi is uinlocked through authorisation interface 
