@@ -25,7 +25,7 @@ import uk.gov.nhs.digital.telehealth.clinician.service.entities.PatientMaster;
 
 import com.dev.ops.common.dao.generic.GenericDAOImpl;
 
-@Service
+@Service("patientsDAO")
 public class PatientDAOImpl extends GenericDAOImpl<PatientMaster> implements PatientDAO {
 
 	@Override

@@ -17,6 +17,7 @@
  */
 package uk.gov.nhs.digital.telehealth.clinician.service.dao.impl;
 
+import java.sql.Timestamp;
 import java.util.List;
 
 import javax.persistence.Query;
@@ -27,7 +28,7 @@ import uk.gov.nhs.digital.telehealth.clinician.service.entities.AttributeThresho
 
 import com.dev.ops.common.dao.generic.GenericDAOImpl;
 
-@Service
+@Service("attributeThresholdsDAO")
 public class AttributeThresholdDAOImpl extends GenericDAOImpl<AttributeThresholdMaster> implements AttributeThresholdDAO {
 
 	@SuppressWarnings("unchecked")
@@ -45,5 +46,14 @@ public class AttributeThresholdDAOImpl extends GenericDAOImpl<AttributeThreshold
 		query.setParameter("patientUUID", patientUUID);
 		query.setParameter("attributeId", attributeId);
 		return query.getResultList();
+	}
+
+	@Override
+	public AttributeThresholdMaster findEffectiveAttributeThreshold(final int attributeId, final String patientUUID, final Timestamp effectiveDate) {
+		final Query query = this.getEntityManager().createNamedQuery("AttributeThresholdMaster.findEffectiveAttributeThreshold", AttributeThresholdMaster.class);
+		query.setParameter("attributeId", attributeId);
+		query.setParameter("patientUUID", patientUUID);
+		query.setParameter("effectiveDate", effectiveDate);
+		return (AttributeThresholdMaster) query.getSingleResult();
 	}
 }

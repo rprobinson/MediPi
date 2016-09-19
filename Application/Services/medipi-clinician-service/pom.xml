@@ -154,12 +154,17 @@
 		</dependency>
 		<!-- common dependencies: END -->
 
-		<!-- <dependency>
+		<dependency>
 			<groupId>org.medipi.clinical</groupId>
 			<artifactId>MediPiClinicalSB</artifactId>
 			<version>0.0.1-SNAPSHOT</version>
-			<classifier>original</classifier>
-		</dependency> -->
+			<exclusions>
+				<exclusion>
+					<groupId>*</groupId>
+					<artifactId>*</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
 	</dependencies>
 
 	<profiles>

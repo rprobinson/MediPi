@@ -31,7 +31,7 @@ import uk.gov.nhs.digital.telehealth.clinician.service.entities.RecordingDeviceD
 import com.dev.ops.common.dao.generic.GenericDAOImpl;
 import com.dev.ops.common.thread.local.ContextThreadLocal;
 
-@Service
+@Service("recordingDevicesDataDAO")
 public class RecordingDeviceDataDAOImpl extends GenericDAOImpl<RecordingDeviceDataMaster> implements RecordingDeviceDataDAO {
 
 	private static final Logger LOGGER = LogManager.getLogger(RecordingDeviceDataDAOImpl.class);

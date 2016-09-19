@@ -78,7 +78,7 @@ public class Measurement implements Comparable<Measurement> {
 		this.maxValue = maxValue;
 	}
 
-	public void setMinMaxValues(final List<AttributeThreshold> attributeThresholds) {
+	/*public void setMinMaxValues(final List<AttributeThreshold> attributeThresholds) {
 		AttributeThreshold oldestThreshold = null;
 		boolean isValueSet = false;
 
@@ -102,6 +102,14 @@ public class Measurement implements Comparable<Measurement> {
 			this.minValue = oldestThreshold.getThresholdLowValue();
 			this.maxValue = oldestThreshold.getThresholdHighValue();
 		}
+	}*/
+
+	public void setMinMaxValues(final List<Double> thresholds) {
+		if(thresholds != null && thresholds.size() == 2) {
+			this.minValue = thresholds.get(0).toString();
+			this.maxValue = thresholds.get(1).toString();
+		}
+
 	}
 
 	@Override

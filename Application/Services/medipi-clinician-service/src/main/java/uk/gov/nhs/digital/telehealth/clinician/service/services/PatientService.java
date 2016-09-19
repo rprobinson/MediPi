@@ -22,7 +22,13 @@ import java.util.List;
 
 import ma.glasnost.orika.MapperFacade;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+import org.medipi.clinical.entities.RecordingDeviceData;
+import org.medipi.clinical.threshold.AttributeThresholdTest;
+import org.medipi.clinical.threshold.ThresholdTestFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,7 +36,6 @@ import org.springframework.transaction.annotation.Transactional;
 import uk.gov.nhs.digital.telehealth.clinician.service.dao.impl.AttributeThresholdDAO;
 import uk.gov.nhs.digital.telehealth.clinician.service.dao.impl.PatientDAO;
 import uk.gov.nhs.digital.telehealth.clinician.service.dao.impl.RecordingDeviceDataDAO;
-import uk.gov.nhs.digital.telehealth.clinician.service.domain.AttributeThreshold;
 import uk.gov.nhs.digital.telehealth.clinician.service.domain.DataValue;
 import uk.gov.nhs.digital.telehealth.clinician.service.domain.Measurement;
 import uk.gov.nhs.digital.telehealth.clinician.service.domain.Patient;
@@ -51,16 +56,24 @@ public class PatientService {
 	private MapperFacade mapperFacade;
 
 	@Autowired
+	@Qualifier("patientsDAO")
 	private PatientDAO patientDAO;
 
 	@Autowired
+	@Qualifier("recordingDevicesDataDAO")
 	private RecordingDeviceDataDAO recordingDeviceDataDAO;
 
 	@Autowired
+	@Qualifier("attributeThresholdsDAO")
 	private AttributeThresholdDAO attributeThresholdDAO;
+
+	@Autowired
+	private ThresholdTestFactory thresholdTestFactory;
 
 	@Value("#{'${medipi.patient.required.device.attributes}'.split(',')}")
 	private List<Integer> requiredDeviceAttributes;
+
+	private static final Logger LOGGER = LogManager.getLogger(PatientService.class);
 
 	@Transactional(rollbackFor = {Exception.class})
 	public Patient getPatientDetails(final String patientUUID) throws DefaultWrappedException {
@@ -144,18 +157,29 @@ public class PatientService {
 		return this.mapperFacade.map(recordingDeviceDataList, (Class<List<DataValue>>) (Class) List.class);
 	}
 
-	public List<Measurement> getPatientMeasurements(final String patientUUID, final int attributeId) {
-		List<AttributeThresholdMaster> attributeThresholdMasterList = attributeThresholdDAO.fetchPatientAttributeThresholds(patientUUID, attributeId);
+	public List<Measurement> getPatientMeasurements(final String patientUUID, final int attributeId) throws Exception {
+		/*List<AttributeThresholdMaster> attributeThresholdMasterList = attributeThresholdDAO.fetchPatientAttributeThresholds(patientUUID, attributeId);
 		List<AttributeThreshold> attributeThresholds = new ArrayList<AttributeThreshold>();
 		for(AttributeThresholdMaster attributeThresholdMaster : attributeThresholdMasterList) {
-			attributeThresholds.add(this.mapperFacade.map(attributeThresholdMaster, AttributeThreshold.class));
-		}
+			AttributeThreshold attributeThreshold = this.mapperFacade.map(attributeThresholdMaster, AttributeThreshold.class);
+			AttributeThresholdTest thresholdTest = thresholdTestFactory.getInstance(attributeThreshold.getThresholdType());
+			RecordingDeviceData recordingDeviceData = this.mapperFacade.map(attributeThresholdMaster.g, destinationClass)
+			thresholdTest.getThreshold(rdd)
+			attributeThresholds.add(attributeThreshold);
+		}*/
 
 		List<RecordingDeviceDataMaster> patientData = recordingDeviceDataDAO.fetchPatientMeasurementsByAttributeId(patientUUID, attributeId);
 		List<Measurement> measurements = new ArrayList<Measurement>();
 		for(RecordingDeviceDataMaster data : patientData) {
+			RecordingDeviceData recordingDeviceData = this.mapperFacade.map(data, RecordingDeviceData.class);
+			AttributeThresholdMaster attributeThresholdMaster = attributeThresholdDAO.findEffectiveAttributeThreshold(attributeId, patientUUID, data.getDataValueTime());
+			AttributeThresholdTest thresholdTest = thresholdTestFactory.getInstance(attributeThresholdMaster.getThresholdType());
+			List<Double> thresholds = thresholdTest.getThreshold(recordingDeviceData);
+			if(thresholds != null && (thresholds.get(0) == null || thresholds.get(1) == null)) {
+				LOGGER.debug("AttributeThresholdMaster:<thresholdLowValue=" + attributeThresholdMaster.getThresholdLowValue() + " thresholdHighValue: " + attributeThresholdMaster.getThresholdHighValue() + "> thresholds:<" + thresholds + ">");
+			}
 			Measurement measurement = this.mapperFacade.map(data, Measurement.class);
-			measurement.setMinMaxValues(attributeThresholds);
+			measurement.setMinMaxValues(thresholds);
 			measurements.add(measurement);
 		}
 		return measurements;

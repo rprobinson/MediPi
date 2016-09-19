@@ -33,6 +33,15 @@ import javax.persistence.Table;
 @Table(name = "attribute_threshold")
 @NamedQueries({
 	@NamedQuery(name = "AttributeThresholdMaster.fetchAllAttributeThresholds", query = "SELECT attributeThreshold FROM AttributeThresholdMaster attributeThreshold"),
+
+	@NamedQuery(name = "AttributeThresholdMaster.findEffectiveAttributeThreshold", query = "SELECT a FROM AttributeThresholdMaster a"
+			+ " WHERE a.recordingDeviceAttribute.attributeId = :attributeId"
+			+ " AND a.patient.patientUUID= :patientUUID"
+			+ " AND a.effectiveDate IN (SELECT MAX(b.effectiveDate) FROM AttributeThresholdMaster b"
+				+ " WHERE b.recordingDeviceAttribute.attributeId = :attributeId"
+				+ " AND b.patient.patientUUID = :patientUUID"
+				+ " AND b.effectiveDate<= :effectiveDate)"),
+
 	@NamedQuery(name = "AttributeThresholdMaster.fetchPatientAttributeThresholds", query = "SELECT attributeThreshold FROM AttributeThresholdMaster attributeThreshold"
 			+ " JOIN attributeThreshold.patient patient"
 			+ " JOIN attributeThreshold.recordingDeviceAttribute recordingDeviceAttribute"

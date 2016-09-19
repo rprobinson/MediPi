@@ -77,7 +77,7 @@ public class PatientServiceController {
 
 	@RequestMapping(value = ServiceURLMappings.PatientServiceController.GET_PATIENT_MEASURMENTS + "{patientUUID}" + "/{attributeId}", method = RequestMethod.GET)
 	@ResponseBody
-	public List<Measurement> getPatientMeasurements(@PathVariable final String patientUUID, @PathVariable final int attributeId, @RequestHeader(CommonConstants.CONTEXT_INFORMATION_REQUEST_PARAMETER) final String context) throws DefaultWrappedException {
+	public List<Measurement> getPatientMeasurements(@PathVariable final String patientUUID, @PathVariable final int attributeId, @RequestHeader(CommonConstants.CONTEXT_INFORMATION_REQUEST_PARAMETER) final String context) throws Exception {
 		ContextThreadLocal.set(ContextInfo.toContextInfo(context));
 		LOGGER.debug("Get Patient measurements for patient id:<" + patientUUID + "> and attribute id:<" + attributeId + ">");
 		final List<Measurement> measurements = this.patientService.getPatientMeasurements(patientUUID, attributeId);
