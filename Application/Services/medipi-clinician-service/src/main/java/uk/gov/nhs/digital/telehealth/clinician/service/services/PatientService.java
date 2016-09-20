@@ -156,7 +156,7 @@ public class PatientService {
 		return this.mapperFacade.map(recordingDeviceDataList, (Class<List<DataValue>>) (Class) List.class);
 	}
 
-	public List<Measurement> getPatientMeasurements(final String patientUUID, final int attributeId) throws Exception {
+	public List<Measurement> getPatientMeasurements(final String patientUUID, final String attributeName) throws Exception {
 		/*List<AttributeThresholdMaster> attributeThresholdMasterList = attributeThresholdDAO.fetchPatientAttributeThresholds(patientUUID, attributeId);
 		List<AttributeThreshold> attributeThresholds = new ArrayList<AttributeThreshold>();
 		for(AttributeThresholdMaster attributeThresholdMaster : attributeThresholdMasterList) {
@@ -167,12 +167,12 @@ public class PatientService {
 			attributeThresholds.add(attributeThreshold);
 		}*/
 
-		List<RecordingDeviceDataMaster> patientData = recordingDeviceDataDAO.fetchPatientMeasurementsByAttributeId(patientUUID, attributeId);
+		List<RecordingDeviceDataMaster> patientData = recordingDeviceDataDAO.fetchPatientMeasurementsByAttribute(patientUUID, attributeName);
 		List<Measurement> measurements = new ArrayList<Measurement>();
 		for(RecordingDeviceDataMaster data : patientData) {
-			AttributeThresholdMaster attributeThresholdMaster = attributeThresholdDAO.findEffectiveAttributeThreshold(attributeId, patientUUID, data.getDataValueTime());
+			AttributeThresholdMaster attributeThresholdMaster = attributeThresholdDAO.findEffectiveAttributeThreshold(data.getRecordingDeviceAttribute().getAttributeId(), patientUUID, data.getDataValueTime());
 			AttributeThresholdTest thresholdTest = thresholdTestFactory.getInstance(attributeThresholdMaster.getThresholdType());
-			List<Double> thresholds = thresholdTest.getThreshold(attributeId, patientUUID, data.getDataValueTime());
+			List<Double> thresholds = thresholdTest.getThreshold(data.getRecordingDeviceAttribute().getAttributeId(), patientUUID, data.getDataValueTime());
 			if(thresholds != null && (thresholds.get(0) == null || thresholds.get(1) == null)) {
 				LOGGER.debug("AttributeThresholdMaster:<thresholdLowValue=" + attributeThresholdMaster.getThresholdLowValue() + " thresholdHighValue: " + attributeThresholdMaster.getThresholdHighValue() + "> thresholds:<" + thresholds + ">");
 			}

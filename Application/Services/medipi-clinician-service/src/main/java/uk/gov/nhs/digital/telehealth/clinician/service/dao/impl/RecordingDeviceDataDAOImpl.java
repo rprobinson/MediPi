@@ -75,10 +75,10 @@ public class RecordingDeviceDataDAOImpl extends GenericDAOImpl<RecordingDeviceDa
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public List<RecordingDeviceDataMaster> fetchPatientMeasurementsByAttributeId(final String patientUUID, final int attributeId) {
-		final Query query = this.getEntityManager().createNamedQuery("RecordingDeviceDataMaster.fetchPatientMeasurementsByAttributeId", RecordingDeviceDataMaster.class);
+	public List<RecordingDeviceDataMaster> fetchPatientMeasurementsByAttribute(final String patientUUID, final String attributeName) {
+		final Query query = this.getEntityManager().createNamedQuery("RecordingDeviceDataMaster.fetchPatientMeasurementsByAttributeName", RecordingDeviceDataMaster.class);
 		query.setParameter("patientUUID", patientUUID);
-		query.setParameter("attributeId", attributeId);
+		query.setParameter("attributeName", attributeName);
 		return query.getResultList();
 	}
 }

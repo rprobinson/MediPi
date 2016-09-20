@@ -91,25 +91,25 @@ insert into recording_device_type (type_id, type, subtype) values ('6','BloodPre
 insert into recording_device_type (type_id, type, subtype) values ('7','Questionnaire','Heart Questionnaire');
 insert into recording_device_type (type_id, type, subtype) values ('8','Scheduler','Scheduler');
 
-insert into recording_device_attribute (attribute_id, type_id, attribute_name, attribute_units, attribute_type) values ('3','4','SpO2','%','VARCHAR');
-insert into recording_device_attribute (attribute_id, type_id, attribute_name, attribute_units, attribute_type) values ('1','4','Pulse','BPM','VARCHAR');
-insert into recording_device_attribute (attribute_id, type_id, attribute_name, attribute_units, attribute_type) values ('4','4','Wave','','VARCHAR');
-insert into recording_device_attribute (attribute_id, type_id, attribute_name, attribute_units, attribute_type) values ('5','5','Weight','Kg','VARCHAR');
-insert into recording_device_attribute (attribute_id, type_id, attribute_name, attribute_units, attribute_type) values ('6','5','Body Fat','%','VARCHAR');
-insert into recording_device_attribute (attribute_id, type_id, attribute_name, attribute_units, attribute_type) values ('7','5','Water','%','VARCHAR');
-insert into recording_device_attribute (attribute_id, type_id, attribute_name, attribute_units, attribute_type) values ('8','5','Muscle','%','VARCHAR');
-insert into recording_device_attribute (attribute_id, type_id, attribute_name, attribute_units, attribute_type) values ('9','6','Systol','mmHg','VARCHAR');
-insert into recording_device_attribute (attribute_id, type_id, attribute_name, attribute_units, attribute_type) values ('10','6','Diastol','mmHg','VARCHAR');
-insert into recording_device_attribute (attribute_id, type_id, attribute_name, attribute_units, attribute_type) values ('11','6','Pulse Rate','BPM','VARCHAR');
-insert into recording_device_attribute (attribute_id, type_id, attribute_name, attribute_units, attribute_type) values ('12','6','Rest Indicator','','VARCHAR');
-insert into recording_device_attribute (attribute_id, type_id, attribute_name, attribute_units, attribute_type) values ('13','6','Arrhythmia','','VARCHAR');
-insert into recording_device_attribute (attribute_id, type_id, attribute_name, attribute_units, attribute_type) values ('14','7','Question','','VARCHAR');
-insert into recording_device_attribute (attribute_id, type_id, attribute_name, attribute_units, attribute_type) values ('15','7','Answer','','VARCHAR');
+insert into recording_device_attribute (attribute_id, type_id, attribute_name, attribute_units, attribute_type) values ('3','4','spo2','%','VARCHAR');
+insert into recording_device_attribute (attribute_id, type_id, attribute_name, attribute_units, attribute_type) values ('1','4','pulse','BPM','VARCHAR');
+insert into recording_device_attribute (attribute_id, type_id, attribute_name, attribute_units, attribute_type) values ('4','4','wave','','VARCHAR');
+insert into recording_device_attribute (attribute_id, type_id, attribute_name, attribute_units, attribute_type) values ('5','5','weight','Kg','VARCHAR');
+insert into recording_device_attribute (attribute_id, type_id, attribute_name, attribute_units, attribute_type) values ('6','5','bodyfat','%','VARCHAR');
+insert into recording_device_attribute (attribute_id, type_id, attribute_name, attribute_units, attribute_type) values ('7','5','water','%','VARCHAR');
+insert into recording_device_attribute (attribute_id, type_id, attribute_name, attribute_units, attribute_type) values ('8','5','muscle','%','VARCHAR');
+insert into recording_device_attribute (attribute_id, type_id, attribute_name, attribute_units, attribute_type) values ('9','6','systol','mmHg','VARCHAR');
+insert into recording_device_attribute (attribute_id, type_id, attribute_name, attribute_units, attribute_type) values ('10','6','diastol','mmHg','VARCHAR');
+insert into recording_device_attribute (attribute_id, type_id, attribute_name, attribute_units, attribute_type) values ('11','6','pulserate','BPM','VARCHAR');
+insert into recording_device_attribute (attribute_id, type_id, attribute_name, attribute_units, attribute_type) values ('12','6','rest','','VARCHAR');
+insert into recording_device_attribute (attribute_id, type_id, attribute_name, attribute_units, attribute_type) values ('13','6','arrhythmia','','VARCHAR');
+insert into recording_device_attribute (attribute_id, type_id, attribute_name, attribute_units, attribute_type) values ('14','7','question','','VARCHAR');
+insert into recording_device_attribute (attribute_id, type_id, attribute_name, attribute_units, attribute_type) values ('15','7','answer','','VARCHAR');
 insert into recording_device_attribute (attribute_id, type_id, attribute_name, attribute_units, attribute_type) values ('16','8','Id','','VARCHAR');
 insert into recording_device_attribute (attribute_id, type_id, attribute_name, attribute_units, attribute_type) values ('17','8','Type','','VARCHAR');
 insert into recording_device_attribute (attribute_id, type_id, attribute_name, attribute_units, attribute_type) values ('18','8','Repeat','','VARCHAR');
 insert into recording_device_attribute (attribute_id, type_id, attribute_name, attribute_units, attribute_type) values ('19','8','Devices','','VARCHAR');
-insert into recording_device_attribute (attribute_id, type_id, attribute_name, attribute_units, attribute_type) values ('20','3','Temperature','°C','VARCHAR');
+insert into recording_device_attribute (attribute_id, type_id, attribute_name, attribute_units, attribute_type) values ('20','3','temperature','°C','VARCHAR');
 
 insert into patient_group (patient_group_uuid, patient_group_name) values ('8f243308-6026-4093-b548-5ec2144e1f36', 'Clinical Group B');
 

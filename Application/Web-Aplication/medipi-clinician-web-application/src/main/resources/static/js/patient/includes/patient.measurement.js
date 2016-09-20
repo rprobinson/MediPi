@@ -4,7 +4,7 @@ var measurement = {
         var data = null;
         $.ajax({
             async: false,
-            url: "/clinician/patient/patientMeasurements?patientUUID=" + includeObject.patientUUID + "&attributeId=" + includeObject.attributeId,
+            url: "/clinician/patient/patientMeasurements?patientUUID=" + includeObject.patientUUID + "&attributeName=" + includeObject.attributeName,
             dataType: "json",
             success: function (pulseData) {
                 data = pulseData;
@@ -72,17 +72,19 @@ var measurement = {
     updateRecentMeasuremnts: function (recentMeasurement, includeObject) {
         $("#" + includeObject.recentMeasurementDateId).html(recentMeasurement != null ? recentMeasurement.dataTime.getStringDate_DDMMYYYY_From_Timestamp() : "- - -");
         $("#" + includeObject.recentMeasurementValueId).html(recentMeasurement != null ? recentMeasurement.value : "- - -");
-        $("#" + includeObject.measurementMinValueId).html(recentMeasurement != null ? recentMeasurement.minValue : "- - -");
-        $("#" + includeObject.measurementMinValueId + "-value").val(recentMeasurement != null ? recentMeasurement.minValue : "");
-        $("#" + includeObject.measurementMaxValueId).html(recentMeasurement != null ? recentMeasurement.maxValue : "- - -");
-        $("#" + includeObject.measurementMaxValueId + "-value").val(recentMeasurement != null ? recentMeasurement.maxValue : "");
+        $("#" + includeObject.measurementMinValueId).html(recentMeasurement != null ? (recentMeasurement.minValue != null ? recentMeasurement.minValue : "- - -") : "- - -");
+        $("#" + includeObject.measurementMinValueId + "-value").val(recentMeasurement != null ? (recentMeasurement.minValue != null ? recentMeasurement.minValue : "") : "");
+        $("#" + includeObject.measurementMaxValueId).html(recentMeasurement != null ? (recentMeasurement.maxValue != null ? recentMeasurement.maxValue : "- - -") : "- - -");
+        $("#" + includeObject.measurementMaxValueId + "-value").val(recentMeasurement != null ? (recentMeasurement.maxValue != null ? recentMeasurement.maxValue : "- - -") : "");
 
         //If within min and max limits
         if(recentMeasurement != null) {
         	/*if(includeObject.attributeId == 3) {
         		console.log("recentMeasurement.value <= recentMeasurement.maxValue:" + (parseFloat(recentMeasurement.minValue) <= parseFloat(recentMeasurement.value) <= parseFloat(recentMeasurement.maxValue)));
         	}*/
-	        if(parseFloat(recentMeasurement.minValue) <= parseFloat(recentMeasurement.value) && parseFloat(recentMeasurement.value) <= parseFloat(recentMeasurement.maxValue)) {
+	        if(recentMeasurement.minValue == null || recentMeasurement.maxValue == null) {
+	        	$("#" + includeObject.recentMeasurementValueId).attr("class", "amber");
+	        } else if(parseFloat(recentMeasurement.minValue) <= parseFloat(recentMeasurement.value) && parseFloat(recentMeasurement.value) <= parseFloat(recentMeasurement.maxValue)) {
 	        	$("#" + includeObject.recentMeasurementValueId).attr("class", "green");
 	        } else {
 	        	$("#" + includeObject.recentMeasurementValueId).attr("class", "red");

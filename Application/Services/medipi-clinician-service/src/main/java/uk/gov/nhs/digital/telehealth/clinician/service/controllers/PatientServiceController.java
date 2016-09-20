@@ -75,12 +75,12 @@ public class PatientServiceController {
 		return recentReadings;
 	}
 
-	@RequestMapping(value = ServiceURLMappings.PatientServiceController.GET_PATIENT_MEASURMENTS + "{patientUUID}" + "/{attributeId}", method = RequestMethod.GET)
+	@RequestMapping(value = ServiceURLMappings.PatientServiceController.GET_PATIENT_MEASURMENTS + "{patientUUID}" + "/{attributeName}", method = RequestMethod.GET)
 	@ResponseBody
-	public List<Measurement> getPatientMeasurements(@PathVariable final String patientUUID, @PathVariable final int attributeId, @RequestHeader(CommonConstants.CONTEXT_INFORMATION_REQUEST_PARAMETER) final String context) throws Exception {
+	public List<Measurement> getPatientMeasurements(@PathVariable final String patientUUID, @PathVariable final String attributeName, @RequestHeader(CommonConstants.CONTEXT_INFORMATION_REQUEST_PARAMETER) final String context) throws Exception {
 		ContextThreadLocal.set(ContextInfo.toContextInfo(context));
-		LOGGER.debug("Get Patient measurements for patient id:<" + patientUUID + "> and attribute id:<" + attributeId + ">");
-		final List<Measurement> measurements = this.patientService.getPatientMeasurements(patientUUID, attributeId);
+		LOGGER.debug("Get Patient measurements for patient id:<" + patientUUID + "> and attributeName:<" + attributeName + ">");
+		final List<Measurement> measurements = this.patientService.getPatientMeasurements(patientUUID, attributeName);
 		return measurements;
 	}
 

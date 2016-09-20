@@ -42,12 +42,12 @@ import javax.persistence.Table;
            	+ " AND patient.patientUUID = :patientUUID"
            	+" ORDER BY recordingDevice.typeId ASC"),
 
-	@NamedQuery(name = "RecordingDeviceDataMaster.fetchPatientMeasurementsByAttributeId", query = "SELECT recordingDeviceDataMaster FROM RecordingDeviceDataMaster recordingDeviceDataMaster"
+	@NamedQuery(name = "RecordingDeviceDataMaster.fetchPatientMeasurementsByAttributeName", query = "SELECT recordingDeviceDataMaster FROM RecordingDeviceDataMaster recordingDeviceDataMaster"
 			+ " JOIN recordingDeviceDataMaster.patient patient"
           	+ " JOIN recordingDeviceDataMaster.recordingDeviceAttribute recordingDeviceAttribute"
            	+ " WHERE patient.patientUUID = :patientUUID"
-           	+ " AND recordingDeviceAttribute.attributeId = :attributeId"
-           	+" ORDER BY recordingDeviceDataMaster.dataValueTime ASC")
+           	+ " AND recordingDeviceAttribute.attributeName = :attributeName"
+           	+ " ORDER BY recordingDeviceDataMaster.dataValueTime ASC")
 })
 //@formatter:on
 public class RecordingDeviceDataMaster {

@@ -29,5 +29,5 @@ public interface RecordingDeviceDataDAO extends GenericDAO<RecordingDeviceDataMa
 
 	List<DataValueEntity> fetchRecentMeasurementsSQL(String patientUUID);
 
-	List<RecordingDeviceDataMaster> fetchPatientMeasurementsByAttributeId(String patientUUID, int attributeId);
+	List<RecordingDeviceDataMaster> fetchPatientMeasurementsByAttribute(String patientUUID, String attributeName);
 }

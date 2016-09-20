@@ -1,10 +1,10 @@
 var measurement = {
-    getData: function (includeObject, attributeId) {
+    getData: function (includeObject, attributeName) {
         var formattedstudentListArray = [];
         var data = null;
         $.ajax({
             async: false,
-            url: "/clinician/patient/patientMeasurements?patientUUID=" + includeObject.patientUUID + "&attributeId=" + attributeId,
+            url: "/clinician/patient/patientMeasurements?patientUUID=" + includeObject.patientUUID + "&attributeName=" + attributeName,
             dataType: "json",
             success: function (pulseData) {
                 data = pulseData;
@@ -82,8 +82,8 @@ var measurement = {
     },
 
     initChart: function (includeObject) {
-        var systolicData = measurement.getData(includeObject, includeObject.attributeIds[0]);
-        var diastolicData = measurement.getData(includeObject, includeObject.attributeIds[1]);
+        var systolicData = measurement.getData(includeObject, includeObject.attributeNames[0]);
+        var diastolicData = measurement.getData(includeObject, includeObject.attributeNames[1]);
         chartData = measurement.createChartData([systolicData, diastolicData], includeObject);
         measurement.renderChart(chartData, includeObject);
         var lastSystolicData = systolicData.lastObject();

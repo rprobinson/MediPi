@@ -18,9 +18,12 @@
 package uk.gov.nhs.digital.telehealth.clinician.service.domain;
 
 import java.sql.Timestamp;
+import java.text.DecimalFormat;
 import java.util.List;
 
 public class Measurement implements Comparable<Measurement> {
+
+	private static final DecimalFormat DECIMAL_FORMATTER = new DecimalFormat("0.##");
 
 	private Timestamp dataTime;
 	private String value;
@@ -28,8 +31,6 @@ public class Measurement implements Comparable<Measurement> {
 	private String maxValue;
 
 	public Measurement() {
-		minValue = "60";
-		maxValue = "100";
 	}
 
 	public Measurement(final Timestamp dataTime, final String value, final String minValue, final String maxValue) {
@@ -106,8 +107,8 @@ public class Measurement implements Comparable<Measurement> {
 
 	public void setMinMaxValues(final List<Double> thresholds) {
 		if(thresholds != null && thresholds.size() == 2) {
-			this.minValue = thresholds.get(0).toString();
-			this.maxValue = thresholds.get(1).toString();
+			this.minValue = DECIMAL_FORMATTER.format(thresholds.get(0)).toString();
+			this.maxValue = DECIMAL_FORMATTER.format(thresholds.get(1)).toString();
 		}
 
 	}
