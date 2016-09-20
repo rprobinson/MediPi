@@ -24,7 +24,6 @@ import ma.glasnost.orika.MapperFacade;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-import org.medipi.clinical.entities.RecordingDeviceData;
 import org.medipi.clinical.threshold.AttributeThresholdTest;
 import org.medipi.clinical.threshold.ThresholdTestFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -171,10 +170,9 @@ public class PatientService {
 		List<RecordingDeviceDataMaster> patientData = recordingDeviceDataDAO.fetchPatientMeasurementsByAttributeId(patientUUID, attributeId);
 		List<Measurement> measurements = new ArrayList<Measurement>();
 		for(RecordingDeviceDataMaster data : patientData) {
-			RecordingDeviceData recordingDeviceData = this.mapperFacade.map(data, RecordingDeviceData.class);
 			AttributeThresholdMaster attributeThresholdMaster = attributeThresholdDAO.findEffectiveAttributeThreshold(attributeId, patientUUID, data.getDataValueTime());
 			AttributeThresholdTest thresholdTest = thresholdTestFactory.getInstance(attributeThresholdMaster.getThresholdType());
-			List<Double> thresholds = thresholdTest.getThreshold(recordingDeviceData);
+			List<Double> thresholds = thresholdTest.getThreshold(attributeId, patientUUID, data.getDataValueTime());
 			if(thresholds != null && (thresholds.get(0) == null || thresholds.get(1) == null)) {
 				LOGGER.debug("AttributeThresholdMaster:<thresholdLowValue=" + attributeThresholdMaster.getThresholdLowValue() + " thresholdHighValue: " + attributeThresholdMaster.getThresholdHighValue() + "> thresholds:<" + thresholds + ">");
 			}
