@@ -1,0 +1,3 @@
+uk.gov.hscic.medipi.MediPi.startup INFO
+uk.gov.hscic.medipi.MediPi.initialisation SEVERE
+uk.gov.hscic.medipi.MediPiMessageBox.makeErrorMessage SEVERE
