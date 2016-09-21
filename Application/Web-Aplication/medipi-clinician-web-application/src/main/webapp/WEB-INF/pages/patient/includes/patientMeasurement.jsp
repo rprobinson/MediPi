@@ -36,12 +36,12 @@
 							<td><input id="${param.measurementMaxValueId}-value" name="maxThreshold" type="text" size="1" maxlength="10"></td>
 						</tr>
 					</table>
-					<div class="span7 pull-left text-right">
+					<%-- <div class="span7 pull-left text-right">
 						<input class="btn btn-xs btn-primary" id="${param.canvasId}-btn_modify_thresholds" type="button" value="Modify Thresholds" name="modifyThresholds">
 					</div>
 					<div class="span7 pull-right text-right">
 						<input class="btn btn-xs btn-primary" id="${param.canvasId}-btn_update_thresholds" type="submit" value="Update Thresholds" name="updateThresholds">
-					</div>
+					</div> --%>
 				</form>
 			</div>
 		</div>

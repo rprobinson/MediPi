@@ -70,7 +70,7 @@ public class PatientService {
 	private ThresholdTestFactory thresholdTestFactory;
 
 	@Value("#{'${medipi.patient.required.device.attributes}'.split(',')}")
-	private List<Integer> requiredDeviceAttributes;
+	private List<String> requiredDeviceAttributes;
 
 	private static final Logger LOGGER = LogManager.getLogger(PatientService.class);
 
@@ -95,15 +95,15 @@ public class PatientService {
 			List<DataValueEntity> patientMeasurements = recordingDeviceDataDAO.fetchRecentMeasurementsSQL(patient.getPatientUUID());
 
 			//Clone the required attributes so that we can compare whether all the required attributes has data against it
-			List<Integer> requiredAttributes = new ArrayList<Integer>(requiredDeviceAttributes);
+			List<String> requiredAttributes = new ArrayList<String>(requiredDeviceAttributes);
 
 			//Set the default status as incomplete schedule
 			PatientStatus patientStatus = PatientStatus.INCOMPLETE_SCHEDULE;
 
 			for(DataValueEntity patientMeasurement : patientMeasurements) {
 				//Check the alert status and scheduled expiry date only if they are listed as required/mandatory attributes.
-				if(requiredAttributes.contains(patientMeasurement.getAttributeId())) {
-					requiredAttributes.remove(patientMeasurement.getAttributeId());
+				if(requiredAttributes.contains(patientMeasurement.getAttributeName())) {
+					requiredAttributes.remove(patientMeasurement.getAttributeName());
 
 					//break if the patient did not submit the data after the last expiry schedule time
 					if(patientMeasurement.getScheduleExpiryTime().before(TimestampUtil.getCurentTimestamp())) {
