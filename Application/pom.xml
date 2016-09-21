@@ -20,6 +20,7 @@
 	</properties>
 
     <modules>
+        <module>../Commons/MediPiTransportTools</module>
         <module>Common-Components/devops-commons</module>
         <module>Common-Components/devops-exception-manager</module>
         <module>Services/medipi-clinician-service</module>
