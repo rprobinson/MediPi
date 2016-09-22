@@ -15,9 +15,12 @@
  */
 package org.medipi.devices;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javafx.beans.property.SimpleStringProperty;
 import org.medipi.MediPiMessageBox;
 import org.medipi.utilities.Utilities;
@@ -34,16 +37,26 @@ public class Message {
     /**
      * Constructor which takes in the filename of the incoming message and parses it into a meaningful date and title
      * @param mTitle message file name
+     * @throws java.lang.Exception
      */
-    public Message(String mTitle) {
+    public Message(String mTitle) throws Exception{
         try {
             fileName = mTitle;
             String elements[] = mTitle.substring(0, mTitle.lastIndexOf(".")).split("-");
-            LocalDateTime d = LocalDateTime.parse(elements[0], Utilities.INTERNAL_SPINE_FORMAT_UTC);
+            if(elements.length>2){
+                throw new Exception("too many time elements");
+            }
+            Long epochMillis = Long.valueOf(elements[0]);
+            Instant i = Instant.ofEpochMilli(epochMillis);
+            
             this.messageTitle = new SimpleStringProperty(elements[1]);
-            this.time = new SimpleStringProperty(d.format(Utilities.DISPLAY_FORMAT_LOCALTIME));
+            this.time = new SimpleStringProperty(Utilities.DISPLAY_FORMAT_LOCALTIME.format(i));
         } catch (DateTimeParseException ex) {
             MediPiMessageBox.getInstance().makeErrorMessage("failure to recognise the date format of the incoming message: "+fileName, ex);
+            throw ex;
+        } catch (Exception ex) {
+            MediPiMessageBox.getInstance().makeErrorMessage("failure to recognise the date format of the incoming message: "+fileName, ex);
+            throw ex;
         }
 
     }

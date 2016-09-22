@@ -42,7 +42,7 @@ public class Utilities {
     public static final DateTimeFormatter DISPLAY_SCHEDULE_FORMAT_LOCALTIME = DateTimeFormatter.ofPattern("HH:mm:ss dd/MM/yyyy").withZone(ZoneId.systemDefault());
     public static final DateTimeFormatter INTERNAL_FORMAT_UTC = DateTimeFormatter.ofPattern("yyyyMMddHHmmss").withZone(ZoneId.of("Z"));
     public static final DateTimeFormatter INTERNAL_SPINE_FORMAT_UTC = DateTimeFormatter.ofPattern("yyyyMMddHHmmss.SSS").withZone(ZoneId.of("Z"));
-    public static final DateTimeFormatter DISPLAY_FORMAT_LOCALTIME = DateTimeFormatter.ofPattern("EEE d MMM yyyy HH:mm:ss").withZone(ZoneId.systemDefault());
+    public static final DateTimeFormatter DISPLAY_FORMAT_LOCALTIME = DateTimeFormatter.ofPattern("EEE d MMM yyyy HH:mm:ss z").withZone(ZoneId.systemDefault());
     public static final DateTimeFormatter ISO8601FORMATDATEMILLI_UTC = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").withZone(ZoneId.of("Z"));
     public static final DateTimeFormatter DISPLAY_TABLE_FORMAT_LOCALTIME = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm").withZone(ZoneId.systemDefault());
     /**

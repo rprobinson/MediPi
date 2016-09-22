@@ -128,7 +128,6 @@ public class HardwareHandler implements DownloadableHandler {
                     try {
                         MediPiLogger.getInstance().log(HardwareHandler.class.getName() + ".info", "Hardware Downloadable download started - Downloadable UUID: " + ddo.getDownloadableUuid());
                         InputStream is = downloadResponse.readEntity(InputStream.class);
-                        String s = Utilities.INTERNAL_FORMAT_DATE.format(ddo.getVersionDate());
                         File f = new File(messageDir.toString(), ddo.getFileName());
                         fetchFeed(is, f);
                         IOUtils.closeQuietly(is);

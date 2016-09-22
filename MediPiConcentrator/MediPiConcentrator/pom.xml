@@ -5,7 +5,7 @@
 
     <groupId>org.medipi.concentrator</groupId>
     <artifactId>MediPiConcentrator</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>1.0.2</version>
     <packaging>jar</packaging>
 
     <name>MediPiConcentrator</name>
@@ -119,6 +119,7 @@
     </dependencies>
 	
     <build>
+        <finalName>MediPiConcentrator</finalName>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>

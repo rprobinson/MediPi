@@ -65,11 +65,14 @@ public class Questionnaire extends Device {
 
     private static final String PROFILEID = "urn:nhs-en:profile:Questionnaire";
     private static final String NAME = "Questionnaire";
-    private static final String ADVICE_TO_PATIENT = "ADVICE_TO_PATIENT";
+    private static final String POSITIVE_RESPONSE = "POSITIVE_RESPONSE";
+    private static final String NEGATIVE_RESPONSE = "NEGATIVE_RESPONSE";
     private final HashMap<String, String> responses = new HashMap<>();
     private final HashMap<String, String> questions = new HashMap<>();
     private final HashMap<String, String[]> questionnaire = new HashMap<>();
-    private final ArrayList<String[]> data = new ArrayList<>();
+    private final ArrayList<String> data = new ArrayList<>();
+    private String questionnaireResult;
+    private Instant dataTime;
     // property to indicate whether data has bee recorded for this device
     private final BooleanProperty hasData = new SimpleBooleanProperty(false);
     private VBox questionnaireWindow;
@@ -236,7 +239,8 @@ public class Questionnaire extends Device {
         //actions for clicking "yes"
         yes.setOnAction((ActionEvent t) -> {
             // add data to data arraylist for transmission later
-            data.add(new String[]{Instant.now().toString(),questions.get(rule[QUESTION]), yes.getText()});
+            data.add(questions.get(rule[QUESTION]));
+            data.add(yes.getText());
             yes.setDisable(true);
             no.setDisable(true);
             no.setVisible(false);
@@ -244,7 +248,9 @@ public class Questionnaire extends Device {
             if (response != null) {
                 // add data to data arraylist for transmission later
                 // n.b. 1 millisecond is added to the response to differentiate it and maintain unique timestamps
-                data.add(new String[]{Instant.now().plusMillis(1).toString(),response, ADVICE_TO_PATIENT});
+                data.add(response);
+                questionnaireResult = NEGATIVE_RESPONSE;
+                dataTime = Instant.now();
                 responseLabel.setText(response);
                 if (isSchedule.get()) {
                     button1.setDisable(false);
@@ -261,7 +267,8 @@ public class Questionnaire extends Device {
         //actions for clicking "no"
         no.setOnAction((ActionEvent t) -> {
             // add data to data arraylist for transmission later
-            data.add(new String[]{Instant.now().toString(),questions.get(rule[QUESTION]), no.getText()});
+            data.add(questions.get(rule[QUESTION]));
+            data.add(no.getText());
             yes.setDisable(true);
             yes.setVisible(false);
             no.setDisable(true);
@@ -269,7 +276,9 @@ public class Questionnaire extends Device {
             if (response != null) {
                 // add data to data arraylist for transmission later
                 // n.b. 1 millisecond is added to the response to differentiate it and maintain unique timestamps
-                data.add(new String[]{Instant.now().plusMillis(1).toString(),response, ADVICE_TO_PATIENT});
+                data.add(response);
+                questionnaireResult = POSITIVE_RESPONSE;
+                dataTime = Instant.now();
                 responseLabel.setText(response);
                 if (isSchedule.get()) {
                     button1.setDisable(false);
@@ -456,7 +465,7 @@ public class Questionnaire extends Device {
 
     /**
      * Gets a DevicedataDO containing the payload
-
+     *
      *
      * @return DevicedataDO containing the payload
      */
@@ -469,14 +478,14 @@ public class Questionnaire extends Device {
         sb.append("metadata->persist->questionnaireversion->").append(titleName).append("\n");
         sb.append("metadata->subtype->").append(getName()).append("\n");
         sb.append("metadata->datadelimiter->").append(medipi.getDataSeparator()).append("\n");
-        if (scheduler!=null) {
+        if (scheduler != null) {
             sb.append("metadata->scheduleeffectivedate->").append(Utilities.ISO8601FORMATDATEMILLI_UTC.format(scheduler.getCurrentScheduledEventTime())).append("\n");
             sb.append("metadata->scheduleexpirydate->").append(Utilities.ISO8601FORMATDATEMILLI_UTC.format(scheduler.getNextScheduledEventTime())).append("\n");
         }
         sb.append("metadata->columns->")
                 .append("iso8601time").append(medipi.getDataSeparator())
-                .append("question").append(medipi.getDataSeparator())
-                .append("answer").append("\n");
+                .append("conversation").append(medipi.getDataSeparator())
+                .append("outcome").append("\n");
         sb.append("metadata->format->")
                 .append("DATE").append(medipi.getDataSeparator())
                 .append("STRING").append(medipi.getDataSeparator())
@@ -486,14 +495,12 @@ public class Questionnaire extends Device {
                 .append("NONE").append(medipi.getDataSeparator())
                 .append("NONE").append("\n");
         // Add Downloaded data
-        for (String[] s : data) {
-            sb.append(s[0]);
-            sb.append(medipi.getDataSeparator());
-            sb.append(s[1]);
-            sb.append(medipi.getDataSeparator());
-            sb.append(s[2]);
-            sb.append("\n");
-        }
+        sb.append(dataTime.toString());
+        sb.append(medipi.getDataSeparator());
+        sb.append(String.join("|", data));
+        sb.append(medipi.getDataSeparator());
+        sb.append(questionnaireResult);
+        sb.append("\n");
         payload.setProfileId(PROFILEID);
         payload.setPayload(sb.toString());
         return payload;
