@@ -56,4 +56,13 @@ public class AttributeThresholdDAOImpl extends GenericDAOImpl<AttributeThreshold
 		query.setParameter("effectiveDate", effectiveDate);
 		return (AttributeThresholdMaster) query.getSingleResult();
 	}
+
+	@Override
+	public AttributeThresholdMaster fetchLatestAttributeThreshold(final String patientUUID, final String attributeName) {
+		final Query query = this.getEntityManager().createNamedQuery("AttributeThresholdMaster.fetchLatestAttributeThreshold", AttributeThresholdMaster.class);
+		query.setParameter("attributeName", attributeName);
+		query.setParameter("patientUUID", patientUUID);
+		query.setMaxResults(1);
+		return (AttributeThresholdMaster) query.getSingleResult();
+	}
 }

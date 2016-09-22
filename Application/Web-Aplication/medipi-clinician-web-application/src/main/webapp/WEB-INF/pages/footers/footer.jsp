@@ -2,7 +2,7 @@
 <footer class="footer">
 	<div class="container">
 		<ul>
-			<li>2016&nbsp;Copyright (C) 2016 Krishna Kuntala @ Mastek <krishna.kuntala@mastek.com>.&nbsp;All rights reserved.&nbsp;</li>
+			<li>2016&nbsp;Copyright (C) 2016 Mastek.&nbsp;All rights reserved.&nbsp;</li>
 			<li><a href="#">Sitemap</a>&nbsp; | &nbsp;</li>
 			<li><a href="#">Tech Support</a>&nbsp; | &nbsp;</li>
 			<li><a href="#">Community</a>&nbsp; | &nbsp;</li>

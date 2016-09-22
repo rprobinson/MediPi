@@ -46,5 +46,12 @@ public interface WebConstants {
 			String DELETE = WebConstants.Operations.DELETE + Patient.class.getSimpleName();
 			String PATIENT_MEASUREMENTS = "Patient Measurements " + Patient.class.getSimpleName();
 		}
+
+		interface AttributeThreshold {
+			String SAVE = WebConstants.Operations.SAVE + AttributeThreshold.class.getSimpleName();
+			String READ = WebConstants.Operations.READ + AttributeThreshold.class.getSimpleName();
+			String READ_ALL = WebConstants.Operations.READ_ALL + AttributeThreshold.class.getSimpleName();
+			String DELETE = WebConstants.Operations.DELETE + AttributeThreshold.class.getSimpleName();
+		}
 	}
 }

@@ -47,7 +47,14 @@ import javax.persistence.Table;
 			+ " JOIN attributeThreshold.recordingDeviceAttribute recordingDeviceAttribute"
 			+ " WHERE patient.patientUUID = :patientUUID"
 			+ " AND recordingDeviceAttribute.attributeId = :attributeId"
-			+ " ORDER BY attributeThreshold.effectiveDate ASC")
+			+ " ORDER BY attributeThreshold.effectiveDate ASC"),
+
+	@NamedQuery(name = "AttributeThresholdMaster.fetchLatestAttributeThreshold", query = "SELECT attributeThreshold FROM AttributeThresholdMaster attributeThreshold"
+			+ " JOIN attributeThreshold.patient patient"
+			+ " JOIN attributeThreshold.recordingDeviceAttribute recordingDeviceAttribute"
+			+ " WHERE patient.patientUUID = :patientUUID"
+			+ " AND recordingDeviceAttribute.attributeName = :attributeName"
+			+ " ORDER BY attributeThreshold.effectiveDate DESC")
 })
 //@formatter:on
 public class AttributeThresholdMaster {

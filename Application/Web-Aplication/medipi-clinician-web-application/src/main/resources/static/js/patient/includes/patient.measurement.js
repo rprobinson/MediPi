@@ -6,8 +6,25 @@ var measurement = {
             async: false,
             url: "/clinician/patient/patientMeasurements?patientUUID=" + includeObject.patientUUID + "&attributeName=" + includeObject.attributeName,
             dataType: "json",
-            success: function (pulseData) {
-                data = pulseData;
+            success: function (measurements) {
+                data = measurements;
+            },
+            error: function(request, status, error) {
+            	showDefaultErrorDiv();
+            }
+        });
+        return data;
+    },
+
+    getLatestAttributeThreshold: function (includeObject) {
+        var formattedstudentListArray = [];
+        var data = null;
+        $.ajax({
+            async: false,
+            url: "/clinician/attributeThreshold?patientUUID=" + includeObject.patientUUID + "&attributeName=" + includeObject.attributeName,
+            dataType: "json",
+            success: function (attributeThreshold) {
+                data = attributeThreshold;
             },
             error: function(request, status, error) {
             	showDefaultErrorDiv();
@@ -72,10 +89,6 @@ var measurement = {
     updateRecentMeasuremnts: function (recentMeasurement, includeObject) {
         $("#" + includeObject.recentMeasurementDateId).html(recentMeasurement != null ? recentMeasurement.dataTime.getStringDate_DDMMYYYY_From_Timestamp() : "- - -");
         $("#" + includeObject.recentMeasurementValueId).html(recentMeasurement != null ? recentMeasurement.value : "- - -");
-        $("#" + includeObject.measurementMinValueId).html(recentMeasurement != null ? (recentMeasurement.minValue != null ? recentMeasurement.minValue : "- - -") : "- - -");
-        $("#" + includeObject.measurementMinValueId + "-value").val(recentMeasurement != null ? (recentMeasurement.minValue != null ? recentMeasurement.minValue : "") : "");
-        $("#" + includeObject.measurementMaxValueId).html(recentMeasurement != null ? (recentMeasurement.maxValue != null ? recentMeasurement.maxValue : "- - -") : "- - -");
-        $("#" + includeObject.measurementMaxValueId + "-value").val(recentMeasurement != null ? (recentMeasurement.maxValue != null ? recentMeasurement.maxValue : "- - -") : "");
 
         //If within min and max limits
         if(recentMeasurement != null) {
@@ -92,10 +105,19 @@ var measurement = {
         }
     },
 
+    updateAttributeThreshold: function (attributeThreshold) {
+        $("#" + includeObject.measurementMinValueId).html(attributeThreshold != null ? (attributeThreshold.thresholdLowValue != null ? attributeThreshold.thresholdLowValue : "- - -") : "- - -");
+        $("#" + includeObject.measurementMinValueId + "-value").val(attributeThreshold != null ? (attributeThreshold.thresholdLowValue != null ? attributeThreshold.thresholdLowValue : "") : "");
+        $("#" + includeObject.measurementMaxValueId).html(attributeThreshold != null ? (attributeThreshold.thresholdHighValue != null ? attributeThreshold.thresholdHighValue : "- - -") : "- - -");
+        $("#" + includeObject.measurementMaxValueId + "-value").val(attributeThreshold != null ? (attributeThreshold.thresholdHighValue != null ? attributeThreshold.thresholdHighValue : "- - -") : "");
+    },
+
     initChart: function (includeObject) {
-        var data = measurement.getData(includeObject);
-        chartData = measurement.createChartData(data, includeObject);
+        var measurements = measurement.getData(includeObject);
+        var attributeThreshold = measurement.getLatestAttributeThreshold(includeObject);
+        chartData = measurement.createChartData(measurements, includeObject);
         measurement.renderChart(chartData, includeObject);
-        measurement.updateRecentMeasuremnts(data.lastObject(), includeObject);
+        measurement.updateRecentMeasuremnts(measurements.lastObject(), includeObject);
+        measurement.updateAttributeThreshold(attributeThreshold);
     }
 };

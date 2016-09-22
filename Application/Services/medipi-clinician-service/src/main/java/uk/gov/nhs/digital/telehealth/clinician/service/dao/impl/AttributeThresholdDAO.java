@@ -25,7 +25,10 @@ import uk.gov.nhs.digital.telehealth.clinician.service.entities.AttributeThresho
 import com.dev.ops.common.dao.generic.GenericDAO;
 
 public interface AttributeThresholdDAO extends GenericDAO<AttributeThresholdMaster> {
+
+	AttributeThresholdMaster fetchLatestAttributeThreshold(final String patientUUID, final String attributeName);
+
 	List<AttributeThresholdMaster> fetchPatientAttributeThresholds(final String patientUUID, final Integer attributeId);
 
-	AttributeThresholdMaster findEffectiveAttributeThreshold(int attributeId, String patientUUID, Timestamp effectiveDate);
+	AttributeThresholdMaster findEffectiveAttributeThreshold(final int attributeId, final String patientUUID, final Timestamp effectiveDate);
 }
