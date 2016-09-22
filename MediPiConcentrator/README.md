@@ -25,7 +25,8 @@ The Concentrator uses an instance of Postgres (v9.4.8). The data is stored in an
 
 The published SQL dump of the database gives the structure and some data examples. Note this is a pg_dump file and will require to be restored from the command line using pg_dump
 
-DB structure
+![Element image](https://github.com/rprobinson/MediPi/files/487667/Database_view.pdf)
+
 
 ## Certificates and PKI
 The certs used for the concentrator are published here as java key stores and should allow testing of the concentrator and patient software. The certs are for testing purposes and not suitable for use in any other circumstance.
