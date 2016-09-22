@@ -46,7 +46,6 @@ import org.medipi.logging.MediPiLogger;
  */
 public class RESTfulMessagingEngine {
 
-    private static final String MEDIPITRANSMITTLSMAENABLE = "medipi.transmit.tlsma.enable";
     private static final String MEDIPITRANSMITKEYSTORE = "medipi.device.cert.location";
     private static final String MEDIPITRANSMITTRUSTSTORELOCATION = "medipi.transmit.truststore.location";
     private static final String MEDIPITRANSMITTRUSTSTOREPASSWORD = "medipi.transmit.truststore.password";

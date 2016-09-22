@@ -15,7 +15,9 @@
  */
 package org.medipi.devices;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -115,7 +117,7 @@ public class Settings extends Element {
         Button closeButton = new Button("Close MediPi", medipi.utils.getImageView("medipi.images.cancel", 20, 20));
         closeButton.setId("button-closemedipi");
         closeButton.setOnAction((ActionEvent t) -> {
-            exit();
+            executeCommand("sudo shutdown -h now");
         });
 
         settingsWindow.getChildren().addAll(
@@ -131,6 +133,31 @@ public class Settings extends Element {
 
         // successful initiation of the this class results in a null return
         return null;
+    }
+
+    // This method executes strings on the command line and can shut the raspberry pi down
+    private String executeCommand(String command) {
+
+        StringBuffer output = new StringBuffer();
+
+        Process p;
+        try {
+            p = Runtime.getRuntime().exec(command);
+            p.waitFor();
+            BufferedReader reader
+                    = new BufferedReader(new InputStreamReader(p.getInputStream()));
+
+            String line = "";
+            while ((line = reader.readLine()) != null) {
+                output.append(line + "\n");
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return output.toString();
+
     }
 
     /**

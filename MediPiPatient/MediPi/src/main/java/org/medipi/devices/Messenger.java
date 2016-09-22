@@ -52,6 +52,7 @@ import org.medipi.model.AlertDO;
 import org.medipi.security.CertificateDefinitions;
 import org.medipi.model.EncryptedAndSignedUploadDO;
 import org.medipi.security.UploadEncryptionAdapter;
+import org.medipi.utilities.Utilities;
 
 /**
  * Class to display and handle the functionality for a incoming read-only
@@ -157,7 +158,14 @@ public class Messenger extends Element implements UnlockConsumer {
         // the messages have a filename of format yyyyMMddHHmmss-messagename.txt 
         Arrays.sort(list, (File f1, File f2) -> Long.valueOf(f2.lastModified()).compareTo(f1.lastModified()));
         for (File f : list) {
-            items.add(new Message(f.getName()));
+            Message m;
+            try {
+                m = new Message(f.getName());
+            } catch (Exception e) {
+                continue;
+            }
+
+            items.add(m);
         }
         messageList.setMinHeight(140);
         messageList.setMaxHeight(140);
@@ -169,10 +177,10 @@ public class Messenger extends Element implements UnlockConsumer {
                 // alter to allow different read formats
                 messageView.setText(readJSONAlert(file2));
             } catch (Exception ex) {
-                if(ex.getLocalizedMessage()==null){
+                if (ex.getLocalizedMessage() == null) {
                     messageView.setText("");
-                }else{
-                    messageView.setText("Cannot read message content" + ex.getLocalizedMessage());               
+                } else {
+                    messageView.setText("Cannot read message content" + ex.getLocalizedMessage());
                 }
             }
         });
@@ -289,7 +297,7 @@ public class Messenger extends Element implements UnlockConsumer {
                     sb.append(alertDO.getType()).append(" Alert").append("\n");
                 }
                 if (!time.equals(alertDO.getAlertTime())) {
-                    sb.append("Created on ").append(alertDO.getAlertTime()).append("\n");
+                    sb.append("Created on ").append(Utilities.DISPLAY_FORMAT_LOCALTIME.format(alertDO.getAlertTime().toInstant())).append("\n");
                 }
                 sb.append("\n").append(alertDO.getAlertText()).append("\n");
                 type = alertDO.getType();
