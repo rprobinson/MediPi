@@ -1,14 +1,14 @@
-# MediPi Telehealth System
+# MediPi Patient Telehealth System
 
 ![Element image](https://cloud.githubusercontent.com/assets/13271321/18472733/fe3ba2e8-79b0-11e6-8097-8ebc0ed732dc.jpg)
 
 ##Software
-This is an implementation of a Telehealth patient/client system (It is intended to be used in with the MediPi Concentrator server implementation which is published separately on this GitHub account). It has been developed to be flexible and extensible.
+This is an implementation of a Telehealth patient/client system (It is intended to be used in with the MediPi Concentrator server implementation which is published alongside this GitHub account). It has been developed to be flexible and extensible.
 
 This project started as a demonstration of a general telehealth system but with clinical involvement from a Hertfordshire Community NHS Trust, it has been developed into a Heart Failure implementation.
 The project is written in Java using JavaFX which communicates with the USB medical devices using javax-usb libraries.
 
-It is intended to be used in with the MediPi Concentrator server implementation which is published separately on this GitHub account
+It is intended to be used in with the MediPi Concentrator server implementation which is published alongside this GitHub account
 
 Functionality:
 
@@ -124,6 +124,29 @@ The MediPi project is a software project but is dependent on hardware for use in
 * Beurer BF480 Diagnostic Scales: [https://www.beurer.com/web/uk/products/Beurer-Connect/HealthManager-Products/BF-480-USB](https://www.beurer.com/web/uk/products/Beurer-Connect/HealthManager-Products/BF-480-USB)
 * Beurer BG55 Upper Arm Blood Pressure Monitor: [https://www.beurer.com/web/en/products/bloodpressure/upper_arm/BM-55](https://www.beurer.com/web/en/products/bloodpressure/upper_arm/BM-55)
 
+## Certificates and PKI
+The Patient device requires 2 certificates:
+	* Patient Certificate - The JKS password controls the authentication of the patient device. The cert is used to encrypt and sign the patient measurement data in the EncryptedAndSignedUploadDO data object.
+	* Device Certificate - The JKS is unlocked using the MAC address of the host computer at start up and will not allow operation unless the MAC address of the system unlocks the device certificate. The provided test certificate will not work on your system, however for test purposes the following line can be amended in org.medpi.MediPi class to allow it to work:
+	
+	for the device cert 24b73cb7-934d-49d5-bf11-1e63ee9d26b3.jks 
+	
+	Linux:
+
+    ```
+	350 String addr = "24b73cb7-934d-49d5-bf11-1e63ee9d26b3"
+	```
+
+	non-Linux:
+
+    ```
+	397 macAddress = "24b73cb7-934d-49d5-bf11-1e63ee9d26b3";
+	```
+
+	The Device Certificate is also used for 2-Way SSl/TLSMA encryption on the data in transit.
+	
+The certs used for the MediPi Patient are published here as java key stores and should allow testing of the MediPiPatient with the MediPi Concentrator. The certs are for testing purposes and not suitable for use in any other circumstance.
+
 ##Licence
 
  Licensed under the Apache License, Version 2.0 (the "License");
@@ -197,11 +220,11 @@ Guide for building OpenJFX: https://wiki.openjdk.java.net/display/OpenJFX/Buildi
     ACTION=="add", SUBSYSTEMS=="usb", ATTRS{idVendor}=="0c45", 	ATTRS{idProduct}=="7406", MODE="660", GROUP="plugdev"
 
     ```
-8. Refer the section `Instructions to update configuration files` to update the configurations files.
+8. Refer the section `Instructions to update configuration files` in this document above to update the configurations files.
 
-9. Build MediPi.jar using maven build. Execute `mvn clean install` from the root of MediPi repository.
+9. Build MediPi.jar using maven build. Navigate to MediPi/MediPiPatient in the cloned repository and execute `mvn clean install`
 
-10. Copy the `{medipi-repo-directory}/MediPi/target/MediPi.jar` file to /home/{user}/MediPi/ directory
+10. Copy the `{medipi-repo-directory}/MediPi/MediPiPatient/target/MediPi.jar` file to /home/{user}/MediPi/ directory
 
 11. Execute MediPi using:
         
