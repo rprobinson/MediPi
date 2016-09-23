@@ -128,22 +128,20 @@ The MediPi project is a software project but is dependent on hardware for use in
 The Patient device requires 2 certificates:
 	* Patient Certificate - The JKS password controls the authentication of the patient device. The cert is used to encrypt and sign the patient measurement data in the EncryptedAndSignedUploadDO data object.
 	* Device Certificate - The JKS is unlocked using the MAC address of the host computer at start up and will not allow operation unless the MAC address of the system unlocks the device certificate. The provided test certificate will not work on your system, however for test purposes the following line can be amended in org.medpi.MediPi class to allow it to work:
-	
-	for the device cert 24b73cb7-934d-49d5-bf11-1e63ee9d26b3.jks 
-	
-	Linux:
+for the device cert 24b73cb7-934d-49d5-bf11-1e63ee9d26b3.jks 
+Linux:
 
 ```
 	350 String addr = "24b73cb7-934d-49d5-bf11-1e63ee9d26b3"
 ```
 
-	non-Linux:
+non-Linux:
 
 ```
 	397 macAddress = "24b73cb7-934d-49d5-bf11-1e63ee9d26b3";
 ```
 
-	The Device Certificate is also used for 2-Way SSl/TLSMA encryption on the data in transit.
+The Device Certificate is also used for 2-Way SSl/TLSMA encryption on the data in transit.
 	
 The certs for MediPi Patient software are published here (and are intended to work out-of-the-box) as java key stores and should allow testing of the MediPiPatient with the MediPi Concentrator. **The certs are for testing purposes and not suitable for use in any other circumstance**
 
