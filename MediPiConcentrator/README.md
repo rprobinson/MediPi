@@ -29,7 +29,7 @@ The published SQL dump of the database gives the structure and some data example
 
 
 ## Certificates and PKI
-The certs used for the concentrator are published here as java key stores and should allow testing of the concentrator and patient software. The certs are for testing purposes and not suitable for use in any other circumstance.
+The certs for the concentrator are published here (and are intended to work out-of-the-box) as java key stores and should allow testing of the concentrator and patient software. **The certs are for testing purposes and not suitable for use in any other circumstance.**
 
 ####Instructions to update configuration files
 1. Copy config directory to an external location e.g. C:\MediPiConcentrator\ (for windows machine) or /home/{user}/MediPiConcentrator (Linux based)
