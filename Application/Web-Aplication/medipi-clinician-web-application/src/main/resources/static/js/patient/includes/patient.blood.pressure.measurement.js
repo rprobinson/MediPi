@@ -69,7 +69,7 @@ var measurement = {
         $("#" + includeObject.measurementMaxValueId).html("- - -");
 
         if(recentMeasurement != null) {
-        	$("#" + includeObject.recentMeasurementValueId).attr("class", "green");
+        	$("#" + includeObject.recentMeasurementValueId).attr("class", "amber");
         }
         //If within min and max limits
         /*if(recentMeasurement != null) {
