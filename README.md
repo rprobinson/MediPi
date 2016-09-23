@@ -4,6 +4,8 @@ MediPi is a clinically lead, community based, open platform development aimed at
 
 Distilled to its core, MediPi allows secure transmission of data from one or many satellite systems to a remote sever and can expose it through secure APIs to clinical systems. This is a model which lends itself to many clinical scenarios
 
+Both the MediPi Patient and Concentrator software repositories have extensive READMEs with quick start guides
+
 ### MediPi Patient Software
 The patient software is designed to be used typically in a domestic setting by a patient to measure and transmit data to a remote clinician and to receive alerts/messages in return. 
 MediPi Open Source software is written using Java and so is platform independent allowing it to run on Linux, Windows, Android or IOS systems. It a flexible solution enabling interaction with USB, Bluetooth, user input or internet-enabled data streams so it is not tied to any particular models or types of device. Its extensibility means that new devices can be plugged in and configured to work. 
