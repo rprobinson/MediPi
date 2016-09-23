@@ -59,7 +59,14 @@ public class AttributeThresholdDAOImpl extends GenericDAOImpl<AttributeThreshold
 		query.setParameter("attributeId", attributeId);
 		query.setParameter("patientUUID", patientUUID);
 		query.setParameter("effectiveDate", effectiveDate);
-		return (AttributeThresholdMaster) query.getSingleResult();
+
+		AttributeThresholdMaster attributeThreshold = null;
+		try {
+			attributeThreshold = (AttributeThresholdMaster) query.getSingleResult();
+		} catch(NoResultException e) {
+			LOGGER.error("No attribute threshold found for patientUUID:<" + patientUUID + ">, attributeId:<" + attributeId + "> and effectiveDate:<" + effectiveDate + ">", e);
+		}
+		return attributeThreshold;
 	}
 
 	@Override
