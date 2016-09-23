@@ -131,8 +131,10 @@ public final class DefaultExceptionManager implements ExceptionManager {
 		try {
 			if(messageParameters != null) {
 				exceptionDescription.append(MessageFormat.format(messageResources.getString(exceptionId), messageParameters));
-			} else {
+			} else if(exceptionId != null) {
 				exceptionDescription.append(messageResources.getString(exceptionId));
+			} else {
+				return exceptionId;
 			}
 		} catch(final MissingResourceException e) {
 			LOGGER.debug("Unable to find the resource with " + exceptionId);

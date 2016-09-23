@@ -170,14 +170,17 @@ public class PatientService {
 		List<RecordingDeviceDataMaster> patientData = recordingDeviceDataDAO.fetchPatientMeasurementsByAttribute(patientUUID, attributeName);
 		List<Measurement> measurements = new ArrayList<Measurement>();
 		for(RecordingDeviceDataMaster data : patientData) {
-			AttributeThresholdMaster attributeThresholdMaster = attributeThresholdDAO.findEffectiveAttributeThreshold(data.getRecordingDeviceAttribute().getAttributeId(), patientUUID, data.getDataValueTime());
-			AttributeThresholdTest thresholdTest = thresholdTestFactory.getInstance(attributeThresholdMaster.getThresholdType());
-			List<Double> thresholds = thresholdTest.getThreshold(data.getRecordingDeviceAttribute().getAttributeId(), patientUUID, data.getDataValueTime());
-			if(thresholds != null && (thresholds.get(0) == null || thresholds.get(1) == null)) {
-				LOGGER.debug("AttributeThresholdMaster:<thresholdLowValue=" + attributeThresholdMaster.getThresholdLowValue() + " thresholdHighValue: " + attributeThresholdMaster.getThresholdHighValue() + "> thresholds:<" + thresholds + ">");
-			}
 			Measurement measurement = this.mapperFacade.map(data, Measurement.class);
-			measurement.setMinMaxValues(thresholds);
+			AttributeThresholdMaster attributeThresholdMaster = attributeThresholdDAO.findEffectiveAttributeThreshold(data.getRecordingDeviceAttribute().getAttributeId(), patientUUID, data.getDataValueTime());
+
+			if(attributeThresholdMaster != null) {
+				AttributeThresholdTest thresholdTest = thresholdTestFactory.getInstance(attributeThresholdMaster.getThresholdType());
+				List<Double> thresholds = thresholdTest.getThreshold(data.getRecordingDeviceAttribute().getAttributeId(), patientUUID, data.getDataValueTime());
+				if(thresholds != null && (thresholds.get(0) == null || thresholds.get(1) == null)) {
+					LOGGER.debug("AttributeThresholdMaster:<thresholdLowValue=" + attributeThresholdMaster.getThresholdLowValue() + " thresholdHighValue: " + attributeThresholdMaster.getThresholdHighValue() + "> thresholds:<" + thresholds + ">");
+				}
+				measurement.setMinMaxValues(thresholds);
+			}
 			measurements.add(measurement);
 		}
 		return measurements;
