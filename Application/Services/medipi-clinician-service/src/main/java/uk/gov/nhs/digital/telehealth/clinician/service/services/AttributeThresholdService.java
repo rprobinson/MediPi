@@ -51,7 +51,7 @@ public class AttributeThresholdService {
 		if(null != attributeThresholdMaster) {
 			attributeThreshold = this.mapperFacade.map(attributeThresholdMaster, AttributeThreshold.class);
 		} else {
-			throw new DefaultWrappedException("ATTRIBUTE_THRESHOLD_WITH_ATTRIBUTE_NAME_NOT_FOUND_EXCEPTION", null, new Object[] {attributeName, patientUUID});
+			//throw new DefaultWrappedException("ATTRIBUTE_THRESHOLD_WITH_ATTRIBUTE_NAME_NOT_FOUND_EXCEPTION", null, new Object[] {attributeName, patientUUID});
 		}
 		return attributeThreshold;
 	}

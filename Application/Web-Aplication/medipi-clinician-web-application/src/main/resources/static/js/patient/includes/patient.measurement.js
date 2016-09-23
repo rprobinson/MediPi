@@ -27,7 +27,9 @@ var measurement = {
                 data = attributeThreshold;
             },
             error: function(request, status, error) {
-            	showDefaultErrorDiv();
+            	if(request.status != 200) {
+            		showDefaultErrorDiv();
+            	}
             }
         });
         return data;

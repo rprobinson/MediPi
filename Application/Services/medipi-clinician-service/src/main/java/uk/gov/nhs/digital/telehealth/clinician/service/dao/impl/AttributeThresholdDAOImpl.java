@@ -20,8 +20,11 @@ package uk.gov.nhs.digital.telehealth.clinician.service.dao.impl;
 import java.sql.Timestamp;
 import java.util.List;
 
+import javax.persistence.NoResultException;
 import javax.persistence.Query;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
 import org.springframework.stereotype.Service;
 
 import uk.gov.nhs.digital.telehealth.clinician.service.entities.AttributeThresholdMaster;
@@ -30,6 +33,8 @@ import com.dev.ops.common.dao.generic.GenericDAOImpl;
 
 @Service("attributeThresholdsDAO")
 public class AttributeThresholdDAOImpl extends GenericDAOImpl<AttributeThresholdMaster> implements AttributeThresholdDAO {
+
+	private static final Logger LOGGER = LogManager.getLogger(AttributeThresholdDAOImpl.class);
 
 	@SuppressWarnings("unchecked")
 	@Override
@@ -63,6 +68,13 @@ public class AttributeThresholdDAOImpl extends GenericDAOImpl<AttributeThreshold
 		query.setParameter("attributeName", attributeName);
 		query.setParameter("patientUUID", patientUUID);
 		query.setMaxResults(1);
-		return (AttributeThresholdMaster) query.getSingleResult();
+
+		AttributeThresholdMaster attributeThreshold = null;
+		try {
+			attributeThreshold = (AttributeThresholdMaster) query.getSingleResult();
+		} catch(NoResultException e) {
+			LOGGER.error("No attribute threshold set for patientUUID:<" + patientUUID + "> and attributeName:<" + attributeName + ">", e);
+		}
+		return attributeThreshold;
 	}
 }
