@@ -133,19 +133,19 @@ The Patient device requires 2 certificates:
 	
 	Linux:
 
-    ```
+```
 	350 String addr = "24b73cb7-934d-49d5-bf11-1e63ee9d26b3"
-	```
+```
 
 	non-Linux:
 
-    ```
+```
 	397 macAddress = "24b73cb7-934d-49d5-bf11-1e63ee9d26b3";
-	```
+```
 
 	The Device Certificate is also used for 2-Way SSl/TLSMA encryption on the data in transit.
 	
-The certs used for the MediPi Patient are published here as java key stores and should allow testing of the MediPiPatient with the MediPi Concentrator. The certs are for testing purposes and not suitable for use in any other circumstance.
+The certs for MediPi Patient software are published here (and are intended to work out-of-the-box) as java key stores and should allow testing of the MediPiPatient with the MediPi Concentrator. **The certs are for testing purposes and not suitable for use in any other circumstance**
 
 ##Licence
 
