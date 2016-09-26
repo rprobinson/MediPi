@@ -128,16 +128,18 @@ public final class DefaultExceptionManager implements ExceptionManager {
 	public static String getExceptionDescription(final String exceptionId, final Object[] messageParameters) {
 		final StringBuilder exceptionDescription = new StringBuilder(exceptionId + LoggingConstants.WhitespaceLiterals.BLANK_SPACE + LoggingConstants.WhitespaceLiterals.HYPHEN + LoggingConstants.WhitespaceLiterals.BLANK_SPACE);
 		final ResourceBundle messageResources = DefaultExceptionManager.getExceptionManager().getMessageResourceBundle();
-		try {
-			if(messageParameters != null) {
-				exceptionDescription.append(MessageFormat.format(messageResources.getString(exceptionId), messageParameters));
-			} else if(exceptionId != null) {
-				exceptionDescription.append(messageResources.getString(exceptionId));
-			} else {
+		if(exceptionId != null) {
+			try {
+				if(messageParameters != null) {
+					exceptionDescription.append(MessageFormat.format(messageResources.getString(exceptionId), messageParameters));
+				} else {
+					exceptionDescription.append(messageResources.getString(exceptionId));
+				}
+			} catch(final MissingResourceException e) {
+				LOGGER.debug("Unable to find the resource with " + exceptionId);
 				return exceptionId;
 			}
-		} catch(final MissingResourceException e) {
-			LOGGER.debug("Unable to find the resource with " + exceptionId);
+		} else {
 			return exceptionId;
 		}
 		return exceptionDescription.toString();

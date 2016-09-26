@@ -66,13 +66,25 @@ var measurement = {
     },
     renderChart: function (chartData, includeObject) {
         var context2D = document.getElementById(includeObject.canvasId).getContext("2d");
+        var timeFormat = 'DD/MM/YYYY HH:mm';
         var myChart = new Chart(context2D, {
             type: 'line',
             data: chartData,
             options: {
                 responsive: true,
                 scales: {
-                    yAxes: [{
+                	xAxes: [{
+                		type: "time",
+                		time: {
+                			format: timeFormat,
+                			tooltipFormat: 'll HH:mm'
+                		},
+                		scaleLabel: {
+                			display: true,
+                		}
+                	},
+                ],
+                yAxes: [{
                         display: true,
                         scaleLabel: {
                             show: true,
