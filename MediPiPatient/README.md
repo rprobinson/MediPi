@@ -226,6 +226,7 @@ Guide for building OpenJFX: https://wiki.openjdk.java.net/display/OpenJFX/Buildi
 
 10. Copy the `{medipi-repo-directory}/MediPi/MediPiPatient/target/MediPi.jar` file to /home/{user}/MediPi/ directory
 
-11. Execute MediPi using:
+11. Upgrade the Java Cryptography Extention. Download from http://www.oracle.com/technetwork/java/javase/downloads/jce8-download-2133166.html and follow the README.txt instructions included in the package. The certs included for demonstration purposes require greater strength binaries in the JRE than are present by default.
+12. Execute MediPi using:
         
         java -Djava.library.path=/usr/lib/jni -jar /home/{user}/MediPi/MediPi.jar --propertiesFile=/home/{user}/MediPi/config/MediPi.properties
