@@ -69,12 +69,14 @@ In no event and under no legal theory, whether in tort (including negligence), c
 
 3. Copy the `{medipi-repo-directory}/MediPi/MediPiConcentrator/MediPiConcentrator/target/MediPiConcentrator.jar` file to /home/{user}/MediPiConcentrator/ directory
 
-4. Install postgres database - the version tested is v9.4.8
+4. Upgrade the Java Cryptography Extention. Download from http://www.oracle.com/technetwork/java/javase/downloads/jce8-download-2133166.html and follow the README.txt instructions included in the package. The certs included for demonstration purposes require greater strength binaries in the JRE than are present by default.
 
-5. Create a database 
+5. Install postgres database - the version tested is v9.4.8
 
-6. Import pg_dump file
+6. Create a database 
 
-7. Execute MediPiConcentrator using:
+7. Import pg_dump file
+
+8. Execute MediPiConcentrator using:
         
         java -jar /home/{user}/MediPi/MediPiConcentrator.jar /home/{user}/MediPiConcentrator/config/MediPiConcentrator.properties --spring.config.location=/home/{user}/MediPiConcentrator/config/application.properties
