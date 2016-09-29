@@ -31,7 +31,7 @@ function getPatientTile(patient) {
 	if(patient.patientStatus === "INCOMPLETE_SCHEDULE") {
 		tileStyle = "incomplete-schedule";
 		tileType = tileStyle + "-tile";
-	} else if(patient.patientStatus === "WITHIN_THRESHOLD")  {
+	} else if(patient.patientStatus === "IN_THRESHOLD")  {
 		tileStyle = "smiley";
 		tileType = tileStyle + "-tile";
 	} else if(patient.patientStatus === "OUT_OF_THRESHOLD")  {

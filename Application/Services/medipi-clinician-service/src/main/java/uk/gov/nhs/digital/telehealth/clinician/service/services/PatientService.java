@@ -121,7 +121,7 @@ public class PatientService {
 			}
 
 			if(requiredAttributes.isEmpty()) {
-				patientStatus = PatientStatus.WITHIN_THRESHOLD;
+				patientStatus = PatientStatus.IN_THRESHOLD;
 			}
 
 			patient.setPatientStatus(patientStatus);

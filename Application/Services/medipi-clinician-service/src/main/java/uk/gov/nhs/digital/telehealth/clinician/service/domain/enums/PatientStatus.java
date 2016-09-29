@@ -19,7 +19,7 @@ package uk.gov.nhs.digital.telehealth.clinician.service.domain.enums;
 
 public enum PatientStatus {
 	//@formatter:off
-	WITHIN_THRESHOLD,
+	IN_THRESHOLD,
 	OUT_OF_THRESHOLD,
 	INCOMPLETE_SCHEDULE,
 	CANNOT_CALCULATE;
