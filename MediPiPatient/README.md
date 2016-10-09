@@ -129,18 +129,18 @@ The Patient device requires 2 certificates:
 ####- Patient Certificate - The JKS password controls the authentication of the patient device. The cert is used to encrypt and sign the patient measurement data in the EncryptedAndSignedUploadDO data object.
 ####- Device Certificate - The JKS is unlocked using the MAC address of the host computer at start up and will not allow operation unless the MAC address of the system unlocks the device certificate. The provided test certificate will not work on your system, however for test purposes the following line can be amended in org.medpi.MediPi class to allow it to work:
 
-For the device cert 24b73cb7-934d-49d5-bf11-1e63ee9d26b3.jks 
+For the device cert 9b636f94-e1c2-4773-a5ca-3858ba176e9c.jks 
 
 Linux:
 
 ```
-	350 String addr = "24b73cb7-934d-49d5-bf11-1e63ee9d26b3"
+	350 String addr = "b8:27:eb:27:09:93"
 ```
 
 non-Linux:
 
 ```
-	397 macAddress = "24b73cb7-934d-49d5-bf11-1e63ee9d26b3";
+	397 macAddress = "b8:27:eb:27:09:93";
 ```
 
 The Device Certificate is also used for 2-Way SSl/TLSMA encryption on the data in transit.
