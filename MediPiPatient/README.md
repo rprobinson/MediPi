@@ -134,7 +134,7 @@ For the device cert 9b636f94-e1c2-4773-a5ca-3858ba176e9c.jks
 Linux:
 
 ```
-	350 String addr = "b8:27:eb:27:09:93"
+	350 String addr = "b8:27:eb:27:09:93";
 ```
 
 non-Linux:
