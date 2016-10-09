@@ -230,3 +230,14 @@ Guide for building OpenJFX: https://wiki.openjdk.java.net/display/OpenJFX/Buildi
 12. Execute MediPi using:
         
         java -Djava.library.path=/usr/lib/jni -jar /home/{user}/MediPi/MediPi.jar --propertiesFile=/home/{user}/MediPi/config/MediPi.properties
+
+#MediPi V1.0.8 .img file
+This downloadable image file of MediPi Patient v1.0.8 was built on the latest version of Raspbian (Jessie) and has been compressed.
+Uncompress and write to a microSD card. 
+
+[Compressed MediPi Image File](https://www.dropbox.com/s/y7q508cpatgu5h7/reduced_Medipi_v1.0.8.img.zip?dl=0)
+
+[Raspberry Pi Guide to writing an image to microSD](https://www.raspberrypi.org/documentation/installation/installing-images/)
+
+This has been tested using the Raspberry Pi 3 with the Raspberry Pi official 7" touchsceen.
+The image once written to the microSD card will boot to the Raspbian desktop and execute MediPi Patient in full screen. To get back to the desktop just close MediPi in "Settings"
