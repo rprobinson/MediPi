@@ -2,16 +2,6 @@ var DEFAULT_EMPTY_STRING = "- - -";
 /*******************************************************************************
  * BEGIN: String related operations.
  ******************************************************************************/
-
-/**
- * Generic method to replace unwanted characters for json strings.
- * Usage: var stringValue = <string>.replaceAll("\\", "");
- */
-String.prototype.replaceAll = function(find, replace) {
-	var str = this;
-	return str.replace(new RegExp(find.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'g'), replace);
-};
-
 /**
  * Generic method to check if the string is empty.
  * Usage: var isEmptyBooleanValue = <string>.isEmpty();
@@ -30,19 +20,6 @@ String.prototype.returnDefaultIfStringEmpty = function() {
 	} else {
 		return this;
 	}
-};
-
-String.prototype.startsWith = function(str) {
-	return (this.match("^" + str) == str);
-};
-
-String.prototype.endsWith = function(pattern) {
-	var d = this.length - pattern.length;
-	return d >= 0 && this.lastIndexOf(pattern) === d;
-};
-
-String.prototype.contains = function(pattern) {
-	return this.indexOf(pattern) != -1 ? true : false;
 };
 
 /**
@@ -84,24 +61,6 @@ String.prototype.getSplittedUUID = function() {
 		return this;
 	}
 	return parts;
-};
-
-/**
- *	Generic method to replace placeHoldersValues inside given string value
- */
-String.prototype.replacePlaceHolderValues = function(placeHolderValues) {
-	var value = this;
-	if(value.isEmpty())
-		return value.toString();
-
-	if(!placeHolderValues)
-		return value;
-
-	for(var i = 0; i < placeHolderValues.length; i++) {
-		var regexp = new RegExp('\\{(' + i + ')\\}', "g");
-		value = value.replace(regexp, placeHolderValues[i]);
-	}
-	return value;
 };
 
 /*******************************************************************************
@@ -298,80 +257,6 @@ String.prototype.getDate_From_StringDDmmmYYYY = function() {
  * END: Date related operations.
  ******************************************************************************/
 
-/*******************************************************************************
- * BEGIN: Generic functions to load any properties file and
- * replace values in the html tags
- ******************************************************************************/
-
-function resolvePropertiesFromBundle(filePath) {
-	var fileName = getFileName(filePath);
-	var fileParentDirectoryPath = getFileDirectory(filePath);
-	jQuery.i18n.properties(
-	{
-		name: fileName,
-		path: fileParentDirectoryPath,
-		mode: 'map',
-		callback: function() {
-			$.get(filePath, function(data) {
-				var lines = data.split("\n");
-				for(var linesCounter = 0; linesCounter < lines.length; linesCounter++) {
-					var line = lines[linesCounter];
-					if(!$.trim(line)) {
-						continue;
-					}
-					var values = line.split("=");
-					var key = values[0];
-					var id = "#" + $.trim(key);
-					jQuery(id).html(jQuery.i18n.prop(key));
-				}
-			});
-		}
-	});
-}
-
-/*******************************************************************************
- * BEGIN: Function to decide whether scrollbar to be added to a table
- * depending on number of records in a table.
- ******************************************************************************/
-var CONSTANT_ROWS_LIMIT_COUNT = 5;
-function addScrollBarToTable(tableId) {
-	var tableRowCount = $("#" + tableId + " tbody tr").length;
-	if(tableRowCount > CONSTANT_ROWS_LIMIT_COUNT) {
-		var heightSum = 0;
-		$("#" + tableId + " tbody tr:lt(" + (CONSTANT_ROWS_LIMIT_COUNT + 1) + ")").each(function() {
-			heightSum += $(this).outerHeight();
-		});
-		$("#" + tableId).parent('div').css("max-height", heightSum + 2);
-	}
-};
-/*******************************************************************************
- * END: Function to decide whether scrollbar to be added to a table
- * depending on number of records in a table.
- ******************************************************************************/
-
-/*******************************************************************************
- * BEGIN: This function users preferred name (if preferred name not empty)
- *  or combination of first name and last name otherwise.
- ******************************************************************************/
-function getUserDisplayName(preferredName, firstName, lastName) {
-	var displayName = DEFAULT_EMPTY_STRING;
-	if(preferredName.isEmpty()) {
-		if(!firstName.isEmpty() && !lastName.isEmpty()) {
-			displayName = firstName + " " + lastName;
-		}
-	} else {
-		displayName = preferredName;
-	}
-	return displayName;
-}
-/*******************************************************************************
- * BEGIN: This function users preferred name (if preferred name not empty) or
- * combination of first name and last name otherwise.
- ******************************************************************************/
-function jsonEscape(str) {
-	return str.replace(/\n/g, "\\\\n").replace(/\r/g, "\\\\r").replace(/\t/g, "\\\\t");
-}
-
 //private method for UTF-8 encoding
 function _utf8_encode(string) {
 	string = string.replace(/\r\n/g, "\n");
@@ -397,57 +282,6 @@ function _utf8_encode(string) {
 	return utftext;
 };
 
-/******************************************************************************
- *  BEGIN: Function to check IE browser with version MSIE 8,9,10
- ******************************************************************************/
-function isIEBrowser() {
-	var isTrue = false;
-	if((navigator.appName == 'Microsoft Internet Explorer') && ((navigator.appVersion.indexOf('MSIE 9') != -1) || (navigator.appVersion.indexOf('MSIE 8') != -1) || (navigator.appVersion.indexOf('MSIE 10') != -1))) {
-		isTrue = true;
-	}
-	return isTrue;
-}
-/*******************************************************************************
- * End: Function to check IE browser with version MSIE 8,9,10
- ******************************************************************************/
-
-/******************************************************************************
- *  BEGIN: Function to scroll at the top or bottom of the page.
- ******************************************************************************/
-var scrollObject =
-{
-	goToSection: function(sectionId) {
-		$('html, body').animate(
-		{
-			scrollTop: $(sectionId).offset().top
-		}, 0);
-	}
-};
-/*******************************************************************************
- * End: Function to scroll at the top or bottom of the page.
- ******************************************************************************/
-
-/******************************************************************************
- *  BEGIN: common function to validate form.
- ******************************************************************************/
-function validateForm(formId) {
-	$(formId).validate(
-	{
-		onfocusout: function(element) {
-			$(element).valid();
-		},
-		onsubmit: false,
-		onfocusin: false,
-		onkeyup: false,
-		onpaste: false,
-		messages: {},
-		groups: {},
-	});
-}
-/*******************************************************************************
- * End: Function to get server time.
- ******************************************************************************/
-
 /*******************************************************************************
  * START: Function to measure performance.
  ******************************************************************************/
@@ -463,51 +297,6 @@ function getPerformanceInSeconds(startTime) {
  * END: Function to measure performance.
  ******************************************************************************/
 
-/*********************************************************************************************
- * This function is used to remove tabindex on focus of exception block in page
- *********************************************************************************************/
-$(function() {
-	$("#errorBlock").on("focusout", function() {
-		$(this).attr("tabindex", "-1");
-	});
-});
-
-/*********************************************************************************************
- * This function is used for tab guard to trap Foucus inside colviz plugin.
- *********************************************************************************************/
-$(document).ready(function() {
-	$('body').on('click', '.ColVis_MasterButton', function() {
-		$('.ColVis_collection').tabGuard();
-	});
-});
-
-/******************************************************************************************************************
- * This function extends support of array.indexOf Function on unsupported Browsers, like IE8
- ******************************************************************************************************************/
-if(!Array.prototype.indexOf) {
-	Array.prototype.indexOf = function(obj, start) {
-		for(var i = (start || 0), j = this.length; i < j; i++) {
-			if(this[i] === obj) {
-				return i;
-			}
-		}
-		return -1;
-	};
-}
-/*******************************************************************************************************************
- * This below code will set autocomplete to off for all the input fields
- *******************************************************************************************************************/
-
-/******************************************************************************************************************
- * Empty the contents of an array : START
- ******************************************************************************************************************/
-Array.prototype.clear = function() {
-	this.splice(0, this.length);
-};
-/*******************************************************************************************************************
- * Empty the contents of an array : END
- *******************************************************************************************************************/
-
 /******************************************************************************************************************
  * Autocomplete feature disabled against all the forms in the application : START
  ******************************************************************************************************************/
@@ -519,29 +308,4 @@ $(document).ready(function() {
 
 /******************************************************************************************************************
  * Autocomplete feature disabled against all the forms in the application : END
- ******************************************************************************************************************/
-
-/******************************************************************************************************************
- * Functions to show/hide elements : START
- ******************************************************************************************************************/
-var DEFAULT_ERROR_MESSAGE = "Please try to reload the page and if the problem still persists, please contact the system administrator.";
-
-function hideElement(elementId) {
-	$("#" + elementId).addClass("hidden");
-}
-
-function hideErrorDiv() {
-	hideElement("errorMessageDiv");
-}
-
-function showErrorDiv(message) {
-	$("#errorMessage").html((message != null && message != "") ? message : DEFAULT_ERROR_MESSAGE);
-	$("#errorMessageDiv").removeClass("hidden");
-}
-
-function showDefaultErrorDiv() {
-	showErrorDiv(DEFAULT_ERROR_MESSAGE);
-}
-/******************************************************************************************************************
- * Functions to hide elements : END
  ******************************************************************************************************************/
