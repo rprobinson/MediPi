@@ -33,5 +33,6 @@ public interface ServiceURLMappings {
 	interface AttributeThresholdServiceController {
 		String CONTROLLER_MAPPING = "/attributeThreshold";
 		String GET_ATTRIBUTE_THRESHOLD = CommonConstants.Separators.URL_SEPARATOR;
+		String SAVE_ATTRIBUTE_THRESHOLD = CommonConstants.Separators.URL_SEPARATOR;
 	}
 }

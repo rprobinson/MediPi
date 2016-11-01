@@ -67,3 +67,6 @@
 		<div class="alert alert-danger hidden" role="alert" id="errorMessageDiv">
 			<strong>Error!&nbsp;</strong><span id="errorMessage"></span>
 		</div>
+		<div class="alert alert-success hidden" role="alert" id="successMessageDiv">
+			<strong>Success!&nbsp;</strong><span id="successMessage">Your employee has been saved with id: and number: .</span>
+		</div>

@@ -63,6 +63,19 @@ String.prototype.getSplittedUUID = function() {
 	return parts;
 };
 
+/**
+ * Method to check whether its a valid number
+ * Usage: var isValid = <string>.isValidNumber();
+ */
+String.prototype.isValidNumber = function() {
+	var isValid = false;
+	var number = Number(this);
+	if (!isNaN(number)) {
+		isValid = true;
+	}
+	return isValid;
+};
+
 /*******************************************************************************
  * END: String related operations.
  ******************************************************************************/
@@ -314,6 +327,7 @@ $(document).ready(function() {
  * Functions to show/hide elements : START
  ******************************************************************************************************************/
 var DEFAULT_ERROR_MESSAGE = "Please try to reload the page and if the problem still persists, please contact the system administrator.";
+var DEFAULT_SUCCESS_MESSAGE = "Successfully saved.";
 
 function hideElement(elementId) {
 	$("#" + elementId).addClass("hidden");
@@ -330,6 +344,19 @@ function showErrorDiv(message) {
 
 function showDefaultErrorDiv() {
 	showErrorDiv(DEFAULT_ERROR_MESSAGE);
+}
+
+function hideSuccessDiv() {
+	hideElement("successMessageDiv");
+}
+
+function showSuccessDiv(message) {
+	$("#successMessage").html((message != null && message != "") ? message : DEFAULT_SUCCESS_MESSAGE);
+	$("#successMessageDiv").removeClass("hidden");
+}
+
+function showDefaultSuccessDiv() {
+	showErrorDiv(DEFAULT_SUCCESS_MESSAGE);
 }
 /******************************************************************************************************************
  * Functions to hide elements : END

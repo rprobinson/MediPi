@@ -35,10 +35,12 @@ public class AttributeThreshold {
 
 	private Integer attributeId;
 
+	private String attributeName;
+
 	public AttributeThreshold() {
 	}
 
-	public AttributeThreshold(final Integer attributeThresholdId, final String thresholdType, final Timestamp effectiveDate, final String thresholdHighValue, final String thresholdLowValue, final String patientUUID, final Integer attributeId) {
+	public AttributeThreshold(final Integer attributeThresholdId, final String thresholdType, final Timestamp effectiveDate, final String thresholdHighValue, final String thresholdLowValue, final String patientUUID, final Integer attributeId, final String attributeName) {
 		this();
 		this.attributeThresholdId = attributeThresholdId;
 		this.thresholdType = thresholdType;
@@ -47,6 +49,7 @@ public class AttributeThreshold {
 		this.thresholdLowValue = thresholdLowValue;
 		this.patientUUID = patientUUID;
 		this.attributeId = attributeId;
+		this.attributeName = attributeName;
 	}
 
 	public Integer getAttributeThresholdId() {
@@ -105,6 +108,14 @@ public class AttributeThreshold {
 		this.attributeId = attributeId;
 	}
 
+	public String getAttributeName() {
+		return attributeName;
+	}
+
+	public void setAttributeName(final String attributeName) {
+		this.attributeName = attributeName;
+	}
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -153,6 +164,6 @@ public class AttributeThreshold {
 
 	@Override
 	public String toString() {
-		return "AttributeThreshold [attributeThresholdId=" + attributeThresholdId + ", thresholdType=" + thresholdType + ", effectiveDate=" + effectiveDate + ", thresholdHighValue=" + thresholdHighValue + ", thresholdLowValue=" + thresholdLowValue + ", patientUUID=" + patientUUID + ", attributeId=" + attributeId + "]";
+		return "AttributeThreshold [attributeThresholdId=" + attributeThresholdId + ", thresholdType=" + thresholdType + ", effectiveDate=" + effectiveDate + ", thresholdHighValue=" + thresholdHighValue + ", thresholdLowValue=" + thresholdLowValue + ", patientUUID=" + patientUUID + ", attributeId=" + attributeId + ", attributeName=" + attributeName + "]";
 	}
 }

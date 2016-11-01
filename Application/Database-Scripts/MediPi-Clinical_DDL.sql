@@ -19,7 +19,7 @@ CREATE TABLE attribute_threshold (
     threshold_high_value character varying(100) NOT NULL,
     effective_date timestamp without time zone NOT NULL
 );
-CREATE SEQUENCE attribute_threshold_attribute_threshold_id_seq START WITH 1 INCREMENT BY 1 NO MINVALUE NO MAXVALUE CACHE 1;
+CREATE SEQUENCE attribute_threshold_attribute_threshold_id_seq START WITH 921 INCREMENT BY 1 NO MINVALUE NO MAXVALUE CACHE 1;
 
 CREATE TABLE patient (
     patient_uuid character varying(100) NOT NULL,

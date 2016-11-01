@@ -135,3 +135,92 @@ var measurement = {
         measurement.updateAttributeThreshold(attributeThreshold);
     }
 };
+
+/*******************************************************************************
+ * BEGIN: Functions related to editable threshold values.
+ ******************************************************************************/
+function showEditableFields(canvasId) {
+	var formId = "#" + canvasId +"-attributeThreshold";
+
+	//Existing values for threshold.
+	var existingThresholdLowValueTD = $("#" + canvasId + "-threshold").find("[name='existingThresholdLowValue']");
+	var existingThresholdHighValueTD = $("#" + canvasId + "-threshold").find("[name='existingThresholdHighValue']");
+
+	var existingThresholdLowValue = existingThresholdLowValueTD.html();
+	var existingThresholdHighValue = existingThresholdHighValueTD.html();
+
+	//Edited values for threshold
+	var editedThresholdLowValueTD = $("#" + canvasId + "-modify-threshold").find("[name='thresholdLowValue']");
+	var editedThresholdHighValueTD = $("#" + canvasId + "-modify-threshold").find("[name='thresholdHighValue']");
+
+	//Reflect the values which are saved in the database.
+	editedThresholdLowValueTD.val(existingThresholdLowValue);
+	editedThresholdHighValueTD.val(existingThresholdHighValue);
+
+	$("#" + canvasId + "-threshold").addClass("hidden");
+	$("#" + canvasId + "-btn_modify_thresholds").addClass("hidden");
+
+	$("#" + canvasId + "-modify-threshold").removeClass("hidden");
+	$("#" + canvasId + "-btn_update_thresholds").removeClass("hidden");
+	$("#" + canvasId + "-btn_cancel_update").removeClass("hidden");
+}
+
+function hideEditableFields(canvasId) {
+	$("#" + canvasId + "-modify-threshold").addClass("hidden");
+	$("#" + canvasId + "-btn_update_thresholds").addClass("hidden");
+	$("#" + canvasId + "-btn_cancel_update").addClass("hidden");
+
+	$("#" + canvasId + "-threshold").removeClass("hidden");
+	$("#" + canvasId + "-btn_modify_thresholds").removeClass("hidden");
+	hideErrorDiv();
+	hideSuccessDiv();
+}
+
+function submitAttributeThreshold(canvasId) {
+	var formId = "#" + canvasId +"-attributeThreshold";
+
+	//Existing values for threshold.
+	var existingThresholdLowValueTD = $("#" + canvasId + "-threshold").find("[name='existingThresholdLowValue']");
+	var existingThresholdHighValueTD = $("#" + canvasId + "-threshold").find("[name='existingThresholdHighValue']");
+
+	var existingThresholdLowValue = existingThresholdLowValueTD.html();
+	var existingThresholdHighValue = existingThresholdHighValueTD.html();
+
+	//Edited values for threshold
+	var editedThresholdLowValueTD = $("#" + canvasId + "-modify-threshold").find("[name='thresholdLowValue']");
+	var editedThresholdHighValueTD = $("#" + canvasId + "-modify-threshold").find("[name='thresholdHighValue']");
+
+	var editedThresholdLowValue = editedThresholdLowValueTD.val();
+	var editedThresholdHighValue = editedThresholdHighValueTD.val();
+
+	if(existingThresholdLowValue == editedThresholdLowValue && existingThresholdHighValue == editedThresholdHighValue) {
+		//no need to update as there are no changes for threshold values.
+		hideEditableFields(canvasId);
+	} else if(!editedThresholdLowValue.isValidNumber() || !editedThresholdHighValue.isValidNumber()) {
+		showErrorDiv('Please submit valid data for thresholds.');
+	} else {
+		$.ajax({
+			type: $(formId).attr("method"),
+			url: $(formId).attr("action"),
+			data: $(formId).serialize(),
+			success: function(data) {
+				//update the values on screen.
+				existingThresholdLowValueTD.html(data.thresholdLowValue);
+				existingThresholdHighValueTD.html(data.thresholdHighValue);
+
+				hideEditableFields(canvasId);
+				hideErrorDiv();
+				showSuccessDiv("Thresholds have been updated.");
+			},
+			error: function(request, status, error) {
+				hideSuccessDiv();
+				showErrorDiv(request.responseText);
+			}
+		});
+	}
+	//returning false so that the form submission should not happen as we are handling form submission via ajax.
+	return false;
+}
+/*******************************************************************************
+ * END: Functions related to editable threshold values.
+ ******************************************************************************/

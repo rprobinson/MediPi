@@ -22,6 +22,7 @@ import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -53,5 +54,15 @@ public class AttributeThresholdServiceController {
 		final AttributeThreshold attributeThreshold = attributeThresholdService.getAttributeThreshold(patientUUID, attributeName);
 		LOGGER.debug("The Attribute threshold: " + attributeThreshold);
 		return attributeThreshold;
+	}
+
+	@RequestMapping(value = ServiceURLMappings.AttributeThresholdServiceController.SAVE_ATTRIBUTE_THRESHOLD, method = RequestMethod.POST)
+	@ResponseBody
+	public AttributeThreshold saveAttributeThreshold(@RequestBody final AttributeThreshold attributeThreshold, @RequestHeader(CommonConstants.CONTEXT_INFORMATION_REQUEST_PARAMETER) final String context) throws DefaultWrappedException {
+		ContextThreadLocal.set(ContextInfo.toContextInfo(context));
+		LOGGER.debug("Save attribute thresholds for: " + attributeThreshold);
+		AttributeThreshold savedAttributeThreshold = attributeThresholdService.saveAttributeThreshold(attributeThreshold);
+		LOGGER.info("The saved attribute threshold: " + savedAttributeThreshold);
+		return savedAttributeThreshold;
 	}
 }

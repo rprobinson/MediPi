@@ -26,10 +26,16 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import uk.gov.nhs.digital.telehealth.clinician.service.constants.ServiceConstants;
 import uk.gov.nhs.digital.telehealth.clinician.service.dao.impl.AttributeThresholdDAO;
+import uk.gov.nhs.digital.telehealth.clinician.service.dao.impl.PatientDAO;
+import uk.gov.nhs.digital.telehealth.clinician.service.dao.impl.RecordingDeviceAttributeDAO;
 import uk.gov.nhs.digital.telehealth.clinician.service.domain.AttributeThreshold;
 import uk.gov.nhs.digital.telehealth.clinician.service.entities.AttributeThresholdMaster;
+import uk.gov.nhs.digital.telehealth.clinician.service.entities.PatientMaster;
+import uk.gov.nhs.digital.telehealth.clinician.service.entities.RecordingDeviceAttributeMaster;
 
+import com.dev.ops.common.utils.TimestampUtil;
 import com.dev.ops.exceptions.impl.DefaultWrappedException;
 
 @Component
@@ -42,6 +48,14 @@ public class AttributeThresholdService {
 	@Qualifier("attributeThresholdsDAO")
 	private AttributeThresholdDAO attributeThresholdDAO;
 
+	@Autowired
+	@Qualifier("patientsDAO")
+	private PatientDAO patientDAO;
+
+	@Autowired
+	@Qualifier("recordingDevicesAttributeDAO")
+	private RecordingDeviceAttributeDAO recordingDeviceAttributeDAO;
+
 	private static final Logger LOGGER = LogManager.getLogger(AttributeThresholdService.class);
 
 	@Transactional(rollbackFor = {Exception.class})
@@ -50,9 +64,29 @@ public class AttributeThresholdService {
 		AttributeThreshold attributeThreshold = null;
 		if(null != attributeThresholdMaster) {
 			attributeThreshold = this.mapperFacade.map(attributeThresholdMaster, AttributeThreshold.class);
-		} else {
-			//throw new DefaultWrappedException("ATTRIBUTE_THRESHOLD_WITH_ATTRIBUTE_NAME_NOT_FOUND_EXCEPTION", null, new Object[] {attributeName, patientUUID});
 		}
 		return attributeThreshold;
+	}
+
+	@Transactional(rollbackFor = {Exception.class})
+	public AttributeThreshold saveAttributeThreshold(final AttributeThreshold attributeThreshold) throws DefaultWrappedException {
+		RecordingDeviceAttributeMaster recordingDeviceAttribute = recordingDeviceAttributeDAO.fetchRecordingDeviceAttributeByName(attributeThreshold.getAttributeName());
+
+		PatientMaster patient = patientDAO.findByPrimaryKey(attributeThreshold.getPatientUUID());
+		if(null == patient) {
+			throw new DefaultWrappedException("PATIENT_WITH_ID_NOT_FOUND_EXCEPTION", null, new Object[] {attributeThreshold.getPatientUUID()});
+		}
+
+		String thresholdType = null;
+		if(ServiceConstants.Attributes.WEIGHT.equalsIgnoreCase(attributeThreshold.getAttributeName().trim())) {
+			thresholdType = ServiceConstants.AttributeThresholdTypes.CHANGE_OVER_TIME_TEST;
+		} else {
+			thresholdType = ServiceConstants.AttributeThresholdTypes.SIMPLE_HIGH_LOW_INCLUSIVE_TEST;
+		}
+
+		AttributeThresholdMaster attributeThresholdMaster = new AttributeThresholdMaster(null, thresholdType, TimestampUtil.getCurentTimestamp(), attributeThreshold.getThresholdHighValue(), attributeThreshold.getThresholdLowValue(), patient, recordingDeviceAttribute);
+		attributeThresholdDAO.save(attributeThresholdMaster);
+		LOGGER.debug("Saved Attribute Threshold with id:<" + attributeThresholdMaster.getAttributeThresholdId() + ">");
+		return mapperFacade.map(attributeThresholdMaster, AttributeThreshold.class);
 	}
 }

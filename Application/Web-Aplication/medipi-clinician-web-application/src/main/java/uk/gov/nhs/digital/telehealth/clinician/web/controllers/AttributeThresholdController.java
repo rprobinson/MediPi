@@ -26,6 +26,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -55,5 +56,14 @@ public class AttributeThresholdController extends BaseController {
 		final HttpEntity<?> entity = HttpUtil.getEntityWithHeaders(WebConstants.Operations.AttributeThreshold.READ, null);
 		LOGGER.debug("Getting attribute threshold for patientUUID:<" + patientUUID + "> and  attributeName:<" + attributeName + ">");
 		return this.restTemplate.exchange(this.clinicianServiceURL + ServiceURLMappings.AttributeThresholdServiceController.CONTROLLER_MAPPING + ServiceURLMappings.AttributeThresholdServiceController.GET_ATTRIBUTE_THRESHOLD + CommonConstants.Separators.URL_SEPARATOR + patientUUID + CommonConstants.Separators.URL_SEPARATOR + attributeName, HttpMethod.GET, entity, AttributeThreshold.class).getBody();
+	}
+
+	@RequestMapping(value = "/", method = RequestMethod.POST)
+	@ResponseBody
+	public AttributeThreshold saveAttributeThreshold(@ModelAttribute final AttributeThreshold attributeThreshold, final HttpServletRequest request) throws DefaultWrappedException {
+		final HttpEntity<?> entity = HttpUtil.getEntityWithHeaders(WebConstants.Operations.AttributeThreshold.SAVE, attributeThreshold);
+		AttributeThreshold savedAttributeThreshold = this.restTemplate.exchange(this.clinicianServiceURL + ServiceURLMappings.AttributeThresholdServiceController.CONTROLLER_MAPPING + ServiceURLMappings.AttributeThresholdServiceController.SAVE_ATTRIBUTE_THRESHOLD, HttpMethod.POST, entity, AttributeThreshold.class).getBody();
+		LOGGER.info("The saved attribute threshold: " + savedAttributeThreshold);
+		return savedAttributeThreshold;
 	}
 }

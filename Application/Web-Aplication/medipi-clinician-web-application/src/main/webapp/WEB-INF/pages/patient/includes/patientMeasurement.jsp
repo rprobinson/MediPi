@@ -13,7 +13,7 @@
 				<canvas id="${param.canvasId}" width="100%" height="30%" />
 			</div>
 			<div class="col-sm-2">
-				<form name="attributeThreshold" id="attributeThreshold" action="/clinician/patient/patients">
+				<form name="${param.canvasId}-attributeThreshold" id="${param.canvasId}-attributeThreshold" action="/clinician/attributeThreshold/" method="POST" onsubmit="return submitAttributeThreshold('${param.canvasId}')">
 					<input type="hidden" name="patientUUID" value="${param.patientUUID}">
 					<input type="hidden" name="attributeName" value="${param.attributeName}">
 					<table class="measurement-attribute">
@@ -28,20 +28,23 @@
 							<th scope="col">Max</th>
 						</tr>
 						<tr id="${param.canvasId}-threshold">
-							<td id="${param.measurementMinValueId}"></td>
-							<td id="${param.measurementMaxValueId}"></td>
+							<td id="${param.measurementMinValueId}" name="existingThresholdLowValue"></td>
+							<td id="${param.measurementMaxValueId}" name="existingThresholdHighValue"></td>
 						</tr>
-						<tr id="${param.canvasId}-modify-threshold">
-							<td><input id="${param.measurementMinValueId}-value" name="minThreshold" type="text" size="1" maxlength="10"></td>
-							<td><input id="${param.measurementMaxValueId}-value" name="maxThreshold" type="text" size="1" maxlength="10"></td>
+						<tr class="hidden" id="${param.canvasId}-modify-threshold">
+							<td><input id="${param.measurementMinValueId}-value" name="thresholdLowValue" type="text" class="w65" maxlength="10"></td>
+							<td><input id="${param.measurementMaxValueId}-value" name="thresholdHighValue" type="text" class="w65" maxlength="10"></td>
 						</tr>
 					</table>
-					<%-- <div class="span7 pull-left text-right">
+					<div class="span7 pull-left text-right" onclick="showEditableFields('${param.canvasId}')">
 						<input class="btn btn-xs btn-primary" id="${param.canvasId}-btn_modify_thresholds" type="button" value="Modify Thresholds" name="modifyThresholds">
 					</div>
-					<div class="span7 pull-right text-right">
-						<input class="btn btn-xs btn-primary" id="${param.canvasId}-btn_update_thresholds" type="submit" value="Update Thresholds" name="updateThresholds">
-					</div> --%>
+					<div class="span7 pull-left text-right">
+						<input class="btn btn-xs btn-primary hidden" id="${param.canvasId}-btn_update_thresholds" type="submit" value="Submit" name="updateThresholds">
+					</div>
+					<div class="span7 pull-left text-right" onclick="hideEditableFields('${param.canvasId}')">
+						<input class="btn btn-xs btn-primary hidden" id="${param.canvasId}-btn_cancel_update" type="button" value="Cancel" name="cancelUpdate">
+					</div>
 				</form>
 			</div>
 		</div>
@@ -50,18 +53,19 @@
 <script type="text/javascript">
 	var includeObject = {patientUUID : '${param.patientUUID}', attributeName : '${param.attributeName}', canvasId : '${param.canvasId}', accordionTitle : '${param.accordionTitle}', chartHeader : '${param.chartHeader}', recentMeasurementDateId : '${param.recentMeasurementDateId}', recentMeasurementValueId : '${param.recentMeasurementValueId}', measurementMinValueId : '${param.measurementMinValueId}', measurementMaxValueId : '${param.measurementMaxValueId}', suggestedMinValue : '${param.suggestedMinValue}', suggestedMaxValue : '${param.suggestedMaxValue}'};
 	measurement.initChart(includeObject);
-	$("#" + includeObject.canvasId + "-modify-threshold").hide();
-	$("#" + includeObject.canvasId + "-btn_update_thresholds").hide();
 
-	var modifyThresholdButtonId = "#" + includeObject.canvasId + "-btn_modify_thresholds";
-	//console.log(modifyThresholdButtonId);
+	/* $("#" + includeObject.canvasId + "-attributeThreshold").submit(function(e){
 
-	$("body").on("click", modifyThresholdButtonId, function() {
-		$("#" + includeObject.canvasId + "-threshold").hide();
-		$("#" + includeObject.canvasId + "btn_modify_thresholds").hide();
-
-		$("#" + includeObject.canvasId + "-modify-threshold").show();
-		$("#" + includeObject.canvasId + "-btn_update_thresholds").show();
-		//console.log("on click called:end: " + modifyThresholdButtonId);
-	});
+		console.log(e);
+		//console.log("action:" + $("#" + includeObject.canvasId + "-attributeThreshold").attr('action'));
+		$.ajax({
+				type: "POST",
+				url: $("#" + includeObject.canvasId + "-attributeThreshold").attr('action'),
+				data: $("#" + includeObject.canvasId + "-attributeThreshold").serialize(), // serializes the form's elements.
+				success: function(data) {
+					alert(data); // show response from the php script.
+				}
+			});
+			e.preventDefault();
+	}); */
 </script>
