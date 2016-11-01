@@ -145,7 +145,8 @@ non-Linux:
 
 The Device Certificate is also used for 2-Way SSl/TLSMA encryption on the data in transit.
 	
-The certs for MediPi Patient software are published here (and are intended to work out-of-the-box) as java key stores and should allow testing of the MediPiPatient with the MediPi Concentrator. **The certs are for testing purposes and not suitable for use in any other circumstance**
+The certs for MediPi Patient software are published here (and are intended to work out-of-the-box) as java key stores and should allow testing of the MediPiPatient with the MediPi Concentrator. The authentication PIN is 2222
+**The certs are for testing purposes and not suitable for use in any other circumstance**
 
 ##Licence
 
@@ -240,4 +241,4 @@ Uncompress and write to a microSD card.
 [Raspberry Pi Guide to writing an image to microSD](https://www.raspberrypi.org/documentation/installation/installing-images/)
 
 This has been tested using the Raspberry Pi 3 with the Raspberry Pi official 7" touchsceen.
-The image once written to the microSD card will boot to the Raspbian desktop and execute MediPi Patient in full screen. To get back to the desktop just close MediPi in "Settings"
+The image once written to the microSD card will boot to the Raspbian desktop and execute MediPi Patient in full screen. To get back to the desktop just close MediPi in "Settings". The authentication PIN is 2222
