@@ -24,7 +24,7 @@ import org.springframework.context.annotation.ComponentScan;
 
 @SpringBootApplication
 @EntityScan(basePackages = {"uk.gov.nhs.digital.telehealth.clinician.service.entities", "org.medipi.clinical.entities"})
-@ComponentScan(basePackages = {"uk.gov.nhs.digital.telehealth.clinician.service", "com.dev.ops.common.audit", "com.dev.ops.common.dao.generic", "com.dev.ops.common.logging.interceptors", "com.dev.ops.common.thread.local", "com.dev.ops.common.orika.mapper.config", "org.medipi.clinical.threshold", "org.medipi.clinical.dao", "org.medipi.clinical.logging"})
+@ComponentScan(basePackages = {"uk.gov.nhs.digital.telehealth.clinician.service", "com.dev.ops.common", "org.medipi.clinical.threshold", "org.medipi.clinical.dao", "org.medipi.clinical.logging"})
 public class ClinicianServiceInitializer {
 
 	public static void main(final String[] args) {

@@ -36,13 +36,11 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.context.request.WebRequest;
-import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import com.dev.ops.exceptions.impl.DefaultWrappedException;
 
 @ControllerAdvice
-@EnableWebMvc
 public class ServiceExceptionControllerAdvice extends ResponseEntityExceptionHandler {
 
 	@Override
