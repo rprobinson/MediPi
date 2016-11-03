@@ -17,6 +17,8 @@
  */
 package uk.gov.nhs.digital.telehealth.clinician.service.controllers;
 
+import javax.validation.Valid;
+
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,7 +60,7 @@ public class AttributeThresholdServiceController {
 
 	@RequestMapping(value = ServiceURLMappings.AttributeThresholdServiceController.SAVE_ATTRIBUTE_THRESHOLD, method = RequestMethod.POST)
 	@ResponseBody
-	public AttributeThreshold saveAttributeThreshold(@RequestBody final AttributeThreshold attributeThreshold, @RequestHeader(CommonConstants.CONTEXT_INFORMATION_REQUEST_PARAMETER) final String context) throws DefaultWrappedException {
+	public AttributeThreshold saveAttributeThreshold(@RequestBody @Valid final AttributeThreshold attributeThreshold, @RequestHeader(CommonConstants.CONTEXT_INFORMATION_REQUEST_PARAMETER) final String context) throws DefaultWrappedException {
 		ContextThreadLocal.set(ContextInfo.toContextInfo(context));
 		LOGGER.debug("Save attribute thresholds for: " + attributeThreshold);
 		AttributeThreshold savedAttributeThreshold = attributeThresholdService.saveAttributeThreshold(attributeThreshold);

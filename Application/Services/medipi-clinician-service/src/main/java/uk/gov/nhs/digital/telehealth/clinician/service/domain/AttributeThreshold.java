@@ -19,6 +19,11 @@ package uk.gov.nhs.digital.telehealth.clinician.service.domain;
 
 import java.sql.Timestamp;
 
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
+
+import org.hibernate.validator.constraints.Length;
+
 public class AttributeThreshold {
 
 	private Integer attributeThresholdId;
@@ -27,14 +32,23 @@ public class AttributeThreshold {
 
 	private Timestamp effectiveDate;
 
+	@NotNull
+	@Pattern(regexp = "^[+-]?(\\d*\\.)?\\d+$", message = "{Pattern.attributeThreshold.thresholdHighValue}")
+	@Length(min = 1, max = 10, message = "{Length.attributeThreshold.thresholdHighValue}")
 	private String thresholdHighValue;
 
+	@NotNull
+	@Pattern(regexp = "^[+-]?(\\d*\\.)?\\d+$", message = "{Pattern.attributeThreshold.thresholdLowValue}")
+	@Length(min = 1, max = 10, message = "{Length.attributeThreshold.thresholdLowValue}")
 	private String thresholdLowValue;
 
+	@NotNull
+	@Length(min = 36, max = 36, message = "{Length.attributeThreshold.patientUUID}")
 	private String patientUUID;
 
 	private Integer attributeId;
 
+	@NotNull
 	private String attributeName;
 
 	public AttributeThreshold() {

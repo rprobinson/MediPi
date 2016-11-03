@@ -69,9 +69,11 @@ String.prototype.getSplittedUUID = function() {
  */
 String.prototype.isValidNumber = function() {
 	var isValid = false;
-	var number = Number(this);
-	if (!isNaN(number)) {
-		isValid = true;
+	if(!this.isEmpty()) {
+		var number = Number(this);
+		if (!isNaN(number)) {
+			isValid = true;
+		}
 	}
 	return isValid;
 };

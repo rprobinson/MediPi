@@ -38,6 +38,7 @@ public class AttributeThresholdMappingConfigurer implements MappingConfigurer {
 		.byDefault()
 		.field("patient.patientUUID", "patientUUID")
 		.field("recordingDeviceAttribute.attributeId", "attributeId")
+		.field("recordingDeviceAttribute.attributeName", "attributeName")
 
 		//@formatter:on
 		.register();
