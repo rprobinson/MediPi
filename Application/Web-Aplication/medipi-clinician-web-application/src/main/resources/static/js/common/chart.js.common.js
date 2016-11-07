@@ -1,6 +1,10 @@
 Array.prototype.mapValue = function (property) {
     return this.map(function (obj) {
-        return obj[property];
+    	if(obj[property] == null) {
+    		return 0;
+    	} else {
+    		return obj[property];
+    	}
     });
 };
 

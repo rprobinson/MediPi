@@ -1,3 +1,5 @@
+var ALLOWED_NUMBER_OF_DIGITS_AFTER_DECIMAL = 1;
+
 var measurement = {
     getData: function (includeObject) {
         var formattedstudentListArray = [];
@@ -196,8 +198,6 @@ function submitAttributeThreshold(canvasId) {
 	if(existingThresholdLowValue == editedThresholdLowValue && existingThresholdHighValue == editedThresholdHighValue) {
 		//no need to update as there are no changes for threshold values.
 		hideEditableFields(canvasId);
-	} else if(!editedThresholdLowValue.isValidNumber() || !editedThresholdHighValue.isValidNumber()) {
-		showErrorDiv('Please submit valid data for thresholds.');
 	} else {
 		$.ajax({
 			type: $(formId).attr("method"),
@@ -221,6 +221,35 @@ function submitAttributeThreshold(canvasId) {
 	//returning false so that the form submission should not happen as we are handling form submission via ajax.
 	return false;
 }
+
+/**
+ * Function which prevents the end user from entering non decimal values.
+ * Also, allows the decimal values upto one decimal point only.
+ */
+$('.number').keypress(function(event) {
+    var $this = $(this);
+    if ((event.which != 46 || $this.val().indexOf('.') != -1) &&
+       ((event.which < 48 || event.which > 57) &&
+       (event.which != 0 && event.which != 8))) {
+           event.preventDefault();
+    }
+
+    var text = $(this).val();
+    if ((event.which == 46) && (text.indexOf('.') == -1)) {
+        setTimeout(function() {
+            if ($this.val().substring($this.val().indexOf('.')).length > ALLOWED_NUMBER_OF_DIGITS_AFTER_DECIMAL + 1) {
+                $this.val($this.val().substring(0, $this.val().indexOf('.') + ALLOWED_NUMBER_OF_DIGITS_AFTER_DECIMAL + 1));
+            }
+        }, 1);
+    }
+
+    if ((text.indexOf('.') != -1) &&
+        (text.substring(text.indexOf('.')).length > ALLOWED_NUMBER_OF_DIGITS_AFTER_DECIMAL) &&
+        (event.which != 0 && event.which != 8) &&
+        ($(this)[0].selectionStart >= text.length - ALLOWED_NUMBER_OF_DIGITS_AFTER_DECIMAL)) {
+            event.preventDefault();
+    }
+});
 /*******************************************************************************
  * END: Functions related to editable threshold values.
  ******************************************************************************/

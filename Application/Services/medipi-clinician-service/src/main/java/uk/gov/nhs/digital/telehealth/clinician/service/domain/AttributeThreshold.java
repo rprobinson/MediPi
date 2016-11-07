@@ -33,12 +33,12 @@ public class AttributeThreshold {
 	private Timestamp effectiveDate;
 
 	@NotNull
-	@Pattern(regexp = "^[+-]?(\\d*\\.)?\\d+$", message = "{Pattern.attributeThreshold.thresholdHighValue}")
+	@Pattern(regexp = "^[+-]?\\d+(\\.\\d{1})?", message = "{Pattern.attributeThreshold.thresholdHighValue}")
 	@Length(min = 1, max = 10, message = "{Length.attributeThreshold.thresholdHighValue}")
 	private String thresholdHighValue;
 
 	@NotNull
-	@Pattern(regexp = "^[+-]?(\\d*\\.)?\\d+$", message = "{Pattern.attributeThreshold.thresholdLowValue}")
+	@Pattern(regexp = "^[+-]?\\d+(\\.\\d{1})?", message = "{Pattern.attributeThreshold.thresholdLowValue}")
 	@Length(min = 1, max = 10, message = "{Length.attributeThreshold.thresholdLowValue}")
 	private String thresholdLowValue;
 

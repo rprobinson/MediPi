@@ -32,8 +32,8 @@
 							<td id="${param.measurementMaxValueId}" name="existingThresholdHighValue"></td>
 						</tr>
 						<tr class="hidden" id="${param.canvasId}-modify-threshold">
-							<td><input id="${param.measurementMinValueId}-value" name="thresholdLowValue" type="text" class="w65" maxlength="10"></td>
-							<td><input id="${param.measurementMaxValueId}-value" name="thresholdHighValue" type="text" class="w65" maxlength="10"></td>
+							<td><input id="${param.measurementMinValueId}-value" name="thresholdLowValue" type="text" class="number w65" maxlength="10"></td>
+							<td><input id="${param.measurementMaxValueId}-value" name="thresholdHighValue" type="text" class="number w65" maxlength="10"></td>
 						</tr>
 					</table>
 					<div class="span7 pull-left text-right" onclick="showEditableFields('${param.canvasId}')">

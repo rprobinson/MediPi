@@ -1,6 +1,7 @@
 <title>MediPi : Patient</title>
 <jsp:include page="/WEB-INF/pages/headers/header.jsp" />
 <script type="text/javascript" charset="utf8" src="/js/common/common.ui.util.js"></script>
+<script type="text/javascript" charset="utf8" src="/js/patient/view.patient.js"></script>
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <%@taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt"%>
 	<div class="accordion-body form-horizontal" style="display: block">
