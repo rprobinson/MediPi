@@ -45,7 +45,7 @@ public class LoggingInterceptor {
 
 	private static final Logger LOGGER = LogManager.getLogger(LoggingInterceptor.class);
 
-	@Before("execution(* uk.gov.nhs.digital.ers.service..controllers..*.*(..))")
+	@Before("execution(* uk.gov.nhs.digital.telehealth.clinician.service..controllers..*.*(..))")
 	public void addContextInfoToThreadLocal(final JoinPoint joinPoint) {
 		ContextInfo contextInfo = getContextInfoFromMethod(joinPoint);
 		ContextThreadLocal.set(contextInfo);
