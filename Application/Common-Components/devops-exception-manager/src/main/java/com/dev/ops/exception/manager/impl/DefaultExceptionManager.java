@@ -24,6 +24,7 @@ import java.util.ResourceBundle;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.apache.log4j.Priority;
+import org.apache.log4j.helpers.LogLog;
 
 import com.dev.ops.common.domain.ContextInfo;
 import com.dev.ops.exception.manager.ExceptionManager;
@@ -136,7 +137,7 @@ public final class DefaultExceptionManager implements ExceptionManager {
 					exceptionDescription.append(messageResources.getString(exceptionId));
 				}
 			} catch(final MissingResourceException e) {
-				LOGGER.debug("Unable to find the resource with " + exceptionId);
+				LogLog.debug("Get Message Failed", e);
 				return exceptionId;
 			}
 		} else {
