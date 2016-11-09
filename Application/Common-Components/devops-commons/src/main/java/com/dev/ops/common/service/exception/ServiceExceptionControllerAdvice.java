@@ -23,6 +23,8 @@ import java.util.List;
 import javax.persistence.PersistenceException;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -42,6 +44,8 @@ import com.dev.ops.exceptions.impl.DefaultWrappedException;
 
 @ControllerAdvice
 public class ServiceExceptionControllerAdvice extends ResponseEntityExceptionHandler {
+
+	private static final Logger LOGGER = LogManager.getLogger(ServiceExceptionControllerAdvice.class);
 
 	@Override
 	protected ResponseEntity<Object> handleMethodArgumentNotValid(final MethodArgumentNotValidException ex, final HttpHeaders headers, final HttpStatus status, final WebRequest request) {
@@ -79,6 +83,7 @@ public class ServiceExceptionControllerAdvice extends ResponseEntityExceptionHan
 			String serviceName = message.split("/")[4];
 			return StringUtils.isNotEmpty(serviceName) ? serviceName.toUpperCase() + "_SERVICE_CONNECTION_REFUSED" : message;
 		} catch(Exception e) {
+			LOGGER.error("Exception while fetching the service name", e);
 			return message;
 		}
 	}

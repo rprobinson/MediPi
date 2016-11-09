@@ -5,15 +5,15 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- * 
+ *
  */
 package com.dev.ops.exceptionmanager.test;
 
@@ -36,15 +36,6 @@ public class DefaultWrappedExceptionTest {
 		exceptionManager = DefaultExceptionManager.getExceptionManager();
 	}
 
-	/**
-	 * Test default exception without exception id.
-	 * @throws DefaultWrappedException
-	 */
-	@Test(expected = NullPointerException.class)
-	public void testDefaultExceptionWithoutExceptionID() throws DefaultWrappedException {
-		throw new DefaultWrappedException(null, new Throwable());
-	}
-
 	@Test
 	public void testDefaultWrappedException() {
 		DefaultWrappedException exception = null;
@@ -52,7 +43,10 @@ public class DefaultWrappedExceptionTest {
 			Class.forName("DummyUnknowClass");
 		} catch(final Exception e) {
 			exception = new DefaultWrappedException(LoggingConstants.ErrorMessageKeys.DEFAULT_MESSAGE_WITH_PARAMETERS, e, new String[] {"param-1"});
-			exceptionManager.logErrorEvent(exception, new ContextInfo("Sample", "Sample"));
+			ContextInfo contextInfo = new ContextInfo();
+			contextInfo.setRequestId("requestId");
+			contextInfo.setSessionId("sessionId");
+			exceptionManager.logErrorEvent(exception, contextInfo);
 		} finally {
 			Assert.assertNotNull(exception);
 			Assert.assertEquals(LoggingConstants.ErrorMessageValues.DEFAULT_MESSAGE_WITH_PARAMETERS + "param-1", exception.getMessage());

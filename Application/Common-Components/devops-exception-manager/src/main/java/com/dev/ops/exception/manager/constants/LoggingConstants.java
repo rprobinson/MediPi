@@ -41,11 +41,11 @@ public interface LoggingConstants {
 	}
 
 	interface ErrorMessageValues {
-		String DEFAULT_MESSAGE = ErrorMessageKeys.DEFAULT_MESSAGE + LoggingConstants.WhitespaceLiterals.BLANK_SPACE + "Exception occurred";
-		String DEFAULT_MESSAGE_WITH_PARAMETERS = ErrorMessageKeys.DEFAULT_MESSAGE_WITH_PARAMETERS + LoggingConstants.WhitespaceLiterals.BLANK_SPACE + "Exception occurred with parameter1=";
+		String DEFAULT_MESSAGE = ErrorMessageKeys.DEFAULT_MESSAGE + LoggingConstants.WhitespaceLiterals.BLANK_SPACE + LoggingConstants.WhitespaceLiterals.HYPHEN + LoggingConstants.WhitespaceLiterals.BLANK_SPACE + "Exception occurred";
+		String DEFAULT_MESSAGE_WITH_PARAMETERS = ErrorMessageKeys.DEFAULT_MESSAGE_WITH_PARAMETERS + LoggingConstants.WhitespaceLiterals.BLANK_SPACE + LoggingConstants.WhitespaceLiterals.HYPHEN + LoggingConstants.WhitespaceLiterals.BLANK_SPACE + "Exception occurred with parameter1=";
 	}
 
 	public enum LoggingPoint {
-		START, END
+		START, END, ERROR
 	}
 }
