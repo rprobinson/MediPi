@@ -81,10 +81,10 @@ In no event and under no legal theory, whether in tort (including negligence), c
 
 7. Execute MediPi Clinician service using:
 
-        <pre><code>For Windows: java -jar /home/{user}/MediPiClinical/medipiClinicianService.jar --spring.config.location=/home/{user}/MediPiClinical/services.properties
-        For Linux: java -jar C:/MediPiClinical/medipiClinicianService.jar --spring.config.location=file:/C:/MediPiClinical/services.properties</code></pre>
+        For Windows: java -jar /home/{user}/MediPiClinical/medipiClinicianService.jar --spring.config.location=/home/{user}/MediPiClinical/services.properties
+        For Linux: java -jar C:/MediPiClinical/medipiClinicianService.jar --spring.config.location=file:/C:/MediPiClinical/services.properties
 
 8. Execute MediPi Clinician web application using:
 
-        <pre><code>For Windows: java -jar /home/{user}/MediPiClinical/medipiClinicianWebApp.war --spring.config.location=/home/{user}/MediPiClinical/services.properties
-        For Linux: java -jar C:/MediPiClinical/medipiClinicianWebApp.war --spring.config.location=file:/C:/MediPiClinical/services.properties</code></pre>
+        For Windows: java -jar /home/{user}/MediPiClinical/medipiClinicianWebApp.war --spring.config.location=/home/{user}/MediPiClinical/services.properties
+        For Linux: java -jar C:/MediPiClinical/medipiClinicianWebApp.war --spring.config.location=file:/C:/MediPiClinical/services.properties
