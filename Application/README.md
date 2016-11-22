@@ -28,7 +28,7 @@ Functionality:
 ## Postgres DB
 The Clinician service uses an instance of Postgres (v9.4.8). The data in this database is a subset of the data from Concentrator database. A scheduler will run in the background which will synchronize the data between these two database instances. 
 
-For testing, you can create a new postgres database with name 'Clinical' and execute the script `MediPi/Application/Database-Scripts/MediPi-Clinical_DDL_DML.sql`
+For testing, you can create a new postgres database with name 'Clinical' and execute the script `{medipi-repo-directory}/MediPi/Application/Database-Scripts/MediPi-Clinical_DDL_DML.sql`
 
 ![Database Structure Document](https://github.com/rprobinson/MediPi/files/487667/Database_view.pdf)
 
