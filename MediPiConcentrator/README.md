@@ -19,6 +19,14 @@ Functionality:
 * Exposes Clinical Application side APIs
 	* Request Patient Data: Allows Clinical systems to request patient data by patient groups and date
 	* Request Patient Certificate: Allows Clinical systems to request PEMs for patients in order to encrypt messages for them
+	
+Instructions to update configuration files
+
+Copy config directory to an external location e.g. C:\MediPiConcentrator\ (for windows machine) or /home/{user}/MediPiConcentrator (Linux based)
+Open command prompt which is capable of executing .sh file. (Git bash if you are on windows. Terminal on linux installation is capable of executing sh files)
+Go to config directory location on command prompt e.g. C:\MediPiConcentrator\config or /home/{user}/MediPiConcentrator/config
+Execute setup-all-configurations.sh "{config-directory-location}" as './set-all-configurations.sh "C:/config"' or './set-all-configurations.sh "/home/{user}/config"'. This will replace all the relative paths in properties and guides files of the configuration.
+The user name and password will need to be udated for the postgres DB.
 
 ## Postgres DB
 The Concentrator uses an instance of Postgres (v9.4.8). The data is stored in an extensible manner, meaning that individual datapoints are stored in the recording_device_data table with their timestamp against their attributes in recording_device_attributes table. Many devices will record more than one datatype per reading (finger oximeters typically record heartrate and SpO2 levels) and this would result in 2 records on the recording_device_data table against 2 separate attributes on the recording_device_attribute table. The 2 data records are linkable via their timestamps. The design of the database in this manner means that any measurement device with any number of datatypes which it is capable of recording can be accomodated without any structural DB changes.
@@ -29,7 +37,7 @@ The published SQL dump of the database gives the structure and some data example
 
 
 ## Certificates and PKI
-The certs used for the concentrator are published here as java key stores and should allow testing of the concentrator and patient software. The certs are for testing purposes and not suitable for use in any other circumstance.
+The certs for the concentrator are published here (and are intended to work out-of-the-box) as java key stores and should allow testing of the concentrator and patient software. **The certs are for testing purposes and not suitable for use in any other circumstance.**
 
 ####Instructions to update configuration files
 1. Copy config directory to an external location e.g. C:\MediPiConcentrator\ (for windows machine) or /home/{user}/MediPiConcentrator (Linux based)
@@ -69,12 +77,14 @@ In no event and under no legal theory, whether in tort (including negligence), c
 
 3. Copy the `{medipi-repo-directory}/MediPi/MediPiConcentrator/MediPiConcentrator/target/MediPiConcentrator.jar` file to /home/{user}/MediPiConcentrator/ directory
 
-4. Install postgres database - the version tested is v9.4.8
+4. Upgrade the Java Cryptography Extention. Download from http://www.oracle.com/technetwork/java/javase/downloads/jce8-download-2133166.html and follow the README.txt instructions included in the package. The certs included for demonstration purposes require greater strength binaries in the JRE than are present by default.
 
-5. Create a database 
+5. Install postgres database - the version tested is v9.4.8
 
-6. Import pg_dump file
+6. Create a database 
 
-7. Execute MediPiConcentrator using:
+7. Import pg_dump file
+
+8. Execute MediPiConcentrator using:
         
         java -jar /home/{user}/MediPi/MediPiConcentrator.jar /home/{user}/MediPiConcentrator/config/MediPiConcentrator.properties --spring.config.location=/home/{user}/MediPiConcentrator/config/application.properties
