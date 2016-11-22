@@ -67,11 +67,11 @@ In no event and under no legal theory, whether in tort (including negligence), c
 
 3. Copy the `{medipi-repo-directory}/MediPi/Application/configurations/services.properties` file to `C:\MediPiClinical` (Windows) or `/home/{user}/MediPiClinical/` (Linux) directory and update the database related properties
 
-    `#-----------Database configurations-----------
+    <pre><code>#-----------Database configurations-----------
     medipi.clinician.service.jdbc.driver=org.postgresql.Driver
     medipi.clinician.service.jdbc.url=jdbc:postgresql://localhost:5432/Clinical
     medipi.clinician.service.jdbc.username=postgres
-    medipi.clinician.service.jdbc.password=Password1`
+    medipi.clinician.service.jdbc.password=Password1</code></pre>
 
 4. Install postgres database - the version tested is v9.4.8
 
