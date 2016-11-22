@@ -66,6 +66,7 @@ In no event and under no legal theory, whether in tort (including negligence), c
     * `{medipi-repo-directory}/MediPi/Application/Web-Aplication/medipi-clinician-web-application/target/medipiClinicianWebApp.war` file to `C:\MediPiClinical` (Windows) or `/home/{user}/MediPiClinical/` (Linux) directory
 
 3. Copy the `{medipi-repo-directory}/MediPi/Application/configurations/services.properties` file to `C:\MediPiClinical` (Windows) or `/home/{user}/MediPiClinical/` (Linux) directory and update the database related properties
+    
     `#-----------Database configurations-----------
     medipi.clinician.service.jdbc.driver=org.postgresql.Driver
     medipi.clinician.service.jdbc.url=jdbc:postgresql://localhost:5432/Clinical
