@@ -68,9 +68,13 @@ In no event and under no legal theory, whether in tort (including negligence), c
 3. Copy the `{medipi-repo-directory}/MediPi/Application/configurations/services.properties` file to `C:\MediPiClinical` (Windows) or `/home/{user}/MediPiClinical/` (Linux) directory and update the database related properties
     
     `#-----------Database configurations-----------
+    
     medipi.clinician.service.jdbc.driver=org.postgresql.Driver
+    
     medipi.clinician.service.jdbc.url=jdbc:postgresql://localhost:5432/Clinical
+    
     medipi.clinician.service.jdbc.username=postgres
+    
     medipi.clinician.service.jdbc.password=Password1`
 
 4. Install postgres database - the version tested is v9.4.8
@@ -80,9 +84,13 @@ In no event and under no legal theory, whether in tort (including negligence), c
 6. Execute sql script `{medipi-repo-directory}/MediPi/Application/Database-Scripts/MediPi-Clinical_DDL_DML.sql` on the Clinical database
 
 7. Execute MediPi Clinician service using:
+
         Windows: `java -jar /home/{user}/MediPiClinical/medipiClinicianService.jar --spring.config.location=/home/{user}/MediPiClinical/services.properties`
+        
         Linux: `java -jar C:/MediPiClinical/medipiClinicianService.jar --spring.config.location=file:/C:/MediPiClinical/services.properties`
 
 8. Execute MediPi Clinician web application using:
+
         Windows: `java -jar /home/{user}/MediPiClinical/medipiClinicianWebApp.war --spring.config.location=/home/{user}/MediPiClinical/services.properties`
+        
         Linux: `java -jar C:/MediPiClinical/medipiClinicianWebApp.war --spring.config.location=file:/C:/MediPiClinical/services.properties`
