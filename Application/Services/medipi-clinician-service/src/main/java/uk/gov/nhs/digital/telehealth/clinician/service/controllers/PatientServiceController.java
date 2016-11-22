@@ -29,7 +29,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import uk.gov.nhs.digital.telehealth.clinician.service.domain.DataValue;
 import uk.gov.nhs.digital.telehealth.clinician.service.domain.Measurement;
 import uk.gov.nhs.digital.telehealth.clinician.service.domain.Patient;
 import uk.gov.nhs.digital.telehealth.clinician.service.services.PatientService;
@@ -67,13 +66,13 @@ public class PatientServiceController {
 		return patients;
 	}
 
-	@RequestMapping(value = ServiceURLMappings.PatientServiceController.GET_PATIENT_RECENT_MEASURMENTS + "{patientUUID}", method = RequestMethod.GET)
+	/*@RequestMapping(value = ServiceURLMappings.PatientServiceController.GET_PATIENT_RECENT_MEASURMENTS + "{patientUUID}", method = RequestMethod.GET)
 	@ResponseBody
 	public List<DataValue> getPatientRecentReadings(@PathVariable final String patientUUID, @RequestHeader(CommonConstants.CONTEXT_INFORMATION_REQUEST_PARAMETER) final String context) throws DefaultWrappedException {
 		ContextThreadLocal.set(ContextInfo.toContextInfo(context));
 		final List<DataValue> recentReadings = this.patientService.getPatientsRecentMeasurements(patientUUID);
 		return recentReadings;
-	}
+	}*/
 
 	@RequestMapping(value = ServiceURLMappings.PatientServiceController.GET_PATIENT_MEASURMENTS + "{patientUUID}" + "/{attributeName}", method = RequestMethod.GET)
 	@ResponseBody
