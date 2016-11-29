@@ -40,7 +40,7 @@ public class RecordingDeviceDataDAOImpl extends GenericDAOImpl<RecordingDeviceDa
 
 	static {
 		StringBuilder query = new StringBuilder();
-		query.append("SELECT rdd.data_id as \"data_id\", rdt.type as \"reading_type\", rdt.subtype as \"device\", rda.attribute_name as \"attribute_name\", rda.attribute_id as \"attribute_id\",");
+		query.append("SELECT rdd.data_id as \"data_id\", rdt.type as \"reading_type\", rdt.display_name as \"device\", rda.attribute_name as \"attribute_name\", rda.attribute_id as \"attribute_id\",");
 		query.append(" rdd.data_value as \"data\", rdt.type_id as \"type_id\", rdd.data_value_time as \"data_time\", rdd.downloaded_time as \"submitted_time\",");
 		query.append(" rdd.schedule_effective_time as \"schedule_effective_time\", rdd.schedule_expiry_time as \"schedule_expiry_time\", rdd.alert_status as \"alert_status\"");
 		query.append(" FROM recording_device_data rdd");
