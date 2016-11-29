@@ -45,7 +45,7 @@ public class RecordingDeviceMaster {
 	@Column(name = "type")
 	private String type;
 
-	@Column(name = "subtype")
+	@Column(name = "display_name")
 	private String subtype;
 
 	@OneToMany(mappedBy = "recordingDevice", cascade = {CascadeType.ALL})
