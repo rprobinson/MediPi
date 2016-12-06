@@ -77,6 +77,11 @@ var measurement = {
             data: chartData,
             options: {
                 responsive: true,
+            	elements: {
+                    point:{
+                        radius: 0
+                    }
+                },
                 scales: {
                 	xAxes: [{
                 		type: "time",
