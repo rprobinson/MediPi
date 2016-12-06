@@ -24,14 +24,16 @@ var measurement = {
                     fill: false,
                     borderColor: 'rgba(0,176,80,1)',
                     backgroundColor: 'rgba(0,176,80,1)',
-                    data: jsonData[1].mapValue('value')
+                    data: jsonData[1].mapValue('value'),
+                    lineTension: 0
                 },
                 {
                     label: includeObject.chartHeaders[0],
                     borderColor: 'rgba(53,94,142,1)',
                     backgroundColor: 'rgba(53,94,142,1)',
                     fill: false,
-                    data: jsonData[0].mapValue('value')
+                    data: jsonData[0].mapValue('value'),
+                    lineTension: 0
                 }
             ]
         };
