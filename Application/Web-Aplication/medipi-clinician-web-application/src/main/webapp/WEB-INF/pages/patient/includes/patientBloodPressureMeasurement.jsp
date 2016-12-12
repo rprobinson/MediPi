@@ -34,6 +34,6 @@
 	</div>
 </div>
 <script type="text/javascript">
-	var includeObject = {patientUUID : '${param.patientUUID}', attributeNames : ${param.attributeNames}, canvasId : '${param.canvasId}', accordionTitle : '${param.accordionTitle}', chartHeaders : ${param.chartHeaders}, recentMeasurementDateId : '${param.recentMeasurementDateId}', recentMeasurementValueId : '${param.recentMeasurementValueId}', measurementMinValueId : '${param.measurementMinValueId}', measurementMaxValueId : '${param.measurementMaxValueId}', suggestedMinValue : '${param.suggestedMinValue}', suggestedMaxValue : '${param.suggestedMaxValue}'};
+	var includeObject = {patientUUID : '${param.patientUUID}', attributeNames : '${param.attributeNames}', canvasId : '${param.canvasId}', accordionTitle : '${param.accordionTitle}', chartHeaders : '${param.chartHeaders}', recentMeasurementDateId : '${param.recentMeasurementDateId}', recentMeasurementValueId : '${param.recentMeasurementValueId}', measurementMinValueId : '${param.measurementMinValueId}', measurementMaxValueId : '${param.measurementMaxValueId}', suggestedMinValue : '${param.suggestedMinValue}', suggestedMaxValue : '${param.suggestedMaxValue}'};
 	measurement.initChart(includeObject);
 </script>
