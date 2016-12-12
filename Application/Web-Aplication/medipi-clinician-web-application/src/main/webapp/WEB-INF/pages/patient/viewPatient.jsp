@@ -89,4 +89,13 @@
 	<jsp:param name="suggestedMaxValue" value="180"/>
 </jsp:include>
 
+<!-- Questionnaire -->
+<jsp:include page="/WEB-INF/pages/patient/includes/patientQuestionnaire.jsp">
+	<jsp:param name="patientUUID" value="${patient.patientUUID}"/>
+	<jsp:param name="attributeName" value="outcome"/>
+	<jsp:param name="accordionTitle" value="Questionnaire"/>
+	<jsp:param name="chartHeader" value="Questionnaire"/>
+	<jsp:param name="canvasId" value="questionnaireCanvas"/>
+</jsp:include>
+
 <jsp:include page="/WEB-INF/pages/footers/footer.jsp" />
