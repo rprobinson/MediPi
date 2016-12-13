@@ -50,6 +50,7 @@ var measurement = {
                 scales: {
                 	xAxes: [{
                 		type: "time",
+                		barPercentage: 0.05,
                 		time: {
                 			format: timeFormat,
                 			tooltipFormat: 'll HH:mm'
