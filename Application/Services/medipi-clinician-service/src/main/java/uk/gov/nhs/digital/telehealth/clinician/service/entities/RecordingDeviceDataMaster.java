@@ -46,8 +46,14 @@ import javax.persistence.Table;
 			+ " JOIN recordingDeviceDataMaster.patient patient"
           	+ " JOIN recordingDeviceDataMaster.recordingDeviceAttribute recordingDeviceAttribute"
            	+ " WHERE patient.patientUUID = :patientUUID"
-           	+ " AND recordingDeviceAttribute.attributeName = :attributeName"
-           	+ " ORDER BY recordingDeviceDataMaster.dataValueTime ASC")
+           	+ " AND recordingDeviceAttribute.attributeId = :attributeId"
+           	+ " ORDER BY recordingDeviceDataMaster.dataValueTime ASC"),
+
+	@NamedQuery(name = "RecordingDeviceDataMaster.fetchPatientAttributesHavingData", query = "SELECT distinct recordingDeviceDataMaster.recordingDeviceAttribute FROM RecordingDeviceDataMaster recordingDeviceDataMaster"
+			+ " JOIN recordingDeviceDataMaster.patient patient"
+          	+ " JOIN recordingDeviceDataMaster.recordingDeviceAttribute recordingDeviceAttribute"
+           	+ " WHERE patient.patientUUID = :patientUUID"
+           	+ " AND recordingDeviceAttribute.attributeName in (:attributeNames)")
 })
 //@formatter:on
 public class RecordingDeviceDataMaster {

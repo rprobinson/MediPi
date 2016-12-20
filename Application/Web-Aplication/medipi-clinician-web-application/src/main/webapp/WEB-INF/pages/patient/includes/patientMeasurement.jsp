@@ -53,19 +53,4 @@
 <script type="text/javascript">
 	var includeObject = {patientUUID : '${param.patientUUID}', attributeName : '${param.attributeName}', canvasId : '${param.canvasId}', accordionTitle : '${param.accordionTitle}', chartHeader : '${param.chartHeader}', recentMeasurementDateId : '${param.recentMeasurementDateId}', recentMeasurementValueId : '${param.recentMeasurementValueId}', measurementMinValueId : '${param.measurementMinValueId}', measurementMaxValueId : '${param.measurementMaxValueId}', suggestedMinValue : '${param.suggestedMinValue}', suggestedMaxValue : '${param.suggestedMaxValue}'};
 	measurement.initChart(includeObject);
-
-	/* $("#" + includeObject.canvasId + "-attributeThreshold").submit(function(e){
-
-		console.log(e);
-		//console.log("action:" + $("#" + includeObject.canvasId + "-attributeThreshold").attr('action'));
-		$.ajax({
-				type: "POST",
-				url: $("#" + includeObject.canvasId + "-attributeThreshold").attr('action'),
-				data: $("#" + includeObject.canvasId + "-attributeThreshold").serialize(), // serializes the form's elements.
-				success: function(data) {
-					alert(data); // show response from the php script.
-				}
-			});
-			e.preventDefault();
-	}); */
 </script>

@@ -4,6 +4,7 @@
 <script type="text/javascript" charset="utf8" src="/js/patient/view.patient.js"></script>
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <%@taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 	<div class="accordion-body form-horizontal" style="display: block">
 		<ul class="summary-three-col">
 			<li><label class="label-display" for="name">Name:</label> <label class="label-text" for="name" id="name">${patient.firstName}&nbsp;${patient.lastName}</label></li>
@@ -14,7 +15,7 @@
 		</ul>
 	</div>
 
-<!-- Body temperature accordion -->
+<%-- <!-- Body temperature accordion -->
 <jsp:include page="/WEB-INF/pages/patient/includes/patientMeasurement.jsp">
 	<jsp:param name="patientUUID" value="${patient.patientUUID}"/>
 	<jsp:param name="attributeName" value="temperature"/>
@@ -87,15 +88,16 @@
 	<jsp:param name="measurementMaxValueId" value="bloodPressureMeasurementMaxValueId"/>
 	<jsp:param name="suggestedMinValue" value="80"/>
 	<jsp:param name="suggestedMaxValue" value="180"/>
-</jsp:include>
+</jsp:include> --%>
 
-<!-- Questionnaire -->
-<jsp:include page="/WEB-INF/pages/patient/includes/patientQuestionnaire.jsp">
-	<jsp:param name="patientUUID" value="${patient.patientUUID}"/>
-	<jsp:param name="attributeName" value="outcome"/>
-	<jsp:param name="accordionTitle" value="Questionnaire"/>
-	<jsp:param name="chartHeader" value="Questionnaire"/>
-	<jsp:param name="canvasId" value="questionnaireCanvas"/>
-</jsp:include>
+<c:forEach items="${questionnnaireDeviceAttributes}" var="questionnnaireDeviceAttribute">
+	<jsp:include page="/WEB-INF/pages/patient/includes/patientQuestionnaire.jsp">
+		<jsp:param name="patientUUID" value="${patient.patientUUID}"/>
+		<jsp:param name="attributeId" value="${questionnnaireDeviceAttribute.attributeId}"/>
+		<jsp:param name="attributeName" value="${questionnnaireDeviceAttribute.attributeName}"/>
+		<jsp:param name="recordingDeviceType" value="${questionnnaireDeviceAttribute.recordingDevice.type}"/>
+		<jsp:param name="displayName" value="${questionnnaireDeviceAttribute.recordingDevice.displayName}"/>
+	</jsp:include>
+</c:forEach>
 
 <jsp:include page="/WEB-INF/pages/footers/footer.jsp" />

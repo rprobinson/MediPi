@@ -28,6 +28,7 @@ public interface ServiceURLMappings {
 		String GET_PATIENT = CommonConstants.Separators.URL_SEPARATOR;
 		String GET_PATIENT_RECENT_MEASURMENTS = "/recentMeasurements/";
 		String GET_PATIENT_MEASURMENTS = "/patientMeasurements/";
+		String GET_PATIENT_ATTRIBUTES = "/patientAttributes/";
 	}
 
 	interface AttributeThresholdServiceController {

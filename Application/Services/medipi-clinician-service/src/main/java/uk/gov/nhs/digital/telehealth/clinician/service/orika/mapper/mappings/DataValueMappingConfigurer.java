@@ -91,12 +91,12 @@ public class DataValueMappingConfigurer implements MappingConfigurer {
 						RecordingDeviceAttributeMaster deviceAttribute = deviceData.getRecordingDeviceAttribute();
 						RecordingDeviceMaster recordingDevice = deviceAttribute.getRecordingDevice();
 
-						DataValue dataValue = new DataValue(recordingDevice.getType(), recordingDevice.getSubtype());
+						DataValue dataValue = new DataValue(recordingDevice.getType(), recordingDevice.getDisplayName());
 						if(!dataValues.contains(dataValue)) {
 							dataValue.setDataTime(deviceData.getDataValueTime());
 							dataValue.setSubmittedTime(deviceData.getSubmittedTime());
 							dataValue.setReadingType(recordingDevice.getType());
-							dataValue.setDevice(recordingDevice.getSubtype());
+							dataValue.setDevice(recordingDevice.getDisplayName());
 							dataValues.add(dataValue);
 
 						} else {

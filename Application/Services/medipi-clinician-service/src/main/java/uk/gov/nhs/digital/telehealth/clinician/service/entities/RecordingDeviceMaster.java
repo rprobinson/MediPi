@@ -46,7 +46,7 @@ public class RecordingDeviceMaster {
 	private String type;
 
 	@Column(name = "display_name")
-	private String subtype;
+	private String displayName;
 
 	@OneToMany(mappedBy = "recordingDevice", cascade = {CascadeType.ALL})
 	private List<RecordingDeviceAttributeMaster> recordingDeviceAttributes;
@@ -55,11 +55,11 @@ public class RecordingDeviceMaster {
 		recordingDeviceAttributes = new ArrayList<RecordingDeviceAttributeMaster>();
 	}
 
-	public RecordingDeviceMaster(final Integer typeId, final String type, final String subtype) {
+	public RecordingDeviceMaster(final Integer typeId, final String type, final String displayName) {
 		this();
 		this.typeId = typeId;
 		this.type = type;
-		this.subtype = subtype;
+		this.displayName = displayName;
 	}
 
 	public Integer getTypeId() {
@@ -78,12 +78,12 @@ public class RecordingDeviceMaster {
 		this.type = type;
 	}
 
-	public String getSubtype() {
-		return subtype;
+	public String getDisplayName() {
+		return displayName;
 	}
 
-	public void setSubtype(final String subtype) {
-		this.subtype = subtype;
+	public void setDisplayName(final String displayName) {
+		this.displayName = displayName;
 	}
 
 	public List<RecordingDeviceAttributeMaster> getRecordingDeviceAttributes() {
@@ -126,6 +126,6 @@ public class RecordingDeviceMaster {
 
 	@Override
 	public String toString() {
-		return "RecordingDeviceMaster [typeId=" + typeId + ", type=" + type + ", subtype=" + subtype + "]";
+		return "RecordingDeviceMaster [typeId=" + typeId + ", type=" + type + ", subtype=" + displayName + "]";
 	}
 }

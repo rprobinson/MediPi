@@ -26,6 +26,7 @@ import org.apache.log4j.Logger;
 import org.springframework.stereotype.Service;
 
 import uk.gov.nhs.digital.telehealth.clinician.service.entities.DataValueEntity;
+import uk.gov.nhs.digital.telehealth.clinician.service.entities.RecordingDeviceAttributeMaster;
 import uk.gov.nhs.digital.telehealth.clinician.service.entities.RecordingDeviceDataMaster;
 
 import com.dev.ops.common.dao.generic.GenericDAOImpl;
@@ -75,10 +76,19 @@ public class RecordingDeviceDataDAOImpl extends GenericDAOImpl<RecordingDeviceDa
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public List<RecordingDeviceDataMaster> fetchPatientMeasurementsByAttribute(final String patientUUID, final String attributeName) {
+	public List<RecordingDeviceDataMaster> fetchPatientMeasurementsByAttribute(final String patientUUID, final Integer attributeId) {
 		final Query query = this.getEntityManager().createNamedQuery("RecordingDeviceDataMaster.fetchPatientMeasurementsByAttributeName", RecordingDeviceDataMaster.class);
 		query.setParameter("patientUUID", patientUUID);
-		query.setParameter("attributeName", attributeName);
+		query.setParameter("attributeId", attributeId);
+		return query.getResultList();
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public List<RecordingDeviceAttributeMaster> fetchPatientAttributesHavingData(final String patientUUID, final List<String> attributeNames) {
+		final Query query = this.getEntityManager().createNamedQuery("RecordingDeviceDataMaster.fetchPatientAttributesHavingData", RecordingDeviceAttributeMaster.class);
+		query.setParameter("patientUUID", patientUUID);
+		query.setParameter("attributeNames", attributeNames);
 		return query.getResultList();
 	}
 }

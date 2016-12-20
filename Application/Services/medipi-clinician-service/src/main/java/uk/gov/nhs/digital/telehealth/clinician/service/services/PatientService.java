@@ -38,10 +38,12 @@ import uk.gov.nhs.digital.telehealth.clinician.service.dao.impl.RecordingDeviceD
 import uk.gov.nhs.digital.telehealth.clinician.service.domain.DataValue;
 import uk.gov.nhs.digital.telehealth.clinician.service.domain.Measurement;
 import uk.gov.nhs.digital.telehealth.clinician.service.domain.Patient;
+import uk.gov.nhs.digital.telehealth.clinician.service.domain.RecordingDeviceAttribute;
 import uk.gov.nhs.digital.telehealth.clinician.service.domain.enums.PatientStatus;
 import uk.gov.nhs.digital.telehealth.clinician.service.entities.AttributeThresholdMaster;
 import uk.gov.nhs.digital.telehealth.clinician.service.entities.DataValueEntity;
 import uk.gov.nhs.digital.telehealth.clinician.service.entities.PatientMaster;
+import uk.gov.nhs.digital.telehealth.clinician.service.entities.RecordingDeviceAttributeMaster;
 import uk.gov.nhs.digital.telehealth.clinician.service.entities.RecordingDeviceDataMaster;
 
 import com.dev.ops.common.thread.local.ContextThreadLocal;
@@ -156,7 +158,7 @@ public class PatientService {
 		return this.mapperFacade.map(recordingDeviceDataList, (Class<List<DataValue>>) (Class) List.class);
 	}
 
-	public List<Measurement> getPatientMeasurements(final String patientUUID, final String attributeName) throws Exception {
+	public List<Measurement> getPatientMeasurements(final String patientUUID, final Integer attributeId) throws Exception {
 		/*List<AttributeThresholdMaster> attributeThresholdMasterList = attributeThresholdDAO.fetchPatientAttributeThresholds(patientUUID, attributeId);
 		List<AttributeThreshold> attributeThresholds = new ArrayList<AttributeThreshold>();
 		for(AttributeThresholdMaster attributeThresholdMaster : attributeThresholdMasterList) {
@@ -167,7 +169,7 @@ public class PatientService {
 			attributeThresholds.add(attributeThreshold);
 		}*/
 
-		List<RecordingDeviceDataMaster> patientData = recordingDeviceDataDAO.fetchPatientMeasurementsByAttribute(patientUUID, attributeName);
+		List<RecordingDeviceDataMaster> patientData = recordingDeviceDataDAO.fetchPatientMeasurementsByAttribute(patientUUID, attributeId);
 		List<Measurement> measurements = new ArrayList<Measurement>();
 		for(RecordingDeviceDataMaster data : patientData) {
 			Measurement measurement = this.mapperFacade.map(data, Measurement.class);
@@ -184,5 +186,15 @@ public class PatientService {
 			measurements.add(measurement);
 		}
 		return measurements;
+	}
+
+	@Transactional(rollbackFor = {Exception.class})
+	public List<RecordingDeviceAttribute> getPatientAttributesWithDevices(final String patientUUID, final List<String> attributeNames) {
+		List<RecordingDeviceAttribute> recordingDeviceAttributes = new ArrayList<RecordingDeviceAttribute>();
+		List<RecordingDeviceAttributeMaster> patientAttributesWithData = recordingDeviceDataDAO.fetchPatientAttributesHavingData(patientUUID, attributeNames);
+		for(RecordingDeviceAttributeMaster patientAttribute : patientAttributesWithData) {
+			recordingDeviceAttributes.add(mapperFacade.map(patientAttribute, RecordingDeviceAttribute.class));
+		}
+		return recordingDeviceAttributes;
 	}
 }

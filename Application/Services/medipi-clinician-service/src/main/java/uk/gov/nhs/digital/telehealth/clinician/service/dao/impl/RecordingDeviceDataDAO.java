@@ -20,6 +20,7 @@ package uk.gov.nhs.digital.telehealth.clinician.service.dao.impl;
 import java.util.List;
 
 import uk.gov.nhs.digital.telehealth.clinician.service.entities.DataValueEntity;
+import uk.gov.nhs.digital.telehealth.clinician.service.entities.RecordingDeviceAttributeMaster;
 import uk.gov.nhs.digital.telehealth.clinician.service.entities.RecordingDeviceDataMaster;
 
 import com.dev.ops.common.dao.generic.GenericDAO;
@@ -29,5 +30,7 @@ public interface RecordingDeviceDataDAO extends GenericDAO<RecordingDeviceDataMa
 
 	List<DataValueEntity> fetchRecentMeasurementsSQL(String patientUUID);
 
-	List<RecordingDeviceDataMaster> fetchPatientMeasurementsByAttribute(String patientUUID, String attributeName);
+	List<RecordingDeviceDataMaster> fetchPatientMeasurementsByAttribute(String patientUUID, Integer attributeId);
+
+	List<RecordingDeviceAttributeMaster> fetchPatientAttributesHavingData(String patientUUID, List<String> attributeNames);
 }

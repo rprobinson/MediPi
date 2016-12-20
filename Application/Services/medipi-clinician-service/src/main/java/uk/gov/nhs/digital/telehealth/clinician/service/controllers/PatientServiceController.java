@@ -31,6 +31,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import uk.gov.nhs.digital.telehealth.clinician.service.domain.Measurement;
 import uk.gov.nhs.digital.telehealth.clinician.service.domain.Patient;
+import uk.gov.nhs.digital.telehealth.clinician.service.domain.RecordingDeviceAttribute;
 import uk.gov.nhs.digital.telehealth.clinician.service.services.PatientService;
 import uk.gov.nhs.digital.telehealth.clinician.service.url.mappings.ServiceURLMappings;
 
@@ -74,13 +75,22 @@ public class PatientServiceController {
 		return recentReadings;
 	}*/
 
-	@RequestMapping(value = ServiceURLMappings.PatientServiceController.GET_PATIENT_MEASURMENTS + "{patientUUID}" + "/{attributeName}", method = RequestMethod.GET)
+	@RequestMapping(value = ServiceURLMappings.PatientServiceController.GET_PATIENT_MEASURMENTS + "{patientUUID}" + "/{attributeId}", method = RequestMethod.GET)
 	@ResponseBody
-	public List<Measurement> getPatientMeasurements(@PathVariable final String patientUUID, @PathVariable final String attributeName, @RequestHeader(CommonConstants.CONTEXT_INFORMATION_REQUEST_PARAMETER) final String context) throws Exception {
+	public List<Measurement> getPatientMeasurements(@PathVariable final String patientUUID, @PathVariable final Integer attributeId, @RequestHeader(CommonConstants.CONTEXT_INFORMATION_REQUEST_PARAMETER) final String context) throws Exception {
 		ContextThreadLocal.set(ContextInfo.toContextInfo(context));
-		LOGGER.debug("Get Patient measurements for patient id:<" + patientUUID + "> and attributeName:<" + attributeName + ">");
-		final List<Measurement> measurements = this.patientService.getPatientMeasurements(patientUUID, attributeName);
+		LOGGER.debug("Get Patient measurements for patient id:<" + patientUUID + "> and attributeId:<" + attributeId + ">");
+		final List<Measurement> measurements = this.patientService.getPatientMeasurements(patientUUID, attributeId);
 		return measurements;
+	}
+
+	@RequestMapping(value = ServiceURLMappings.PatientServiceController.GET_PATIENT_ATTRIBUTES + "{patientUUID}" + "/{attributeNames}", method = RequestMethod.GET)
+	@ResponseBody
+	public List<RecordingDeviceAttribute> getPatientAttributesWithDevices(@PathVariable final String patientUUID, @PathVariable final List<String> attributeNames, @RequestHeader(CommonConstants.CONTEXT_INFORMATION_REQUEST_PARAMETER) final String context) throws Exception {
+		ContextThreadLocal.set(ContextInfo.toContextInfo(context));
+		LOGGER.debug("Get Patient attributes with devices for patient id:<" + patientUUID + "> and attributeNames:<" + attributeNames + ">");
+		final List<RecordingDeviceAttribute> recordingDeviceAttributes = this.patientService.getPatientAttributesWithDevices(patientUUID, attributeNames);
+		return recordingDeviceAttributes;
 	}
 
 }

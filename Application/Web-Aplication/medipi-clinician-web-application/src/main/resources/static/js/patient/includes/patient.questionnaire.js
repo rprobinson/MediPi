@@ -6,7 +6,7 @@ var measurement = {
         var data = null;
         $.ajax({
             async: false,
-            url: "/clinician/patient/patientMeasurements?patientUUID=" + includeObject.patientUUID + "&attributeName=" + includeObject.attributeName,
+            url: "/clinician/patient/patientMeasurements?patientUUID=" + includeObject.patientUUID + "&attributeId=" + includeObject.attributeId,
             dataType: "json",
             success: function (measurements) {
                 data = measurements;
@@ -50,7 +50,7 @@ var measurement = {
                 scales: {
                 	xAxes: [{
                 		type: "time",
-                		barPercentage: 0.05,
+                		barPercentage: 0.1,
                 		time: {
                 			format: timeFormat,
                 			tooltipFormat: 'll HH:mm'
