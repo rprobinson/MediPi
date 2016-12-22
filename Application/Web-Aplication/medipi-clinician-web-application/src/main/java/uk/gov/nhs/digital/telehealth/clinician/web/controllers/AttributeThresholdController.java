@@ -52,10 +52,10 @@ public class AttributeThresholdController extends BaseController {
 
 	@RequestMapping(value = "", method = RequestMethod.GET)
 	@ResponseBody
-	public AttributeThreshold getAttributeThreshold(@RequestParam("patientUUID") final String patientUUID, @RequestParam("attributeName") final String attributeName, final HttpServletRequest request) throws DefaultWrappedException {
+	public AttributeThreshold getAttributeThreshold(@RequestParam("patientUUID") final String patientUUID, @RequestParam("attributeId") final String attributeId, final HttpServletRequest request) throws DefaultWrappedException {
 		final HttpEntity<?> entity = HttpUtil.getEntityWithHeaders(WebConstants.Operations.AttributeThreshold.READ, null);
-		LOGGER.debug("Getting attribute threshold for patientUUID:<" + patientUUID + "> and  attributeName:<" + attributeName + ">");
-		return this.restTemplate.exchange(this.clinicianServiceURL + ServiceURLMappings.AttributeThresholdServiceController.CONTROLLER_MAPPING + ServiceURLMappings.AttributeThresholdServiceController.GET_ATTRIBUTE_THRESHOLD + CommonConstants.Separators.URL_SEPARATOR + patientUUID + CommonConstants.Separators.URL_SEPARATOR + attributeName, HttpMethod.GET, entity, AttributeThreshold.class).getBody();
+		LOGGER.debug("Getting attribute threshold for patientUUID:<" + patientUUID + "> and  attributeId:<" + attributeId + ">");
+		return this.restTemplate.exchange(this.clinicianServiceURL + ServiceURLMappings.AttributeThresholdServiceController.CONTROLLER_MAPPING + ServiceURLMappings.AttributeThresholdServiceController.GET_ATTRIBUTE_THRESHOLD + CommonConstants.Separators.URL_SEPARATOR + patientUUID + CommonConstants.Separators.URL_SEPARATOR + attributeId, HttpMethod.GET, entity, AttributeThreshold.class).getBody();
 	}
 
 	@RequestMapping(value = "/", method = RequestMethod.POST)

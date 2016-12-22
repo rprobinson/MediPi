@@ -70,9 +70,9 @@ public class AttributeThresholdDAOImpl extends GenericDAOImpl<AttributeThreshold
 	}
 
 	@Override
-	public AttributeThresholdMaster fetchLatestAttributeThreshold(final String patientUUID, final String attributeName) {
+	public AttributeThresholdMaster fetchLatestAttributeThreshold(final String patientUUID, final Integer attributeId) {
 		final Query query = this.getEntityManager().createNamedQuery("AttributeThresholdMaster.fetchLatestAttributeThreshold", AttributeThresholdMaster.class);
-		query.setParameter("attributeName", attributeName);
+		query.setParameter("attributeId", attributeId);
 		query.setParameter("patientUUID", patientUUID);
 		query.setMaxResults(1);
 
@@ -80,7 +80,7 @@ public class AttributeThresholdDAOImpl extends GenericDAOImpl<AttributeThreshold
 		try {
 			attributeThreshold = (AttributeThresholdMaster) query.getSingleResult();
 		} catch(NoResultException e) {
-			LOGGER.error("No attribute threshold set for patientUUID:<" + patientUUID + "> and attributeName:<" + attributeName + ">", e);
+			LOGGER.error("No attribute threshold set for patientUUID:<" + patientUUID + "> and attributeId:<" + attributeId + ">", e);
 		}
 		return attributeThreshold;
 	}

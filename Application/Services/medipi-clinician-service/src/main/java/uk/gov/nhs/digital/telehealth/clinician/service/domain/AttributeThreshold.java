@@ -48,7 +48,6 @@ public class AttributeThreshold {
 
 	private Integer attributeId;
 
-	@NotNull
 	private String attributeName;
 
 	public AttributeThreshold() {

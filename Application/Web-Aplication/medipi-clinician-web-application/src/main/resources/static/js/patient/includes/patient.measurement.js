@@ -6,7 +6,7 @@ var measurement = {
         var data = null;
         $.ajax({
             async: false,
-            url: "/clinician/patient/patientMeasurements?patientUUID=" + includeObject.patientUUID + "&attributeName=" + includeObject.attributeName,
+            url: "/clinician/patient/patientMeasurements?patientUUID=" + includeObject.patientUUID + "&attributeId=" + includeObject.attributeId,
             dataType: "json",
             success: function (measurements) {
                 data = measurements;
@@ -23,7 +23,7 @@ var measurement = {
         var data = null;
         $.ajax({
             async: false,
-            url: "/clinician/attributeThreshold?patientUUID=" + includeObject.patientUUID + "&attributeName=" + includeObject.attributeName,
+            url: "/clinician/attributeThreshold?patientUUID=" + includeObject.patientUUID + "&attributeId=" + includeObject.attributeId,
             dataType: "json",
             success: function (attributeThreshold) {
                 data = attributeThreshold;
@@ -50,7 +50,7 @@ var measurement = {
                     lineTension: 0
                 },
                 {
-                    label: includeObject.chartHeader,
+                    label: includeObject.attributeName,
                     borderColor: 'rgba(53,94,142,1)',
                     backgroundColor: 'rgba(53,94,142,1)',
                     fill: false,
@@ -98,10 +98,6 @@ var measurement = {
                         display: true,
                         scaleLabel: {
                             show: true,
-                        },
-                        ticks: {
-                            suggestedMin: includeObject.suggestedMinValue,
-                            suggestedMax: includeObject.suggestedMaxValue,
                         }
                     }]
                 }

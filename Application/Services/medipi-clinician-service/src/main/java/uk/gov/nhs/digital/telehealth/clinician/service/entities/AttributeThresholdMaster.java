@@ -56,7 +56,7 @@ import javax.persistence.Table;
 			+ " JOIN attributeThreshold.patient patient"
 			+ " JOIN attributeThreshold.recordingDeviceAttribute recordingDeviceAttribute"
 			+ " WHERE patient.patientUUID = :patientUUID"
-			+ " AND recordingDeviceAttribute.attributeName = :attributeName"
+			+ " AND recordingDeviceAttribute.attributeId = :attributeId"
 			+ " ORDER BY attributeThreshold.effectiveDate DESC")
 })
 //@formatter:on

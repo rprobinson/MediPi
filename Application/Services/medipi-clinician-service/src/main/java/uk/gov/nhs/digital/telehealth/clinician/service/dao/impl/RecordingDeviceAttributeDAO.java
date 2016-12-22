@@ -23,5 +23,6 @@ import com.dev.ops.common.dao.generic.GenericDAO;
 import com.dev.ops.exceptions.impl.DefaultWrappedException;
 
 public interface RecordingDeviceAttributeDAO extends GenericDAO<RecordingDeviceAttributeMaster> {
+	RecordingDeviceAttributeMaster fetchRecordingDeviceAttributeById(Integer attributeId) throws DefaultWrappedException;
 	RecordingDeviceAttributeMaster fetchRecordingDeviceAttributeByName(String attributeName) throws DefaultWrappedException;
 }

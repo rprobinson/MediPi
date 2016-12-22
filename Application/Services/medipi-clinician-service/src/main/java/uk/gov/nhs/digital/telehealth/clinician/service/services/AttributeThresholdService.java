@@ -59,8 +59,8 @@ public class AttributeThresholdService {
 	private static final Logger LOGGER = LogManager.getLogger(AttributeThresholdService.class);
 
 	@Transactional(rollbackFor = {Exception.class})
-	public AttributeThreshold getAttributeThreshold(final String patientUUID, final String attributeName) throws DefaultWrappedException {
-		final AttributeThresholdMaster attributeThresholdMaster = this.attributeThresholdDAO.fetchLatestAttributeThreshold(patientUUID, attributeName);
+	public AttributeThreshold getAttributeThreshold(final String patientUUID, final Integer attributeId) throws DefaultWrappedException {
+		final AttributeThresholdMaster attributeThresholdMaster = this.attributeThresholdDAO.fetchLatestAttributeThreshold(patientUUID, attributeId);
 		AttributeThreshold attributeThreshold = null;
 		if(null != attributeThresholdMaster) {
 			attributeThreshold = this.mapperFacade.map(attributeThresholdMaster, AttributeThreshold.class);
@@ -71,21 +71,21 @@ public class AttributeThresholdService {
 	@Transactional(rollbackFor = {Exception.class})
 	public AttributeThreshold saveAttributeThreshold(final AttributeThreshold attributeThreshold) throws DefaultWrappedException {
 		AttributeThreshold returnThreshold = null;
-		RecordingDeviceAttributeMaster recordingDeviceAttribute = recordingDeviceAttributeDAO.fetchRecordingDeviceAttributeByName(attributeThreshold.getAttributeName());
+		RecordingDeviceAttributeMaster recordingDeviceAttribute = recordingDeviceAttributeDAO.fetchRecordingDeviceAttributeById(attributeThreshold.getAttributeId());
 
 		PatientMaster patient = patientDAO.findByPrimaryKey(attributeThreshold.getPatientUUID());
 		if(null == patient) {
 			throw new DefaultWrappedException("PATIENT_WITH_ID_NOT_FOUND_EXCEPTION", null, new Object[] {attributeThreshold.getPatientUUID()});
 		}
 
-		final AttributeThresholdMaster latestAttributeThreshold = this.attributeThresholdDAO.fetchLatestAttributeThreshold(attributeThreshold.getPatientUUID(), attributeThreshold.getAttributeName());
+		final AttributeThresholdMaster latestAttributeThreshold = this.attributeThresholdDAO.fetchLatestAttributeThreshold(attributeThreshold.getPatientUUID(), attributeThreshold.getAttributeId());
 		if(null != latestAttributeThreshold && latestAttributeThreshold.getThresholdLowValue().equals(attributeThreshold.getThresholdLowValue()) && latestAttributeThreshold.getThresholdHighValue().equals(attributeThreshold.getThresholdHighValue())) {
 			//Do nothing and return the fetched attribute threshold as is because there are no changes in thresholds.
 			returnThreshold = mapperFacade.map(latestAttributeThreshold, AttributeThreshold.class);
 		} else {
 
 			String thresholdType = null;
-			if(ServiceConstants.Attributes.WEIGHT.equalsIgnoreCase(attributeThreshold.getAttributeName().trim())) {
+			if(ServiceConstants.Attributes.WEIGHT.equalsIgnoreCase(recordingDeviceAttribute.getAttributeName().trim())) {
 				thresholdType = ServiceConstants.AttributeThresholdTypes.CHANGE_OVER_TIME_TEST;
 			} else {
 				thresholdType = ServiceConstants.AttributeThresholdTypes.SIMPLE_HIGH_LOW_INCLUSIVE_TEST;

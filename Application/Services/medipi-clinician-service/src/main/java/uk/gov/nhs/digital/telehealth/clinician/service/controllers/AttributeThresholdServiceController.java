@@ -48,12 +48,12 @@ public class AttributeThresholdServiceController {
 
 	private static final Logger LOGGER = LogManager.getLogger(AttributeThresholdServiceController.class);
 
-	@RequestMapping(value = ServiceURLMappings.AttributeThresholdServiceController.GET_ATTRIBUTE_THRESHOLD + "{patientUUID}" + CommonConstants.Separators.URL_SEPARATOR + "{attributeName}", method = RequestMethod.GET)
+	@RequestMapping(value = ServiceURLMappings.AttributeThresholdServiceController.GET_ATTRIBUTE_THRESHOLD + "{patientUUID}" + CommonConstants.Separators.URL_SEPARATOR + "{attributeId}", method = RequestMethod.GET)
 	@ResponseBody
-	public AttributeThreshold getPatientDetails(@PathVariable final String patientUUID, @PathVariable final String attributeName, @RequestHeader(CommonConstants.CONTEXT_INFORMATION_REQUEST_PARAMETER) final String context) throws DefaultWrappedException {
+	public AttributeThreshold getPatientDetails(@PathVariable final String patientUUID, @PathVariable final Integer attributeId, @RequestHeader(CommonConstants.CONTEXT_INFORMATION_REQUEST_PARAMETER) final String context) throws DefaultWrappedException {
 		ContextThreadLocal.set(ContextInfo.toContextInfo(context));
-		LOGGER.debug("Get Attribute threshold for attributeName:<" + attributeName + "> and patient UUID:<" + patientUUID + ">");
-		final AttributeThreshold attributeThreshold = attributeThresholdService.getAttributeThreshold(patientUUID, attributeName);
+		LOGGER.debug("Get Attribute threshold for attributeId:<" + attributeId + "> and patient UUID:<" + patientUUID + ">");
+		final AttributeThreshold attributeThreshold = attributeThresholdService.getAttributeThreshold(patientUUID, attributeId);
 		LOGGER.debug("The Attribute threshold: " + attributeThreshold);
 		return attributeThreshold;
 	}

@@ -52,4 +52,21 @@ public class RecordingDeviceAttributeDAOImpl extends GenericDAOImpl<RecordingDev
 		}
 	}
 
+	@SuppressWarnings("unchecked")
+	@Override
+	public RecordingDeviceAttributeMaster fetchRecordingDeviceAttributeById(final Integer attributeId) throws DefaultWrappedException {
+		LOGGER.debug("Get attribute for attributeId:<" + attributeId + ">");
+		Query query = getEntityManager().createNamedQuery("RecordingDeviceAttributeMaster.fetchByAttributeId", RecordingDeviceAttributeMaster.class);
+		query.setParameter("attributeId", attributeId);
+
+		List<RecordingDeviceAttributeMaster> recordingDeviceAttributes = query.getResultList();
+		if(recordingDeviceAttributes.isEmpty()) {
+			throw new DefaultWrappedException("NO_RECORDING_DEVICE_ATTRIBUTE_FOUND_EXCEPTION", null, new Object[] {attributeId});
+		} else if(recordingDeviceAttributes.size() > 1) {
+			throw new DefaultWrappedException("MORE_THAN_ONE_RECORDING_DEVICE_ATTRIBUTE_FOUND_EXCEPTION", null, new Object[] {attributeId});
+		} else {
+			return recordingDeviceAttributes.get(0);
+		}
+	}
+
 }

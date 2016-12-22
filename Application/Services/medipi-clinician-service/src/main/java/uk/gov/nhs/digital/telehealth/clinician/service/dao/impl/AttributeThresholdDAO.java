@@ -26,7 +26,7 @@ import com.dev.ops.common.dao.generic.GenericDAO;
 
 public interface AttributeThresholdDAO extends GenericDAO<AttributeThresholdMaster> {
 
-	AttributeThresholdMaster fetchLatestAttributeThreshold(final String patientUUID, final String attributeName);
+	AttributeThresholdMaster fetchLatestAttributeThreshold(final String patientUUID, final Integer attributeId);
 
 	List<AttributeThresholdMaster> fetchPatientAttributeThresholds(final String patientUUID, final Integer attributeId);
 

@@ -53,7 +53,8 @@ import javax.persistence.Table;
 			+ " JOIN recordingDeviceDataMaster.patient patient"
           	+ " JOIN recordingDeviceDataMaster.recordingDeviceAttribute recordingDeviceAttribute"
            	+ " WHERE patient.patientUUID = :patientUUID"
-           	+ " AND recordingDeviceAttribute.attributeName in (:attributeNames)")
+           	+ " AND recordingDeviceAttribute.attributeName in (:attributeNames)"
+           	+ " ORDER BY recordingDeviceAttribute.attributeId ASC")
 })
 //@formatter:on
 public class RecordingDeviceDataMaster {

@@ -36,7 +36,8 @@ import javax.persistence.Table;
 @Table(name = "recording_device_attribute")
 @NamedQueries({
 	@NamedQuery(name = "RecordingDeviceAttributeMaster.fetchAllRecordingDeviceAttributes", query = "SELECT recordingDeviceAttributeMaster FROM RecordingDeviceAttributeMaster recordingDeviceAttributeMaster"),
-	@NamedQuery(name = "RecordingDeviceAttributeMaster.fetchByAttributeName", query = "SELECT recordingDeviceAttributeMaster FROM RecordingDeviceAttributeMaster recordingDeviceAttributeMaster WHERE recordingDeviceAttributeMaster.attributeName = :attributeName")
+	@NamedQuery(name = "RecordingDeviceAttributeMaster.fetchByAttributeName", query = "SELECT recordingDeviceAttributeMaster FROM RecordingDeviceAttributeMaster recordingDeviceAttributeMaster WHERE recordingDeviceAttributeMaster.attributeName = :attributeName"),
+	@NamedQuery(name = "RecordingDeviceAttributeMaster.fetchByAttributeId", query = "SELECT recordingDeviceAttributeMaster FROM RecordingDeviceAttributeMaster recordingDeviceAttributeMaster WHERE recordingDeviceAttributeMaster.attributeId = :attributeId")
 })
 //@formatter:on
 public class RecordingDeviceAttributeMaster {
