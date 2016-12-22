@@ -27,9 +27,9 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import uk.gov.nhs.digital.telehealth.clinician.service.domain.AttributeThreshold;
@@ -50,9 +50,9 @@ public class AttributeThresholdController extends BaseController {
 
 	private static final Logger LOGGER = LogManager.getLogger(AttributeThresholdController.class);
 
-	@RequestMapping(value = "", method = RequestMethod.GET)
+	@RequestMapping(value = "/{patientUUID}/{attributeId}", method = RequestMethod.GET)
 	@ResponseBody
-	public AttributeThreshold getAttributeThreshold(@RequestParam("patientUUID") final String patientUUID, @RequestParam("attributeId") final String attributeId, final HttpServletRequest request) throws DefaultWrappedException {
+	public AttributeThreshold getAttributeThreshold(@PathVariable final String patientUUID, @PathVariable final Integer attributeId, final HttpServletRequest request) throws DefaultWrappedException {
 		final HttpEntity<?> entity = HttpUtil.getEntityWithHeaders(WebConstants.Operations.AttributeThreshold.READ, null);
 		LOGGER.debug("Getting attribute threshold for patientUUID:<" + patientUUID + "> and  attributeId:<" + attributeId + ">");
 		return this.restTemplate.exchange(this.clinicianServiceURL + ServiceURLMappings.AttributeThresholdServiceController.CONTROLLER_MAPPING + ServiceURLMappings.AttributeThresholdServiceController.GET_ATTRIBUTE_THRESHOLD + CommonConstants.Separators.URL_SEPARATOR + patientUUID + CommonConstants.Separators.URL_SEPARATOR + attributeId, HttpMethod.GET, entity, AttributeThreshold.class).getBody();

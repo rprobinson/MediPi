@@ -32,7 +32,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.ModelAndView;
 
@@ -110,9 +109,9 @@ public class PatientController extends BaseController {
 	}
 
 	@SuppressWarnings({"unchecked", "rawtypes"})
-	@RequestMapping(value = "/patientMeasurements", method = RequestMethod.GET)
+	@RequestMapping(value = "/patientMeasurements/{patientUUID}/{attributeId}", method = RequestMethod.GET)
 	@ResponseBody
-	public List<Measurement> patientMeasurements(@RequestParam("patientUUID") final String patientUUID, @RequestParam("attributeId") final String attributeId, final HttpServletRequest request) throws DefaultWrappedException {
+	public List<Measurement> patientMeasurements(@PathVariable final String patientUUID, @PathVariable final Integer attributeId, final HttpServletRequest request) throws DefaultWrappedException {
 		final HttpEntity<?> entity = HttpUtil.getEntityWithHeaders(WebConstants.Operations.Patient.PATIENT_MEASUREMENTS, null);
 		final List<Measurement> measurements = this.restTemplate.exchange(this.clinicianServiceURL + ServiceURLMappings.PatientServiceController.CONTROLLER_MAPPING + ServiceURLMappings.PatientServiceController.GET_PATIENT_MEASURMENTS + patientUUID + "/" + attributeId, HttpMethod.GET, entity, (Class<List<Measurement>>) (Class) List.class).getBody();
 		return measurements;

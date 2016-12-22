@@ -6,7 +6,7 @@ var measurement = {
         var data = null;
         $.ajax({
             async: false,
-            url: "/clinician/patient/patientMeasurements?patientUUID=" + includeObject.patientUUID + "&attributeId=" + includeObject.attributeId,
+            url: "/clinician/patient/patientMeasurements/" + includeObject.patientUUID + "/" + includeObject.attributeId,
             dataType: "json",
             success: function (measurements) {
                 data = measurements;
@@ -23,7 +23,7 @@ var measurement = {
         var data = null;
         $.ajax({
             async: false,
-            url: "/clinician/attributeThreshold?patientUUID=" + includeObject.patientUUID + "&attributeId=" + includeObject.attributeId,
+            url: "/clinician/attributeThreshold/" + includeObject.patientUUID + "/" + includeObject.attributeId,
             dataType: "json",
             success: function (attributeThreshold) {
                 data = attributeThreshold;
