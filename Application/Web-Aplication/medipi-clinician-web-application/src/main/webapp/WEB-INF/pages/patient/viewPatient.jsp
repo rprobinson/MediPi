@@ -15,6 +15,7 @@
 		</ul>
 	</div>
 
+<!-- Pulse, spO2, Temperature and Weight accordion -->
 <c:forEach items="${similarDeviceAttributes}" var="similarDeviceAttribute" varStatus="counter">
 	<jsp:include page="/WEB-INF/pages/patient/includes/patientMeasurement.jsp">
 		<jsp:param name="patientUUID" value="${patient.patientUUID}"/>
@@ -30,29 +31,35 @@
 	</jsp:include>
 </c:forEach>
 
-<%-- <!-- Blood pressure accordion -->
-<jsp:include page="/WEB-INF/pages/patient/includes/patientBloodPressureMeasurement.jsp">
-	<jsp:param name="patientUUID" value="${patient.patientUUID}"/>
-	<jsp:param name="attributeNames" value="['systol','diastol']"/>
-	<jsp:param name="accordionTitle" value="Blood Pressure"/>
-	<jsp:param name="chartHeaders" value="['Systolic', 'Diastolic']"/>
-	<jsp:param name="canvasId" value="bloodPressureCanvas"/>
-	<jsp:param name="recentMeasurementDateId" value="bloodPressureRecentMeasurementDateId"/>
-	<jsp:param name="recentMeasurementValueId" value="bloodPressureRecentMeasurementValueId"/>
-	<jsp:param name="measurementMinValueId" value="bloodPressureMeasurementMinValueId"/>
-	<jsp:param name="measurementMaxValueId" value="bloodPressureMeasurementMaxValueId"/>
-	<jsp:param name="suggestedMinValue" value="80"/>
-	<jsp:param name="suggestedMaxValue" value="180"/>
-</jsp:include> --%>
+<!-- Blood pressure accordion -->
+<c:forEach items="${bloodPressureDeviceAttributesList}" var="bloodPressureDeviceAttributes" varStatus="counter">
+	<jsp:include page="/WEB-INF/pages/patient/includes/patientBloodPressureMeasurement.jsp">
+		<jsp:param name="patientUUID" value="${patient.patientUUID}"/>
+		<jsp:param name="recordingDeviceType" value="${bloodPressureDeviceAttributes.systolic.recordingDevice.type}"/>
+		<jsp:param name="displayName" value="${bloodPressureDeviceAttributes.systolic.recordingDevice.displayName}"/>
+		<jsp:param name="canvasId" value="${bloodPressureDeviceAttributes.systolic.attributeName}Canvas${counter.count}"/>
+		<jsp:param name="systolicAttributeId" value="${bloodPressureDeviceAttributes.systolic.attributeId}"/>
+		<jsp:param name="systolicAttributeName" value="${bloodPressureDeviceAttributes.systolic.attributeName}"/>
+		<jsp:param name="diastolicAttributeId" value="${bloodPressureDeviceAttributes.diastolic.attributeId}"/>
+		<jsp:param name="diastolicAttributeName" value="${bloodPressureDeviceAttributes.diastolic.attributeName}"/>
+		<jsp:param name="recentMeasurementDateId" value="${bloodPressureDeviceAttributes.systolic.attributeName}RecentMeasurementDateId${counter.count}"/>
+		<jsp:param name="recentMeasurementValueId" value="${bloodPressureDeviceAttributes.systolic.attributeName}RecentMeasurementValueId${counter.count}"/>
+		<jsp:param name="measurementSystolicMinValueId" value="${bloodPressureDeviceAttributes.systolic.attributeName}MeasurementMinValueId${counter.count}"/>
+		<jsp:param name="measurementSystolicMaxValueId" value="${bloodPressureDeviceAttributes.systolic.attributeName}MeasurementMaxValueId${counter.count}"/>
+		<jsp:param name="measurementDiastolicMinValueId" value="${bloodPressureDeviceAttributes.diastolic.attributeName}MeasurementMinValueId${counter.count}"/>
+		<jsp:param name="measurementDiastolicMaxValueId" value="${bloodPressureDeviceAttributes.diastolic.attributeName}MeasurementMaxValueId${counter.count}"/>
+	</jsp:include>
+</c:forEach>
 
-<c:forEach items="${questionnnaireDeviceAttributes}" var="questionnnaireDeviceAttribute" varStatus="counter">
+<!-- Questionnaires accordion -->
+<c:forEach items="${questionnaireDeviceAttributes}" var="questionnaireDeviceAttribute" varStatus="counter">
 	<jsp:include page="/WEB-INF/pages/patient/includes/patientQuestionnaire.jsp">
 		<jsp:param name="patientUUID" value="${patient.patientUUID}"/>
-		<jsp:param name="attributeId" value="${questionnnaireDeviceAttribute.attributeId}"/>
-		<jsp:param name="attributeName" value="${questionnnaireDeviceAttribute.attributeName}"/>
-		<jsp:param name="recordingDeviceType" value="${questionnnaireDeviceAttribute.recordingDevice.type}"/>
-		<jsp:param name="displayName" value="${questionnnaireDeviceAttribute.recordingDevice.displayName}"/>
-		<jsp:param name="canvasId" value="${similarDeviceAttribute.attributeName}Canvas${counter.count}"/>
+		<jsp:param name="attributeId" value="${questionnaireDeviceAttribute.attributeId}"/>
+		<jsp:param name="attributeName" value="${questionnaireDeviceAttribute.attributeName}"/>
+		<jsp:param name="recordingDeviceType" value="${questionnaireDeviceAttribute.recordingDevice.type}"/>
+		<jsp:param name="displayName" value="${questionnaireDeviceAttribute.recordingDevice.displayName}"/>
+		<jsp:param name="canvasId" value="${questionnaireDeviceAttribute.attributeName}Canvas${counter.count}"/>
 	</jsp:include>
 </c:forEach>
 

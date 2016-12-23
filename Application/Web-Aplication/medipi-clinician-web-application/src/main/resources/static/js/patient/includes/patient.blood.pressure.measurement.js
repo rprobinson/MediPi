@@ -1,10 +1,10 @@
 var measurement = {
-    getData: function (includeObject, attributeName) {
+    getData: function (includeObject, attributeId) {
         var formattedstudentListArray = [];
         var data = null;
         $.ajax({
             async: false,
-            url: "/clinician/patient/patientMeasurements?patientUUID=" + includeObject.patientUUID + "&attributeName=" + attributeName,
+            url: "/clinician/patient/patientMeasurements/" + includeObject.patientUUID + "/" + attributeId,
             dataType: "json",
             success: function (pulseData) {
                 data = pulseData;
@@ -20,7 +20,7 @@ var measurement = {
             labels: jsonData[0].timeMapProperty('dataTime'),
             datasets: [
                 {
-                    label: includeObject.chartHeaders[1],
+                    label: includeObject.diastolicAttributeName,
                     fill: false,
                     borderColor: 'rgba(0,176,80,1)',
                     backgroundColor: 'rgba(0,176,80,1)',
@@ -28,7 +28,7 @@ var measurement = {
                     lineTension: 0
                 },
                 {
-                    label: includeObject.chartHeaders[0],
+                    label: includeObject.systolicAttributeName,
                     borderColor: 'rgba(53,94,142,1)',
                     backgroundColor: 'rgba(53,94,142,1)',
                     fill: false,
@@ -100,8 +100,8 @@ var measurement = {
     },
 
     initChart: function (includeObject) {
-        var systolicData = measurement.getData(includeObject, includeObject.attributeNames[0]);
-        var diastolicData = measurement.getData(includeObject, includeObject.attributeNames[1]);
+        var systolicData = measurement.getData(includeObject, includeObject.systolicAttributeId);
+        var diastolicData = measurement.getData(includeObject, includeObject.diastolicAttributeId);
         chartData = measurement.createChartData([systolicData, diastolicData], includeObject);
         measurement.renderChart(chartData, includeObject);
         var lastSystolicData = systolicData.lastObject();

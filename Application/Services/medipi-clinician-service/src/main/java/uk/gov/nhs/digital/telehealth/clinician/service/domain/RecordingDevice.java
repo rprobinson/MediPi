@@ -59,6 +59,36 @@ public class RecordingDevice {
 	}
 
 	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + (typeId == null ? 0 : typeId.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if(this == obj) {
+			return true;
+		}
+		if(obj == null) {
+			return false;
+		}
+		if(getClass() != obj.getClass()) {
+			return false;
+		}
+		RecordingDevice other = (RecordingDevice) obj;
+		if(typeId == null) {
+			if(other.typeId != null) {
+				return false;
+			}
+		} else if(!typeId.equals(other.typeId)) {
+			return false;
+		}
+		return true;
+	}
+
+	@Override
 	public String toString() {
 		return "RecordingDevice [typeId=" + typeId + ", type=" + type + ", displayName=" + displayName + "]";
 	}

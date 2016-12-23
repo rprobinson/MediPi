@@ -40,6 +40,7 @@ import uk.gov.nhs.digital.telehealth.clinician.service.domain.Patient;
 import uk.gov.nhs.digital.telehealth.clinician.service.domain.RecordingDeviceAttribute;
 import uk.gov.nhs.digital.telehealth.clinician.service.url.mappings.ServiceURLMappings;
 import uk.gov.nhs.digital.telehealth.clinician.web.constants.WebConstants;
+import uk.gov.nhs.digital.telehealth.clinician.web.domain.BloodPressureDeviceAttributes;
 
 import com.dev.ops.common.utils.HttpUtil;
 import com.dev.ops.exceptions.impl.DefaultWrappedException;
@@ -61,8 +62,12 @@ public class PatientController extends BaseController {
 	private String similarPlotAttributes;
 
 	@Autowired
-	@Value("${medipi.clinician.web.blood.pressure.attributes}")
-	private String bloodPressureAttributes;
+	@Value("${medipi.clinician.web.blood.pressure.systol.attribute}")
+	private String bloodPressureSystolAttribute;
+
+	@Autowired
+	@Value("${medipi.clinician.web.blood.pressure.diastol.attribute}")
+	private String bloodPressureDiastolAttribute;
 
 	@Autowired
 	@Value("${medipi.clinician.web.questionnnaire.attributes}")
@@ -98,11 +103,11 @@ public class PatientController extends BaseController {
 		final List<RecordingDeviceAttribute> similarDeviceAttributes = this.restTemplate.exchange(this.clinicianServiceURL + ServiceURLMappings.PatientServiceController.CONTROLLER_MAPPING + ServiceURLMappings.PatientServiceController.GET_PATIENT_ATTRIBUTES + patientUUID + "/" + similarPlotAttributes, HttpMethod.GET, entity, List.class).getBody();
 		modelAndView.addObject("similarDeviceAttributes", similarDeviceAttributes);
 
-		final List<RecordingDeviceAttribute> bloodPressureDeviceAttributes = this.restTemplate.exchange(this.clinicianServiceURL + ServiceURLMappings.PatientServiceController.CONTROLLER_MAPPING + ServiceURLMappings.PatientServiceController.GET_PATIENT_ATTRIBUTES + patientUUID + "/" + bloodPressureAttributes, HttpMethod.GET, entity, List.class).getBody();
-		modelAndView.addObject("bloodPressureDeviceAttributes", bloodPressureDeviceAttributes);
+		final RecordingDeviceAttribute[] bloodPressureDeviceAttributes = this.restTemplate.exchange(this.clinicianServiceURL + ServiceURLMappings.PatientServiceController.CONTROLLER_MAPPING + ServiceURLMappings.PatientServiceController.GET_PATIENT_ATTRIBUTES + patientUUID + "/" + bloodPressureSystolAttribute + "," + bloodPressureDiastolAttribute, HttpMethod.GET, entity, RecordingDeviceAttribute[].class).getBody();
+		modelAndView.addObject("bloodPressureDeviceAttributesList", BloodPressureDeviceAttributes.getBloodPressureDeviceAttributes(bloodPressureDeviceAttributes, bloodPressureSystolAttribute, bloodPressureDiastolAttribute));
 
-		final List<RecordingDeviceAttribute> questionnnaireDeviceAttributes = this.restTemplate.exchange(this.clinicianServiceURL + ServiceURLMappings.PatientServiceController.CONTROLLER_MAPPING + ServiceURLMappings.PatientServiceController.GET_PATIENT_ATTRIBUTES + patientUUID + "/" + questionnnaireAttributes, HttpMethod.GET, entity, List.class).getBody();
-		modelAndView.addObject("questionnnaireDeviceAttributes", questionnnaireDeviceAttributes);
+		final List<RecordingDeviceAttribute> questionnaireDeviceAttributes = this.restTemplate.exchange(this.clinicianServiceURL + ServiceURLMappings.PatientServiceController.CONTROLLER_MAPPING + ServiceURLMappings.PatientServiceController.GET_PATIENT_ATTRIBUTES + patientUUID + "/" + questionnnaireAttributes, HttpMethod.GET, entity, List.class).getBody();
+		modelAndView.addObject("questionnaireDeviceAttributes", questionnaireDeviceAttributes);
 
 		modelAndView.setViewName("patient/viewPatient");
 		return modelAndView;

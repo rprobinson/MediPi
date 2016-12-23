@@ -5,7 +5,7 @@
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <div class="accordion-section">
 	<div class="accordion-head" id="accordion-head">
-		<a href="#" class="on" aria-expanded="true" id="${param.canvasId}Header"><c:out value="${param.accordionTitle}"/></a>
+		<a href="#" class="on" aria-expanded="true" id="${param.canvasId}Header"><c:out value="${param.displayName} (${param.diastolicAttributeName}, ${param.systolicAttributeName})"/></a>
 	</div>
 	<div class="accordion-body form-horizontal" style="display: block">
 		<div class="row">
@@ -25,8 +25,12 @@
 						<th scope="col">Max</th>
 					</tr>
 					<tr>
-						<td id="${param.measurementMinValueId}"></td>
-						<td id="${param.measurementMaxValueId}"></td>
+						<td id="${param.measurementSystolicMinValueId}"></td>
+						<td id="${param.measurementSystolicMaxValueId}"></td>
+					</tr>
+					<tr>
+						<td id="${param.measurementDiastolicMinValueId}"></td>
+						<td id="${param.measurementDiastolicMaxValueId}"></td>
 					</tr>
 				</table>
 			</div>
@@ -34,6 +38,21 @@
 	</div>
 </div>
 <script type="text/javascript">
-	var includeObject = {patientUUID : '${param.patientUUID}', attributeNames : ${param.attributeNames}, canvasId : '${param.canvasId}', accordionTitle : '${param.accordionTitle}', chartHeaders : ${param.chartHeaders}, recentMeasurementDateId : '${param.recentMeasurementDateId}', recentMeasurementValueId : '${param.recentMeasurementValueId}', measurementMinValueId : '${param.measurementMinValueId}', measurementMaxValueId : '${param.measurementMaxValueId}', suggestedMinValue : '${param.suggestedMinValue}', suggestedMaxValue : '${param.suggestedMaxValue}'};
+	var includeObject = {
+				patientUUID : '${param.patientUUID}',
+				recordingDeviceType : '${param.recordingDeviceType}',
+				displayName : '${param.displayName}',
+				canvasId : '${param.canvasId}',
+				systolicAttributeId : '${param.systolicAttributeId}',
+				systolicAttributeName : '${param.systolicAttributeName}',
+				diastolicAttributeId : '${param.diastolicAttributeId}',
+				diastolicAttributeName : '${param.diastolicAttributeName}',
+				recentMeasurementDateId : '${param.recentMeasurementDateId}',
+				recentMeasurementValueId : '${param.recentMeasurementValueId}',
+				measurementSystolicMinValueId : '${param.measurementSystolicMinValueId}',
+				measurementSystolicMaxValueId : '${param.measurementSystolicMaxValueId}',
+				measurementDiastolicMinValueId : '${param.measurementDiastolicMinValueId}',
+				measurementDiastolicMaxValueId : '${param.measurementDiastolicMaxValueId}'
+			};
 	measurement.initChart(includeObject);
 </script>
