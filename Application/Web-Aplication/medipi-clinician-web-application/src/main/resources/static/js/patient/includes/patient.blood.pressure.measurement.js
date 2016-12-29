@@ -105,7 +105,7 @@ var measurement = {
                 responsive: true,
             	elements: {
                     point:{
-                        radius: 0
+                        radius: 1
                     }
                 },
                 scales: {
@@ -139,7 +139,8 @@ var measurement = {
     	var measurementIndicatorClass;
     	$("#" + includeObject.recentMeasurementDateId).html(systolicData != null ? systolicData.dataTime.getStringDate_DDMMYYYY_From_Timestamp() : "- - -");
     	if(systolicData != null && diastolicData != null) {
-    		$("#" + includeObject.recentMeasurementValueId).html("<u>" + systolicData.value + "</u><br/>" + diastolicData.value);
+    		var bloodPressureMeasurements = "<u>" + systolicData.value + "</u><br/>" + diastolicData.value;
+    		$("#" + includeObject.recentMeasurementValueId).html(bloodPressureMeasurements);
     		//If within min and max limits
     		if(systolicData.minValue == null || systolicData.maxValue == null || diastolicData.minValue == null || diastolicData.maxValue == null) {
     			measurementIndicatorClass = "amber";
@@ -189,61 +190,95 @@ var measurement = {
 /*******************************************************************************
  * BEGIN: Functions related to editable threshold values.
  ******************************************************************************/
-function showEditableFields(canvasId) {
+function showBloodPressureEditableFields(canvasId) {
 	var formId = "#" + canvasId +"-attributeThreshold";
 
-	//Existing values for threshold.
-	var existingThresholdLowValueTD = $("#" + canvasId + "-threshold").find("[name='existingThresholdLowValue']");
-	var existingThresholdHighValueTD = $("#" + canvasId + "-threshold").find("[name='existingThresholdHighValue']");
+	//Systolic:Existing values for threshold.
+	var existingSystolicThresholdLowValueTD = $("#" + canvasId + "-systolic-threshold").find("[name='existingSystolicThresholdLowValue']");
+	var existingSystolicThresholdHighValueTD = $("#" + canvasId + "-systolic-threshold").find("[name='existingSystolicThresholdHighValue']");
 
-	var existingThresholdLowValue = existingThresholdLowValueTD.html();
-	var existingThresholdHighValue = existingThresholdHighValueTD.html();
+	var existingSystolicThresholdLowValue = existingSystolicThresholdLowValueTD.html();
+	var existingSystolicThresholdHighValue = existingSystolicThresholdHighValueTD.html();
 
-	//Edited values for threshold
-	var editedThresholdLowValueTD = $("#" + canvasId + "-modify-threshold").find("[name='thresholdLowValue']");
-	var editedThresholdHighValueTD = $("#" + canvasId + "-modify-threshold").find("[name='thresholdHighValue']");
+	//Systolic:Edited values for threshold
+	var editedSystolicThresholdLowValueTD = $("#" + canvasId + "-systolic-modify-threshold").find("[name='systolic.thresholdLowValue']");
+	var editedSystolicThresholdHighValueTD = $("#" + canvasId + "-systolic-modify-threshold").find("[name='systolic.thresholdHighValue']");
 
-	//Reflect the values which are saved in the database.
-	editedThresholdLowValueTD.val(existingThresholdLowValue);
-	editedThresholdHighValueTD.val(existingThresholdHighValue);
+	//Systolic:Replace the values in the editable fields from the database.
+	editedSystolicThresholdLowValueTD.val(existingSystolicThresholdLowValue);
+	editedSystolicThresholdHighValueTD.val(existingSystolicThresholdHighValue);
 
-	$("#" + canvasId + "-threshold").addClass("hidden");
+	//Diastolic:Existing values for threshold.
+	var existingDiastolicThresholdLowValueTD = $("#" + canvasId + "-diastolic-threshold").find("[name='existingDiastolicThresholdLowValue']");
+	var existingDiastolicThresholdHighValueTD = $("#" + canvasId + "-diastolic-threshold").find("[name='existingDiastolicThresholdHighValue']");
+
+	var existingDiastolicThresholdLowValue = existingDiastolicThresholdLowValueTD.html();
+	var existingDiastolicThresholdHighValue = existingDiastolicThresholdHighValueTD.html();
+
+	//Diastolic:Edited values for threshold
+	var editedDiastolicThresholdLowValueTD = $("#" + canvasId + "-diastolic-modify-threshold").find("[name='diastolic.thresholdLowValue']");
+	var editedDiastolicThresholdHighValueTD = $("#" + canvasId + "-diastolic-modify-threshold").find("[name='diastolic.thresholdHighValue']");
+
+	//Diastolic:Replace the values in the editable fields from the database.
+	editedDiastolicThresholdLowValueTD.val(existingDiastolicThresholdLowValue);
+	editedDiastolicThresholdHighValueTD.val(existingDiastolicThresholdHighValue);
+
+	$("#" + canvasId + "-systolic-threshold").addClass("hidden");
+	$("#" + canvasId + "-diastolic-threshold").addClass("hidden");
 	$("#" + canvasId + "-btn_modify_thresholds").addClass("hidden");
 
-	$("#" + canvasId + "-modify-threshold").removeClass("hidden");
+	$("#" + canvasId + "-systolic-modify-threshold").removeClass("hidden");
+	$("#" + canvasId + "-diastolic-modify-threshold").removeClass("hidden");
 	$("#" + canvasId + "-btn_update_thresholds").removeClass("hidden");
 	$("#" + canvasId + "-btn_cancel_update").removeClass("hidden");
 }
 
-function hideEditableFields(canvasId) {
-	$("#" + canvasId + "-modify-threshold").addClass("hidden");
+function hideBloodPressureEditableFields(canvasId) {
+	$("#" + canvasId + "-systolic-modify-threshold").addClass("hidden");
+	$("#" + canvasId + "-diastolic-modify-threshold").addClass("hidden");
 	$("#" + canvasId + "-btn_update_thresholds").addClass("hidden");
 	$("#" + canvasId + "-btn_cancel_update").addClass("hidden");
 
-	$("#" + canvasId + "-threshold").removeClass("hidden");
+	$("#" + canvasId + "-systolic-threshold").removeClass("hidden");
+	$("#" + canvasId + "-diastolic-threshold").removeClass("hidden");
 	$("#" + canvasId + "-btn_modify_thresholds").removeClass("hidden");
 	hideErrorDiv();
 	hideSuccessDiv();
 }
 
-function submitAttributeThreshold(canvasId) {
+function submitBloodPressureAttributeThreshold(canvasId) {
 	var formId = "#" + canvasId +"-attributeThreshold";
 
-	//Existing values for threshold.
-	var existingThresholdLowValueTD = $("#" + canvasId + "-threshold").find("[name='existingThresholdLowValue']");
-	var existingThresholdHighValueTD = $("#" + canvasId + "-threshold").find("[name='existingThresholdHighValue']");
+	//Systolic:Existing values for threshold.
+	var existingSystolicThresholdLowValueTD = $("#" + canvasId + "-systolic-threshold").find("[name='existingSystolicThresholdLowValue']");
+	var existingSystolicThresholdHighValueTD = $("#" + canvasId + "-systolic-threshold").find("[name='existingSystolicThresholdHighValue']");
 
-	var existingThresholdLowValue = existingThresholdLowValueTD.html();
-	var existingThresholdHighValue = existingThresholdHighValueTD.html();
+	var existingSystolicThresholdLowValue = existingSystolicThresholdLowValueTD.html();
+	var existingSystolicThresholdHighValue = existingSystolicThresholdHighValueTD.html();
 
-	//Edited values for threshold
-	var editedThresholdLowValueTD = $("#" + canvasId + "-modify-threshold").find("[name='thresholdLowValue']");
-	var editedThresholdHighValueTD = $("#" + canvasId + "-modify-threshold").find("[name='thresholdHighValue']");
+	//Systolic:Edited values for threshold
+	var editedSystolicThresholdLowValueTD = $("#" + canvasId + "-systolic-modify-threshold").find("[name='systolic.thresholdLowValue']");
+	var editedSystolicThresholdHighValueTD = $("#" + canvasId + "-systolic-modify-threshold").find("[name='systolic.thresholdHighValue']");
 
-	var editedThresholdLowValue = editedThresholdLowValueTD.val();
-	var editedThresholdHighValue = editedThresholdHighValueTD.val();
+	var editedSystolicThresholdLowValue = editedSystolicThresholdLowValueTD.val();
+	var editedSystolicThresholdHighValue = editedSystolicThresholdHighValueTD.val();
 
-	if(existingThresholdLowValue == editedThresholdLowValue && existingThresholdHighValue == editedThresholdHighValue) {
+	//Diastolic:Existing values for threshold.
+	var existingDiastolicThresholdLowValueTD = $("#" + canvasId + "-diastolic-threshold").find("[name='existingDiastolicThresholdLowValue']");
+	var existingDiastolicThresholdHighValueTD = $("#" + canvasId + "-diastolic-threshold").find("[name='existingDiastolicThresholdHighValue']");
+
+	var existingDiastolicThresholdLowValue = existingDiastolicThresholdLowValueTD.html();
+	var existingDiastolicThresholdHighValue = existingDiastolicThresholdHighValueTD.html();
+
+	//Diastolic:Edited values for threshold
+	var editedDiastolicThresholdLowValueTD = $("#" + canvasId + "-diastolic-modify-threshold").find("[name='diastolic.thresholdLowValue']");
+	var editedDiastolicThresholdHighValueTD = $("#" + canvasId + "-diastolic-modify-threshold").find("[name='diastolic.thresholdHighValue']");
+
+	var editedDiastolicThresholdLowValue = editedDiastolicThresholdLowValueTD.val();
+	var editedDiastolicThresholdHighValue = editedDiastolicThresholdHighValueTD.val();
+
+
+	if(existingSystolicThresholdLowValue == editedSystolicThresholdLowValue && existingSystolicThresholdHighValue == editedSystolicThresholdHighValue && existingDiastolicThresholdLowValue == editedDiastolicThresholdLowValue && existingDiastolicThresholdHighValue == editedDiastolicThresholdHighValue) {
 		//no need to update as there are no changes for threshold values.
 		hideEditableFields(canvasId);
 	} else {
@@ -253,8 +288,10 @@ function submitAttributeThreshold(canvasId) {
 			data: $(formId).serialize(),
 			success: function(data) {
 				//update the values on screen.
-				existingThresholdLowValueTD.html(data.thresholdLowValue);
-				existingThresholdHighValueTD.html(data.thresholdHighValue);
+				existingSystolicThresholdLowValueTD.html(data.systolic.thresholdLowValue);
+				existingSystolicThresholdHighValueTD.html(data.systolic.thresholdHighValue);
+				existingDiastolicThresholdLowValueTD.html(data.diastolic.thresholdLowValue);
+				existingDiastolicThresholdHighValueTD.html(data.diastolic.thresholdHighValue);
 
 				hideEditableFields(canvasId);
 				hideErrorDiv();

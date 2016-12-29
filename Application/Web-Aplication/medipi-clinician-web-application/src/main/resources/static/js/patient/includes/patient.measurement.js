@@ -1,5 +1,3 @@
-var ALLOWED_NUMBER_OF_DIGITS_AFTER_DECIMAL = 1;
-
 var measurement = {
     getData: function (includeObject) {
         var formattedstudentListArray = [];
@@ -79,7 +77,7 @@ var measurement = {
                 responsive: true,
             	elements: {
                     point:{
-                        radius: 0
+                        radius: 1
                     }
                 },
                 scales: {
@@ -112,9 +110,6 @@ var measurement = {
 
         //If within min and max limits
         if(recentMeasurement != null) {
-        	/*if(includeObject.attributeId == 3) {
-        		console.log("recentMeasurement.value <= recentMeasurement.maxValue:" + (parseFloat(recentMeasurement.minValue) <= parseFloat(recentMeasurement.value) <= parseFloat(recentMeasurement.maxValue)));
-        	}*/
 	        if(recentMeasurement.minValue == null || recentMeasurement.maxValue == null) {
 	        	$("#" + includeObject.recentMeasurementValueId).attr("class", "amber");
 	        } else if(parseFloat(recentMeasurement.minValue) <= parseFloat(recentMeasurement.value) && parseFloat(recentMeasurement.value) <= parseFloat(recentMeasurement.maxValue)) {
@@ -159,7 +154,7 @@ function showEditableFields(canvasId) {
 	var editedThresholdLowValueTD = $("#" + canvasId + "-modify-threshold").find("[name='thresholdLowValue']");
 	var editedThresholdHighValueTD = $("#" + canvasId + "-modify-threshold").find("[name='thresholdHighValue']");
 
-	//Reflect the values which are saved in the database.
+	//Replace the values in the editable fields from the database.
 	editedThresholdLowValueTD.val(existingThresholdLowValue);
 	editedThresholdHighValueTD.val(existingThresholdHighValue);
 

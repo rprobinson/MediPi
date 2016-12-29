@@ -31,6 +31,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import uk.gov.nhs.digital.telehealth.clinician.service.domain.AttributeThreshold;
+import uk.gov.nhs.digital.telehealth.clinician.service.domain.BloodPressureAttributeThreshold;
 import uk.gov.nhs.digital.telehealth.clinician.service.services.AttributeThresholdService;
 import uk.gov.nhs.digital.telehealth.clinician.service.url.mappings.ServiceURLMappings;
 
@@ -64,6 +65,16 @@ public class AttributeThresholdServiceController {
 		ContextThreadLocal.set(ContextInfo.toContextInfo(context));
 		LOGGER.debug("Save attribute thresholds for: " + attributeThreshold);
 		AttributeThreshold savedAttributeThreshold = attributeThresholdService.saveAttributeThreshold(attributeThreshold);
+		LOGGER.info("The saved attribute threshold: " + savedAttributeThreshold);
+		return savedAttributeThreshold;
+	}
+
+	@RequestMapping(value = ServiceURLMappings.AttributeThresholdServiceController.SAVE_BLOOD_PRESSURE_ATTRIBUTE_THRESHOLD, method = RequestMethod.POST)
+	@ResponseBody
+	public BloodPressureAttributeThreshold saveBloodPressureAttributeThreshold(@RequestBody @Valid final BloodPressureAttributeThreshold attributeThreshold, @RequestHeader(CommonConstants.CONTEXT_INFORMATION_REQUEST_PARAMETER) final String context) throws DefaultWrappedException {
+		ContextThreadLocal.set(ContextInfo.toContextInfo(context));
+		LOGGER.debug("Save attribute thresholds for: " + attributeThreshold);
+		BloodPressureAttributeThreshold savedAttributeThreshold = attributeThresholdService.saveBloodPressureAttributeThreshold(attributeThreshold);
 		LOGGER.info("The saved attribute threshold: " + savedAttributeThreshold);
 		return savedAttributeThreshold;
 	}

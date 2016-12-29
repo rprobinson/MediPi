@@ -13,9 +13,11 @@
 				<canvas id="${param.canvasId}" width="100%" height="30%" />
 			</div>
 			<div class="col-sm-2">
-				<form name="${param.canvasId}-attributeThreshold" id="${param.canvasId}-attributeThreshold" action="/clinician/attributeThreshold/" method="POST" onsubmit="return submitAttributeThreshold('${param.canvasId}')">
-					<input type="hidden" name="patientUUID" value="${param.patientUUID}">
-					<input type="hidden" name="attributeId" value="${param.attributeId}">
+				<form name="${param.canvasId}-attributeThreshold" id="${param.canvasId}-attributeThreshold" action="/clinician/attributeThreshold/bloodPressure" method="POST" onsubmit="return submitBloodPressureAttributeThreshold('${param.canvasId}')">
+					<input type="hidden" name="systolic.patientUUID" value="${param.patientUUID}">
+					<input type="hidden" name="diastolic.patientUUID" value="${param.patientUUID}">
+					<input type="hidden" name="systolic.attributeId" value="${param.systolicAttributeId}">
+					<input type="hidden" name="diastolic.attributeId" value="${param.diastolicAttributeId}">
 					<table class="measurement-attribute">
 						<tr>
 							<th scope="col" colspan="2" id="${param.recentMeasurementDateId}"></th>
@@ -27,30 +29,30 @@
 							<th scope="col">Min</th>
 							<th scope="col">Max</th>
 						</tr>
-						<tr id="${param.canvasId}-threshold">
+						<tr id="${param.canvasId}-systolic-threshold">
 							<td id="${param.measurementSystolicMinValueId}" name="existingSystolicThresholdLowValue"></td>
 							<td id="${param.measurementSystolicMaxValueId}" name="existingSystolicThresholdHighValue"></td>
 						</tr>
-						<tr class="hidden" id="${param.canvasId}-modify-threshold">
-							<td><input id="${param.measurementSystolicMinValueId}-value" name="systolicThresholdLowValue" type="text" class="number w65" maxlength="10"></td>
-							<td><input id="${param.measurementSystolicMaxValueId}-value" name="systolicThresholdHighValue" type="text" class="number w65" maxlength="10"></td>
+						<tr class="hidden" id="${param.canvasId}-systolic-modify-threshold">
+							<td><input id="${param.measurementSystolicMinValueId}-value" name="systolic.thresholdLowValue" type="text" class="number w65" maxlength="10"></td>
+							<td><input id="${param.measurementSystolicMaxValueId}-value" name="systolic.thresholdHighValue" type="text" class="number w65" maxlength="10"></td>
 						</tr>
-						<tr id="${param.canvasId}-threshold">
+						<tr id="${param.canvasId}-diastolic-threshold">
 							<td id="${param.measurementDiastolicMinValueId}" name="existingDiastolicThresholdLowValue"></td>
 							<td id="${param.measurementDiastolicMaxValueId}" name="existingDiastolicThresholdHighValue"></td>
 						</tr>
-						<tr class="hidden" id="${param.canvasId}-modify-threshold">
-							<td><input id="${param.measurementDiastolicMinValueId}-value" name="systolicThresholdLowValue" type="text" class="number w65" maxlength="10"></td>
-							<td><input id="${param.measurementDiastolicMaxValueId}-value" name="systolicThresholdHighValue" type="text" class="number w65" maxlength="10"></td>
+						<tr class="hidden" id="${param.canvasId}-diastolic-modify-threshold">
+							<td><input id="${param.measurementDiastolicMinValueId}-value" name="diastolic.thresholdLowValue" type="text" class="number w65" maxlength="10"></td>
+							<td><input id="${param.measurementDiastolicMaxValueId}-value" name="diastolic.thresholdHighValue" type="text" class="number w65" maxlength="10"></td>
 						</tr>
 					</table>
-					<div class="span7 pull-left text-right" onclick="showEditableFields('${param.canvasId}')">
+					<div class="span7 pull-left text-right" onclick="showBloodPressureEditableFields('${param.canvasId}')">
 						<input class="btn btn-xs btn-primary" id="${param.canvasId}-btn_modify_thresholds" type="button" value="Modify Thresholds" name="modifyThresholds">
 					</div>
 					<div class="span7 pull-left text-right">
 						<input class="btn btn-xs btn-primary hidden" id="${param.canvasId}-btn_update_thresholds" type="submit" value="Submit" name="updateThresholds">
 					</div>
-					<div class="span7 pull-left text-right" onclick="hideEditableFields('${param.canvasId}')">
+					<div class="span7 pull-left text-right" onclick="hideBloodPressureEditableFields('${param.canvasId}')">
 						<input class="btn btn-xs btn-primary hidden" id="${param.canvasId}-btn_cancel_update" type="button" value="Cancel" name="cancelUpdate">
 					</div>
 				</form>

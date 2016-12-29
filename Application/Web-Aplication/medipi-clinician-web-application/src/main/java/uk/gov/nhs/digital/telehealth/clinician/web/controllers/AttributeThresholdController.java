@@ -33,6 +33,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import uk.gov.nhs.digital.telehealth.clinician.service.domain.AttributeThreshold;
+import uk.gov.nhs.digital.telehealth.clinician.service.domain.BloodPressureAttributeThreshold;
 import uk.gov.nhs.digital.telehealth.clinician.service.url.mappings.ServiceURLMappings;
 import uk.gov.nhs.digital.telehealth.clinician.web.constants.WebConstants;
 
@@ -63,6 +64,15 @@ public class AttributeThresholdController extends BaseController {
 	public AttributeThreshold saveAttributeThreshold(@ModelAttribute final AttributeThreshold attributeThreshold, final HttpServletRequest request) throws DefaultWrappedException {
 		final HttpEntity<?> entity = HttpUtil.getEntityWithHeaders(WebConstants.Operations.AttributeThreshold.SAVE, attributeThreshold);
 		AttributeThreshold savedAttributeThreshold = this.restTemplate.exchange(this.clinicianServiceURL + ServiceURLMappings.AttributeThresholdServiceController.CONTROLLER_MAPPING + ServiceURLMappings.AttributeThresholdServiceController.SAVE_ATTRIBUTE_THRESHOLD, HttpMethod.POST, entity, AttributeThreshold.class).getBody();
+		LOGGER.info("The saved attribute threshold: " + savedAttributeThreshold);
+		return savedAttributeThreshold;
+	}
+
+	@RequestMapping(value = "/bloodPressure", method = RequestMethod.POST)
+	@ResponseBody
+	public BloodPressureAttributeThreshold saveBloodPressureAttributeThreshold(@ModelAttribute final BloodPressureAttributeThreshold attributeThreshold, final HttpServletRequest request) throws DefaultWrappedException {
+		final HttpEntity<?> entity = HttpUtil.getEntityWithHeaders(WebConstants.Operations.AttributeThreshold.SAVE, attributeThreshold);
+		BloodPressureAttributeThreshold savedAttributeThreshold = this.restTemplate.exchange(this.clinicianServiceURL + ServiceURLMappings.AttributeThresholdServiceController.CONTROLLER_MAPPING + ServiceURLMappings.AttributeThresholdServiceController.SAVE_BLOOD_PRESSURE_ATTRIBUTE_THRESHOLD, HttpMethod.POST, entity, BloodPressureAttributeThreshold.class).getBody();
 		LOGGER.info("The saved attribute threshold: " + savedAttributeThreshold);
 		return savedAttributeThreshold;
 	}

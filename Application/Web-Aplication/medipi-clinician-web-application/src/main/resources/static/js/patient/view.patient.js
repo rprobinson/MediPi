@@ -1,3 +1,2 @@
-$(document).ready(function() {
-	showActiveMenu(NAVIGATION_LINK_MAP.PATIENT);
-});
+var ALLOWED_NUMBER_OF_DIGITS_AFTER_DECIMAL = 1;
+showActiveMenu(NAVIGATION_LINK_MAP.PATIENT);

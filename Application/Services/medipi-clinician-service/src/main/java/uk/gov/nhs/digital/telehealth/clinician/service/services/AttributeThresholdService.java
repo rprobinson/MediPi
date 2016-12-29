@@ -31,6 +31,7 @@ import uk.gov.nhs.digital.telehealth.clinician.service.dao.impl.AttributeThresho
 import uk.gov.nhs.digital.telehealth.clinician.service.dao.impl.PatientDAO;
 import uk.gov.nhs.digital.telehealth.clinician.service.dao.impl.RecordingDeviceAttributeDAO;
 import uk.gov.nhs.digital.telehealth.clinician.service.domain.AttributeThreshold;
+import uk.gov.nhs.digital.telehealth.clinician.service.domain.BloodPressureAttributeThreshold;
 import uk.gov.nhs.digital.telehealth.clinician.service.entities.AttributeThresholdMaster;
 import uk.gov.nhs.digital.telehealth.clinician.service.entities.PatientMaster;
 import uk.gov.nhs.digital.telehealth.clinician.service.entities.RecordingDeviceAttributeMaster;
@@ -96,6 +97,14 @@ public class AttributeThresholdService {
 			LOGGER.debug("Saved Attribute Threshold with id:<" + attributeThresholdMaster.getAttributeThresholdId() + ">");
 			returnThreshold = mapperFacade.map(attributeThresholdMaster, AttributeThreshold.class);
 		}
+		return returnThreshold;
+	}
+
+	@Transactional(rollbackFor = {Exception.class})
+	public BloodPressureAttributeThreshold saveBloodPressureAttributeThreshold(final BloodPressureAttributeThreshold attributeThreshold) throws DefaultWrappedException {
+		BloodPressureAttributeThreshold returnThreshold = new BloodPressureAttributeThreshold();
+		returnThreshold.setSystolic(saveAttributeThreshold(attributeThreshold.getSystolic()));
+		returnThreshold.setDiastolic(saveAttributeThreshold(attributeThreshold.getDiastolic()));
 		return returnThreshold;
 	}
 }
