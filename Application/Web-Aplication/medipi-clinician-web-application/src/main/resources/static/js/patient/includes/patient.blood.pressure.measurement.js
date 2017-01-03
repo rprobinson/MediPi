@@ -103,11 +103,6 @@ var measurement = {
             data: chartData,
             options: {
                 responsive: true,
-            	elements: {
-                    point:{
-                        radius: 1
-                    }
-                },
                 scales: {
                 	xAxes: [{
                 		type: "time",
@@ -280,7 +275,7 @@ function submitBloodPressureAttributeThreshold(canvasId) {
 
 	if(existingSystolicThresholdLowValue == editedSystolicThresholdLowValue && existingSystolicThresholdHighValue == editedSystolicThresholdHighValue && existingDiastolicThresholdLowValue == editedDiastolicThresholdLowValue && existingDiastolicThresholdHighValue == editedDiastolicThresholdHighValue) {
 		//no need to update as there are no changes for threshold values.
-		hideEditableFields(canvasId);
+		hideBloodPressureEditableFields(canvasId);
 	} else {
 		$.ajax({
 			type: $(formId).attr("method"),
@@ -293,7 +288,7 @@ function submitBloodPressureAttributeThreshold(canvasId) {
 				existingDiastolicThresholdLowValueTD.html(data.diastolic.thresholdLowValue);
 				existingDiastolicThresholdHighValueTD.html(data.diastolic.thresholdHighValue);
 
-				hideEditableFields(canvasId);
+				hideBloodPressureEditableFields(canvasId);
 				hideErrorDiv();
 				showSuccessDiv("Thresholds have been updated.");
 			},
