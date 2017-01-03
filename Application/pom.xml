@@ -23,6 +23,7 @@
         <module>../Commons/MediPiTransportTools</module>
         <module>Common-Components/devops-commons</module>
         <module>Common-Components/devops-exception-manager</module>
+        <module>../Clinician/MediPiClinical/</module>
         <module>Services/medipi-clinician-service</module>
         <module>Web-Aplication/medipi-clinician-web-application</module>
     </modules>
