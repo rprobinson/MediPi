@@ -13,20 +13,24 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
-package org.medipi.concentrator.dao;
+package org.medipi.clinical.dao;
 
-import java.util.List;
-import org.medipi.concentrator.entities.RecordingDeviceType;
+import org.medipi.clinical.entities.RecordingDeviceAttribute;
+import org.medipi.clinical.entities.RecordingDeviceType;
 
 /**
- * Data Access Object interface for RecordingDeviceType
+ * Data Access Object interface for RecordingDeviceAttribute
  *
  * @author rick@robinsonhq.com
  */
-public interface RecordingDeviceTypeDAO extends GenericDAO<RecordingDeviceType> {
+public interface RecordingDeviceAttributeDAO extends GenericDAO<RecordingDeviceAttribute> {
 
-    public RecordingDeviceType findByTypeMakeModelDisplayName(String type, String make, String model, String displayName);
-
-    public List<String> findByPatient(String patientUuid);
-    public RecordingDeviceType findByType(String type);
+    /**
+     * Find RecordingDeviceAttribute by type and attributeName
+     *
+     * @param typeId
+     * @param column
+     * @return recording device attribute object 
+     */
+    public RecordingDeviceAttribute findByAttributeNameTypeUnitsTypeId(String name, String type, String units,int typeId);
 }
