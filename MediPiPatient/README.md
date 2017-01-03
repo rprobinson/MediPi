@@ -126,26 +126,27 @@ The MediPi project is a software project but is dependent on hardware for use in
 
 ## Certificates and PKI
 The Patient device requires 2 certificates:
-	* Patient Certificate - The JKS password controls the authentication of the patient device. The cert is used to encrypt and sign the patient measurement data in the EncryptedAndSignedUploadDO data object.
-	* Device Certificate - The JKS is unlocked using the MAC address of the host computer at start up and will not allow operation unless the MAC address of the system unlocks the device certificate. The provided test certificate will not work on your system, however for test purposes the following line can be amended in org.medpi.MediPi class to allow it to work:
+####- Patient Certificate - The JKS password controls the authentication of the patient device. The cert is used to encrypt and sign the patient measurement data in the EncryptedAndSignedUploadDO data object.
+####- Device Certificate - The JKS is unlocked using the MAC address of the host computer at start up and will not allow operation unless the MAC address of the system unlocks the device certificate. The provided test certificate will not work on your system, however for test purposes the following line can be amended in org.medpi.MediPi class to allow it to work:
+
+For the device cert 9b636f94-e1c2-4773-a5ca-3858ba176e9c.jks 
+
+Linux:
+
+```
+	350 String addr = "b8:27:eb:27:09:93";
+```
+
+non-Linux:
+
+```
+	397 macAddress = "b8:27:eb:27:09:93";
+```
+
+The Device Certificate is also used for 2-Way SSl/TLSMA encryption on the data in transit.
 	
-	for the device cert 24b73cb7-934d-49d5-bf11-1e63ee9d26b3.jks 
-	
-	Linux:
-
-    ```
-	350 String addr = "24b73cb7-934d-49d5-bf11-1e63ee9d26b3"
-	```
-
-	non-Linux:
-
-    ```
-	397 macAddress = "24b73cb7-934d-49d5-bf11-1e63ee9d26b3";
-	```
-
-	The Device Certificate is also used for 2-Way SSl/TLSMA encryption on the data in transit.
-	
-The certs used for the MediPi Patient are published here as java key stores and should allow testing of the MediPiPatient with the MediPi Concentrator. The certs are for testing purposes and not suitable for use in any other circumstance.
+The certs for MediPi Patient software are published here (and are intended to work out-of-the-box) as java key stores and should allow testing of the MediPiPatient with the MediPi Concentrator. The authentication PIN is 2222
+**The certs are for testing purposes and not suitable for use in any other circumstance**
 
 ##Licence
 
@@ -226,6 +227,18 @@ Guide for building OpenJFX: https://wiki.openjdk.java.net/display/OpenJFX/Buildi
 
 10. Copy the `{medipi-repo-directory}/MediPi/MediPiPatient/target/MediPi.jar` file to /home/{user}/MediPi/ directory
 
-11. Execute MediPi using:
+11. Upgrade the Java Cryptography Extention. Download from http://www.oracle.com/technetwork/java/javase/downloads/jce8-download-2133166.html and follow the README.txt instructions included in the package. The certs included for demonstration purposes require greater strength binaries in the JRE than are present by default.
+12. Execute MediPi using:
         
         java -Djava.library.path=/usr/lib/jni -jar /home/{user}/MediPi/MediPi.jar --propertiesFile=/home/{user}/MediPi/config/MediPi.properties
+
+#MediPi V1.0.8 .img file
+This downloadable image file of MediPi Patient v1.0.8 was built on the latest version of Raspbian (Jessie) and has been compressed.
+Uncompress and write to a microSD card. 
+
+[Compressed MediPi Image File](https://www.dropbox.com/s/y7q508cpatgu5h7/reduced_Medipi_v1.0.8.img.zip?dl=0)
+
+[Raspberry Pi Guide to writing an image to microSD](https://www.raspberrypi.org/documentation/installation/installing-images/)
+
+This has been tested using the Raspberry Pi 3 with the Raspberry Pi official 7" touchsceen.
+The image once written to the microSD card will boot to the Raspbian desktop and execute MediPi Patient in full screen. To get back to the desktop just close MediPi in "Settings". The authentication PIN is 2222
