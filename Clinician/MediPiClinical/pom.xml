@@ -3,13 +3,13 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>org.medipi.concentrator</groupId>
-    <artifactId>MediPiConcentrator</artifactId>
-    <version>1.0.3</version>
+    <groupId>org.medipi.clinical</groupId>
+    <artifactId>MediPiClinical</artifactId>
+    <version>PILOT-20170103-1</version>
     <packaging>jar</packaging>
 
-    <name>MediPiConcentrator</name>
-    <description>MediPi Concentrator</description>
+    <name>MediPiClinical</name>
+    <description>MediPi Clinical</description>
 
     <parent>
         <groupId>org.springframework.boot</groupId>
@@ -69,7 +69,6 @@
         <dependency>
             <groupId>org.hibernate</groupId>
             <artifactId>hibernate-entitymanager</artifactId>
-            <version>4.3.10.Final</version>
         </dependency>
         <dependency>
             <groupId>commons-codec</groupId>
@@ -119,7 +118,6 @@
     </dependencies>
 	
     <build>
-        <finalName>MediPiConcentrator</finalName>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
@@ -127,19 +125,5 @@
             </plugin>
         </plugins>
     </build>
-    <repositories>
-        <repository>
-            <id>lib</id>
-            <name>lib</name>
-            <releases>
-                <enabled>true</enabled>
-                <checksumPolicy>ignore</checksumPolicy>
-            </releases>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-            <url>file://${project.basedir}/lib</url>
-        </repository>
-    </repositories>	
 
 </project>

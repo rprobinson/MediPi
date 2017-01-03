@@ -94,7 +94,9 @@ public class MediPiNativeFormat extends PatientUploadDataFormat {
 
                 }
                 int rowsWrittenToDBPerPayload = 0;
-                String subtype = null;
+                String make = null;
+                String model = null;
+                String displayName = null;
                 String datadelimeter = null;
                 String[] columnsArray = null;
                 String[] formatArray = null;
@@ -146,8 +148,14 @@ public class MediPiNativeFormat extends PatientUploadDataFormat {
                                             datadelimeter = "\\" + datadelimeter;
                                         }
                                         break;
-                                    case "subtype":
-                                        subtype = metaSplit[2];
+                                    case "make":
+                                        make = metaSplit[2];
+                                        break;
+                                    case "model":
+                                        model = metaSplit[2];
+                                        break;
+                                    case "displayname":
+                                        displayName = metaSplit[2];
                                         break;
                                     case "columns":
                                         columnsArray = metaSplit[2].split(datadelimeter);
@@ -171,14 +179,14 @@ public class MediPiNativeFormat extends PatientUploadDataFormat {
                                         try {
                                             scheduleeffectivedate = new ISO8601DateFormat().parse(metaSplit[2]);
                                         } catch (ParseException ex) {
-                                            throwBadRequest400("scheduleeffectivedate for device: " + type + " " + subtype + " metatdata->scheduleeffectivedate is in an invalid format");
+                                            throwBadRequest400("scheduleeffectivedate for device: " + displayName + " metatdata->scheduleeffectivedate is in an invalid format");
                                         }
                                         break;
                                     case "scheduleexpirydate":
                                         try {
                                             scheduleexpirydate = new ISO8601DateFormat().parse(metaSplit[2]);
                                         } catch (ParseException ex) {
-                                            throwBadRequest400("scheduleexpirydate for device: " + type + " " + subtype + " metatdata->scheduleexpirydate is in an invalid format");
+                                            throwBadRequest400("scheduleexpirydate for device: " + displayName + " metatdata->scheduleexpirydate is in an invalid format");
                                         }
                                         break;
                                     default:
@@ -187,18 +195,18 @@ public class MediPiNativeFormat extends PatientUploadDataFormat {
                                 }
                             }
 
-                        } else if (readAllMetadata || checkMetadata(subtype, datadelimeter, columnsArray, formatArray, unitsArray)) {
+                        } else if (readAllMetadata || checkMetadata(make, model, displayName, datadelimeter, columnsArray, formatArray, unitsArray)) {
                             readAllMetadata = true;
                             // It's data
                             if (rdt == null) {
                                 // need to find the type - only needs to be done once per device type
                                 // Check to find the device in the device_type table
                                 try {
-                                    rdt = this.recordingDeviceTypeDAO.findBytypeAndSubtype(type, subtype);
+                                    rdt = this.recordingDeviceTypeDAO.findByTypeMakeModelDisplayName(type, make, model, displayName);
                                 } catch (EmptyResultDataAccessException e) {
                                     // Device does NOT exist in the database
                                     // if not in db add it
-                                    rdt = updateRecordingDeviceType(rdt, type, subtype);
+                                    rdt = updateRecordingDeviceType(rdt, type, make, model, displayName);
                                 }
                             }
                             String[] dataArray = line.split(datadelimeter);
@@ -210,7 +218,7 @@ public class MediPiNativeFormat extends PatientUploadDataFormat {
                                         // The concentrator expects the incoming string representation of the time to be UTC in ISO
                                         dataPointTime = new ISO8601DateFormat().parse(data);
                                     } catch (ParseException ex) {
-                                        throwBadRequest400("Datapoint time for device: " + type + " " + subtype + " is in an invalid format: " + data);
+                                        throwBadRequest400("Datapoint time for device: " + displayName + " is in an invalid format: " + data);
                                     }
                                 } else {
                                     RecordingDeviceAttribute rda = null;
@@ -288,14 +296,16 @@ public class MediPiNativeFormat extends PatientUploadDataFormat {
     }
 
     @Transactional
-    private RecordingDeviceType updateRecordingDeviceType(RecordingDeviceType rdt, String type, String subtype) {
+    private RecordingDeviceType updateRecordingDeviceType(RecordingDeviceType rdt, String type, String make, String model, String displayName) {
         try {
             rdt = new RecordingDeviceType();
             rdt.setType(type);
-            rdt.setSubtype(subtype);
+            rdt.setMake(make);
+            rdt.setModel(model);
+            rdt.setDisplayName(displayName);
             recordingDeviceTypeDAO.save(rdt);
         } catch (EntityExistsException e) {
-            throwBadRequest400("Device: " + type + " " + subtype + " already exists in RECORDING_DEVICE_TYPE table in the DB");
+            throwBadRequest400("Device: " + type + " " + make+ " " + model+ " " + displayName + " already exists in RECORDING_DEVICE_TYPE table in the DB");
         }
         return rdt;
 
@@ -325,11 +335,17 @@ public class MediPiNativeFormat extends PatientUploadDataFormat {
         throw new BadRequest400Exception(message);
     }
 
-    private boolean checkMetadata(String device, String datadelimiter, String[] columns, String[] format, String[] units) {
+    private boolean checkMetadata(String make,String model,String displayName, String datadelimiter, String[] columns, String[] format, String[] units) {
         //what is the minimum metadata required?
         StringBuilder nullContent = new StringBuilder();
-        if (device == null) {
-            nullContent.append("metadata->device ");
+        if (make == null) {
+            nullContent.append("metadata->make ");
+        }
+        if (model == null) {
+            nullContent.append("metadata->model ");
+        }
+        if (displayName == null) {
+            nullContent.append("metadata->displayname ");
         }
         if (datadelimiter == null) {
             nullContent.append("metadata->datadelimiter ");

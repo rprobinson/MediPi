@@ -13,20 +13,25 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
-package org.medipi.concentrator.dao;
+package org.medipi.clinical.dao;
 
-import java.util.List;
-import org.medipi.concentrator.entities.RecordingDeviceType;
+import java.util.Date;
+import org.medipi.clinical.entities.AttributeThreshold;
 
 /**
- * Data Access Object interface for RecordingDeviceType
+ * Data Access Object interface for RecordingDeviceAttribute
  *
  * @author rick@robinsonhq.com
  */
-public interface RecordingDeviceTypeDAO extends GenericDAO<RecordingDeviceType> {
+public interface AttributeThresholdDAO extends GenericDAO<AttributeThreshold> {
 
-    public RecordingDeviceType findByTypeMakeModelDisplayName(String type, String make, String model, String displayName);
-
-    public List<String> findByPatient(String patientUuid);
-    public RecordingDeviceType findByType(String type);
+    /**
+     * Find RecordingDeviceAttribute by type and attributeName
+     *
+     * @param attributeId
+     * @param patientUuid
+     * @param measurementDate
+     * @return recording device attribute object 
+     */
+    public AttributeThreshold findLatestByAttributeAndPatientAndDate(int attributeId, String patientUuid, Date measurementDate);
 }

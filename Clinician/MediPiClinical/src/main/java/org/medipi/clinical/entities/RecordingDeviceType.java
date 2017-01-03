@@ -13,7 +13,7 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
-package org.medipi.concentrator.entities;
+package org.medipi.clinical.entities;
 
 import java.io.Serializable;
 import javax.persistence.Basic;
@@ -29,17 +29,15 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
 /**
- * Entity class encapsulating RecordingDeviceType database table
+ * Entity Class to manage DB access for recording device type
  * @author rick@robinsonhq.com
  */
-
 @Entity
 @Table(name = "recording_device_type")
 @NamedQueries({
-    //Added
+//Added
     @NamedQuery(name = "RecordingDeviceType.findByTypeMakeModelDisplayName", query = "SELECT r FROM RecordingDeviceType r WHERE r.type = :type AND r.make = :make AND r.model = :model AND r.displayName = :displayname"),
-    @NamedQuery(name = "RecordingDeviceType.findByPatient", query = "SELECT t.type FROM RecordingDeviceData d, RecordingDeviceAttribute a, RecordingDeviceType t WHERE d.attributeId = a.attributeId AND a.typeId = t.typeId AND d.patientUuid.patientUuid = :patientUuid GROUP BY t.type"),
-    //
+//
     @NamedQuery(name = "RecordingDeviceType.findAll", query = "SELECT r FROM RecordingDeviceType r"),
     @NamedQuery(name = "RecordingDeviceType.findByTypeId", query = "SELECT r FROM RecordingDeviceType r WHERE r.typeId = :typeId"),
     @NamedQuery(name = "RecordingDeviceType.findByType", query = "SELECT r FROM RecordingDeviceType r WHERE r.type = :type"),
@@ -47,6 +45,7 @@ import javax.validation.constraints.Size;
     @NamedQuery(name = "RecordingDeviceType.findByModel", query = "SELECT r FROM RecordingDeviceType r WHERE r.model = :model"),
     @NamedQuery(name = "RecordingDeviceType.findByDisplayName", query = "SELECT r FROM RecordingDeviceType r WHERE r.displayName = :displayname")})
 public class RecordingDeviceType implements Serializable {
+
 
     private static final long serialVersionUID = 1L;
     @Id
@@ -150,8 +149,9 @@ public class RecordingDeviceType implements Serializable {
 
     @Override
     public String toString() {
-        return "org.medipi.concentrator.RecordingDeviceType[ typeId=" + typeId + " ]";
+        return "org.medipi.clinical.entities.RecordingDeviceType[ typeId=" + typeId + " ]";
     }
 
 
+    
 }
