@@ -42,8 +42,8 @@ var measurement = {
 				{
 				    label: includeObject.diastolicAttributeName + " min",
 				    fill: false,
-				    borderColor: 'rgba(255,220,113,1)',
-				    backgroundColor: 'rgba(255,220,113,1)',
+				    borderColor: 'rgba(111,255,175,1)',
+				    backgroundColor: 'rgba(111,255,175,1)',
 				    data: jsonData[1].mapValue('minValue'),
 				    borderDash: [10, 7],
 				    lineTension: 0
@@ -59,8 +59,8 @@ var measurement = {
 				{
 				    label: includeObject.diastolicAttributeName + " max",
 				    fill: false,
-				    borderColor: 'rgba(179,134,0,1)',
-				    backgroundColor: 'rgba(179,134,0,1)',
+				    borderColor: 'rgba(0,111,50,1)',
+				    backgroundColor: 'rgba(0,111,50,1)',
 				    data: jsonData[1].mapValue('maxValue'),
 				    borderDash: [10, 5],
 				    lineTension: 0
@@ -68,8 +68,8 @@ var measurement = {
 				{
 				    label: includeObject.systolicAttributeName + " min",
 				    fill: false,
-				    borderColor: 'rgba(255,89,89,1)',
-				    backgroundColor: 'rgba(255,89,89,1)',
+				    borderColor: 'rgba(174,198,225,1)',
+				    backgroundColor: 'rgba(174,198,225,1)',
 				    data: jsonData[0].mapValue('minValue'),
 				    borderDash: [10, 7],
 				    lineTension: 0
@@ -85,8 +85,8 @@ var measurement = {
 				{
 				    label: includeObject.systolicAttributeName + " max",
 				    fill: false,
-				    borderColor: 'rgba(196,0,0,1)',
-				    backgroundColor: 'rgba(196,0,0,1)',
+				    borderColor: 'rgba(30,53,81,1)',
+				    backgroundColor: 'rgba(30,53,81,1)',
 				    data: jsonData[0].mapValue('maxValue'),
 				    borderDash: [10, 5],
 				    lineTension: 0
