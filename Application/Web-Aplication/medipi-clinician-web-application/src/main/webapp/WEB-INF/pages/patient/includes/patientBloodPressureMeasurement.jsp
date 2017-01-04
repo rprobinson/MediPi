@@ -56,28 +56,6 @@
 						<input class="btn btn-xs btn-primary hidden" id="${param.canvasId}-btn_cancel_update" type="button" value="Cancel" name="cancelUpdate">
 					</div>
 				</form>
-
-
-				<%-- <table class="measurement-attribute">
-					<tr>
-						<th scope="col" colspan="2" id="${param.recentMeasurementDateId}"></th>
-					</tr>
-					<tr>
-						<td colspan="2" id="${param.recentMeasurementValueId}"></td>
-					</tr>
-					<tr>
-						<th scope="col">Min</th>
-						<th scope="col">Max</th>
-					</tr>
-					<tr>
-						<td id="${param.measurementSystolicMinValueId}"></td>
-						<td id="${param.measurementSystolicMaxValueId}"></td>
-					</tr>
-					<tr>
-						<td id="${param.measurementDiastolicMinValueId}"></td>
-						<td id="${param.measurementDiastolicMaxValueId}"></td>
-					</tr>
-				</table> --%>
 			</div>
 		</div>
 	</div>
