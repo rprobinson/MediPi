@@ -1,6 +1,0 @@
-${config-directory-location}/images/bf480.jpg Instructions for the use of the Beurer BF480 Diagnostic Scale. Before following this guide make sure you have taken a measurement to download. 
-${config-directory-location}/images/bf480.jpg Only the latest weight measurement will be displayed although all results on the meter will be transmitted.
-${config-directory-location}/guides/BeurerBF480_USBInsert.jpg Insert the black USB cable into any USB port on MediPi
-${config-directory-location}/guides/BeurerBF480_USBInsert2.jpg Insert the other end of the USB cable into the Beurer BF480 Diagnostic Scale
-${config-directory-location}/guides/BeurerBF480_percent.jpg Press the Download button on MediPi and the screen on the diagnostic scale will count up a percentage
-${config-directory-location}/guides/BeurerBF480_end.jpg When it is complete the screen on the diagnostic scale will display "END"

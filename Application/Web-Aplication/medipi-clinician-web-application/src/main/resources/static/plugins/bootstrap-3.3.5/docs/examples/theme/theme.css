@@ -1,0 +1,50 @@
+body {
+  padding-top: 100px;
+  padding-bottom: 30px;
+}
+
+.theme-dropdown .dropdown-menu {
+  position: static;
+  display: block;
+  margin-bottom: 20px;
+}
+
+.theme-showcase > p > .btn {
+  margin: 5px 0;
+}
+
+.theme-showcase .navbar .container {
+  width: auto;
+}
+
+
+/* Sticky footer styles
+-------------------------------------------------- */
+html {
+  position: relative;
+  min-height: 100%;
+}
+body {
+  /* Margin bottom by footer height */
+  margin-bottom: 60px;
+}
+.footer {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  /* Set the fixed height of the footer here */
+  height: 60px;
+  /*background-color: #f5f5f5;*/
+  background-color: #000000;
+  border-top:1px solid #ccc;
+}
+
+.footer  ul  {color: white; margin:20px 0 0 0; padding-left:0;}
+.footer  ul li {list-style-type: none; display: inline;}
+
+
+
+.navbar-nav>li>a {
+    padding-top: 25px;
+    padding-bottom: 25px;
+}

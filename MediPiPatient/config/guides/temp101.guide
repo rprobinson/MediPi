@@ -1,0 +1,4 @@
+${config-directory-location}/images/Braun-Thermoscan.jpg Instructions for the use of the Therm 101 Thermometer
+${config-directory-location}/images/Braun-Thermoscan.jpg 1. Take reading from tympanic thermometer as directed.
+${config-directory-location}/guides/therm_input_result.png 2. Read device screen and input reading into the MediPi device using the +/- buttons. All digits must be entered.
+${config-directory-location}/guides/next.png 3. Press ‘next’/’back’

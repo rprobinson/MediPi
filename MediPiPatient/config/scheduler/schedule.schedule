@@ -1,0 +1,12 @@
+#	UUID	status_S/M/T time	mins_until_next_schedule 	devices 
+c0521ad0-6999-4b45-b154-88a60575c772 SCHEDULED 2016-02-17T01:38:00Z 1440 Oximeter Scale BloodPressureCuff Thermometer HeartFailureQuestionnaire COPDQuestionnaire DiabetesQuestionnaire Transmitter
+f2b9e498-f536-476a-b8cd-b3676bd6e5c9 STARTED 2016-09-07T14:01:01.415Z 30 Oximeter Scale BloodPressureCuff Questionnaire Transmitter
+f2b9e498-f536-476a-b8cd-b3676bd6e5c9 MEASURED 2016-09-07T14:01:17.295Z 0 Oximeter
+f2b9e498-f536-476a-b8cd-b3676bd6e5c9 MEASURED 2016-09-07T14:01:41.424Z 0 Scale
+f2b9e498-f536-476a-b8cd-b3676bd6e5c9 MEASURED 2016-09-07T14:01:45.999Z 0 BloodPressureCuff
+f2b9e498-f536-476a-b8cd-b3676bd6e5c9 MEASURED 2016-09-07T14:01:50.407Z 0 Questionnaire
+f2b9e498-f536-476a-b8cd-b3676bd6e5c9 TRANSMITTED 2016-09-07T14:01:52.393Z 0 Oximeter Scale BloodPressureCuff Questionnaire Scheduler
+5bd5877d-f5a9-422f-b640-48aec203bdf7 STARTED 2016-11-09T21:51:32.024Z 30 Oximeter Scale BloodPressureCuff Questionnaire Transmitter
+5bd5877d-f5a9-422f-b640-48aec203bdf7 MEASURED 2016-11-09T21:51:55.217Z 0 Oximeter
+5bd5877d-f5a9-422f-b640-48aec203bdf7 MEASURED 2016-11-09T21:52:06.532Z 0 Questionnaire
+5bd5877d-f5a9-422f-b640-48aec203bdf7 TRANSMITTED 2016-11-09T21:52:14.110Z 0 Oximeter Questionnaire Scheduler

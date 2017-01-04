@@ -1,0 +1,1 @@
+Need to write integrated tests which will log actual messages in a log file. Need to delete the same file and recreate again.
