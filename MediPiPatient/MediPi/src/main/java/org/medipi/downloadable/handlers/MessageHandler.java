@@ -1,5 +1,5 @@
 /*
- Copyright 2016  Richard Robinson @ HSCIC <rrobinson@hscic.gov.uk, rrobinson@nhs.net>
+ Copyright 2016  Richard Robinson @ NHS Digital <rrobinson@nhs.net>
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -26,20 +26,20 @@ import java.util.Properties;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
 import org.apache.commons.io.IOUtils;
+import org.medipi.MediPiMessageBox;
 import org.medipi.logging.MediPiLogger;
 import org.medipi.security.CertificateDefinitions;
 import org.medipi.messaging.rest.RESTfulMessagingEngine;
 import org.medipi.security.UploadEncryptionAdapter;
 import org.medipi.model.DownloadableDO;
 import org.medipi.model.Links;
-import org.medipi.utilities.Utilities;
 
 /**
- * This is an implementation of the DownloadableHandler for patient messages. It confirms that
- * the signature is verified and that the same content has been signed. The
- * payload is inspected for the HATEOAS link, that link is then requested and
- * the file downloaded to the local specified directory
- * 
+ * This is an implementation of the DownloadableHandler for patient messages. It
+ * confirms that the signature is verified and that the same content has been
+ * signed. The payload is inspected for the HATEOAS link, that link is then
+ * requested and the file downloaded to the local specified directory
+ *
  * @author rick@robinsonhq.com
  */
 public class MessageHandler implements DownloadableHandler {
@@ -129,7 +129,7 @@ public class MessageHandler implements DownloadableHandler {
                     } catch (Exception e) {
                         //FAILED TO SAVE THE MESSAGE - put a message box to the patient
                         MediPiLogger.getInstance().log(MessageHandler.class.getName() + ".error", "Patient Message Downloadable download failed to download or ack - probably a file issue - Downloadable UUID: " + ddo.getDownloadableUuid());
-
+                        MediPiMessageBox.getInstance().makeErrorMessage("Patient Message Downloadable download failed to download or ack - probably a file issue - Downloadable UUID: " + ddo.getDownloadableUuid() + " " + e.getLocalizedMessage(), e);
                     }
                 } else {
                     //ERROR RESPONSE
@@ -151,9 +151,11 @@ public class MessageHandler implements DownloadableHandler {
                 }
             } else {
                 MediPiLogger.getInstance().log(MessageHandler.class.getName() + ".error", "Patient Message failed to resolve link - Downloadable UUID: " + ddo.getDownloadableUuid());
+                MediPiMessageBox.getInstance().makeErrorMessage("Patient Message failed to resolve link - Downloadable UUID: " + ddo.getDownloadableUuid(),null);
             }
         } catch (Exception e) {
             MediPiLogger.getInstance().log(MessageHandler.class.getName() + ".error", "Patient Message failed to resolve link - Downloadable UUID: " + ddo.getDownloadableUuid());
+            MediPiMessageBox.getInstance().makeErrorMessage("Patient Message failed to resolve link - Downloadable UUID: " + ddo.getDownloadableUuid() + " " + e.getLocalizedMessage(), e);
         }
     }
 

@@ -1,5 +1,5 @@
 /*
- Copyright 2016  Richard Robinson @ HSCIC <rrobinson@hscic.gov.uk, rrobinson@nhs.net>
+ Copyright 2016  Richard Robinson @ NHS Digital <rrobinson@nhs.net>
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -15,26 +15,21 @@
  */
 package org.medipi.devices.drivers;
 
-import gnu.io.CommPortIdentifier;
-import gnu.io.PortInUseException;
-import gnu.io.SerialPort;
-import gnu.io.SerialPortEvent;
-import gnu.io.SerialPortEventListener;
-import gnu.io.UnsupportedCommOperationException;
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
 import java.time.Instant;
-import java.util.Enumeration;
-import java.util.TooManyListenersException;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.regex.Pattern;
+import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
+import javafx.concurrent.Task;
 import org.medipi.logging.MediPiLogger;
 import org.medipi.MediPi;
 import org.medipi.MediPiMessageBox;
 import org.medipi.devices.Oximeter;
+import org.medipi.devices.drivers.domain.CMS50DPlusMeasurement;
 import org.medipi.utilities.Utilities;
 
 /**
@@ -45,26 +40,35 @@ import org.medipi.utilities.Utilities;
  * the USB and streaming it to the Device class. Uses RXTX library for serial
  * communication under the GNU Lesser General Public License
  *
- * @author rick@robinsonhq.com
+ * This class defines the device which is to be connected, defines the data to
+ * be collected and passes this forward to the generic device class
+
+* @author rick@robinsonhq.com
  */
-public class ContecCMS50DPlus extends Oximeter implements SerialPortEventListener {
+public class ContecCMS50DPlus extends Oximeter {
 
     private static final String MAKE = "Contec";
     private static final String MODEL = "CMS50D+";
-    private long nanoTime;
-    private long epochTimeAtStart;
-    static CommPortIdentifier portId;
-    static Enumeration portList;
-
-    InputStream inputStream;
-    SerialPort serialPort;
-    boolean stopping = false;
-    boolean fingerOut = false;
-    boolean probeError = false;
-    private String portName;
-    BufferedReader dataReader;
-    protected PipedOutputStream pos = new PipedOutputStream();
-    OutputStream os;
+    private static final String DISPLAYNAME = "Contec CMS50D+ Finger Pulse Oximeter";
+    private static final String RECORD = "Record";
+    private static final String STOP = "Stop";
+    private CMS50DPlusMeasurement measurement;
+    private int spO2DataCounter = 1;
+    private int pulseRateDataCounter = 1;
+    private int sumPulseRate = 0;
+    private int sumSpO2Rate = 0;
+    private int meanPulse = 0;
+    private int meanSpO2 = 0;
+    private Instant endTime;
+    private boolean transmitAverages = true;
+    private ArrayList<ArrayList<String>> verboseDeviceData = new ArrayList<>();
+    /**
+     * The main task. It is exposed to allow the concrete driver class to
+     * control the main task. This is due to the fact that the device is
+     * serially pushing data to this class, so that when it stops it needs
+     * access to the task itself.
+     */
+    protected Task task;
 
     /**
      * Constructor for ContecCMS50DPlus
@@ -75,256 +79,251 @@ public class ContecCMS50DPlus extends Oximeter implements SerialPortEventListene
     @Override
     public String init() throws Exception {
         String deviceNamespace = MediPi.ELEMENTNAMESPACESTEM + getClassTokenName();
-        portName = medipi.getProperties().getProperty(deviceNamespace + ".portname");
+        String portName = medipi.getProperties().getProperty(deviceNamespace + ".portname");
         if (portName == null || portName.trim().length() == 0) {
             String error = "Cannot find the portname for for driver for " + MAKE + " " + MODEL + " - for " + deviceNamespace + ".portname";
-            MediPiLogger.getInstance().log(ContecCMS50DPlus.class.getName(), error);
+            MediPiLogger.getInstance().log(CMS50DPlusMeasurement.class.getName(), error);
             return error;
         }
+        // Decide whether to transmit the full set of streamed data points or just the averages
+        String b = medipi.getProperties().getProperty(MediPi.ELEMENTNAMESPACESTEM + getClassTokenName() + ".data.transmitaverages");
+        if (b == null || b.trim().length() == 0) {
+            transmitAverages = true;
+        } else {
+            transmitAverages = !b.toLowerCase().startsWith("n");
+        }
+
+         initialButtonText = RECORD;
+         initialGraphic = medipi.utils.getImageView("medipi.images.record", 20, 20);
+
+        columns.add("iso8601time");
+        columns.add("pulse");
+        columns.add("spo2");
+        if (!transmitAverages) {
+            columns.add("wave");
+        }
+        format.add("DATE");
+        format.add("INTEGER");
+        format.add("INTEGER");
+        if (!transmitAverages) {
+            format.add("DOUBLE");
+        }
+        units.add("NONE");
+        units.add("BPM");
+        units.add("%");
+        if (!transmitAverages) {
+            units.add("NONE");
+        }
+       measurement = new CMS50DPlusMeasurement(portName, medipi.getDataSeparator());
         return super.init();
     }
 
+    // Method to handle the recording of the serial device data
+    @Override
+    protected void downloadData() {
+        if (task == null || !task.isRunning()) {
+            resetDevice();
+            processData();
+        } else {
+            Platform.runLater(() -> {
+                task.cancel();
+                if (measurement.stopSerialDevice()) {
+                } else {
+                    // serial device cant stop
+                }
+            });
+
+        }
+    }
+
+    private void processData() {
+        task = new Task<String>() {
+            ArrayList<ArrayList<String>> data = new ArrayList<>();
+            @Override
+            protected String call() throws Exception {
+                try {
+                    updateValue("Is the device plugged in?");
+                    BufferedReader stdInput = measurement.startSerialDevice(task);
+                    if (stdInput != null) {
+                        updateValue("No readings taken");
+                        String readData = new String();
+                        while (true) {
+                            try {
+                                readData = stdInput.readLine();
+                            } catch (IOException i) {
+                                // This happens when the connection is dropped when stop is pressed
+                                break;
+                            }
+                            if (readData == null) {
+                                return "no data from device";
+                            } else if (readData.equals("-1")) {
+                                return "end of data stream from oximeter";
+                            } else {
+                                String[] line = readData.split(Pattern.quote(separator));
+                                ArrayList<String> lineList = new ArrayList<>(Arrays.asList(line));
+                                ZonedDateTime zdt = ZonedDateTime.parse(line[0], Utilities.ISO8601FORMATDATEMILLI_UTC);
+                                final Instant timestamp = zdt.toInstant();
+                                final int pulse = Integer.parseInt(line[1]);
+                                final int spO2 = Integer.parseInt(line[2]);
+                                if (transmitAverages) {
+                                    lineList.remove(3);
+                                }
+                                // add the data to the data array
+                                if (pulse > 0 && spO2 > 0) {
+                                    updateValue("INPROGRESS");
+                                    verboseDeviceData.add(lineList);
+                                    // add the data to the screen display - this might be a graph/table 
+                                    // or just a simple result of the last measure
+                                    averageAndDisplay(timestamp, pulse, spO2);
+                                }
+
+                            }
+                        }
+                    }
+                    return "Is the device plugged in?";
+                } catch (Exception ex) {
+                    return ex.getLocalizedMessage();
+                }
+            }
+
+            // the measure of completion and success is returning "SUCCESS"
+            // all other outcomes indicate failure and pipe the failure 
+            // reason given from the device to the error message box
+            @Override
+            protected void succeeded() {
+                super.succeeded();
+                if (getValue().equals("INPROGRESS")) {
+                    makeDataAvailableForDownload();
+                } else {
+                    MediPiMessageBox.getInstance().makeErrorMessage(getValue(), null);
+                }
+
+            }
+
+            @Override
+            protected void scheduled() {
+                super.scheduled();
+            }
+
+            @Override
+            protected void failed() {
+                super.failed();
+                MediPiMessageBox.getInstance().makeErrorMessage(getValue(), null);
+            }
+
+            @Override
+            // Also counts as a positive outcome as the straeming of data is stopped by cancelling
+            protected void cancelled() {
+                super.succeeded();
+                if (getValue().equals("INPROGRESS")) {
+                    makeDataAvailableForDownload();
+                } else {
+                    MediPiMessageBox.getInstance().makeErrorMessage(getValue(), null);
+                }
+            }
+
+            private void makeDataAvailableForDownload() {
+                if (!verboseDeviceData.isEmpty()) {
+                    if (transmitAverages) {
+                        ArrayList<String> al = new ArrayList<>();
+                        al.add(endTime.toString());
+                        al.add(String.valueOf(meanPulse));
+                        al.add(String.valueOf(meanSpO2));
+                        data.add(al);
+                    } else {
+                        data = verboseDeviceData;
+                    }
+                    setData(data);
+                }
+            }
+        };
+
+        // Set up the bindings to control the UI elements during the running of the task
+        actionButton.textProperty()
+                .bind(
+                        Bindings.when(task.runningProperty())
+                        .then(STOP)
+                        .otherwise(RECORD)
+                );
+        actionButton.graphicProperty()
+                .bind(
+                        Bindings.when(task.runningProperty())
+                        .then(medipi.utils.getImageView("medipi.images.stop", 20, 20))
+                        .otherwise(medipi.utils.getImageView("medipi.images.record", 20, 20))
+                );
+        button3.disableProperty()
+                .bind(
+                        Bindings.when(task.runningProperty().and(isSchedule))
+                        .then(true)
+                        .otherwise(false)
+                );
+
+        new Thread(task)
+                .start();
+    }
+
+    /**
+     * method to get the Make of the device
+     *
+     * @return make and model of device
+     */
+    @Override
+    public String getMake() {
+        return MAKE;
+    }
     /**
      * method to get the Make and Model of the device
      *
      * @return make and model of device
      */
     @Override
-    public String getName() {
-        return MAKE + ":" + MODEL;
+    public String getModel() {
+        return MODEL;
+    }
+    /**
+     * method to get the Make and Model of the device
+     *
+     * @return make and model of device
+     */
+    @Override
+    public String getDisplayName() {
+        return DISPLAYNAME;
+    }
+
+    // initialises the device window and the data behind it
+    @Override
+    public void resetDevice() {
+        spO2DataCounter = 1;
+        pulseRateDataCounter = 1;
+        sumPulseRate = 0;
+        sumSpO2Rate = 0;
+        endTime = null;
+        meanPulse = 0;
+        meanSpO2 = 0;
+        super.resetDevice();
     }
 
     /**
-     * Opens the USB serial connection and prepares for serial data
+     * Add data to the graph
      *
-     * @return BufferedReader to set up the data stream
+     * @param time as UNIX epoch time format
+     * @param pulseRate in BPM
+     * @param spO2 in %
+     * @param waveForm
      */
-    @Override
-    public BufferedReader startSerialDevice() {
-        stopping = false;
-        portList = CommPortIdentifier.getPortIdentifiers();
-        StringBuilder errorString = new StringBuilder();
+    public void averageAndDisplay(Instant time, int pulseRate, int spO2) {
 
-        //Open the USB port 
-        while (portList.hasMoreElements()) {
-            portId = (CommPortIdentifier) portList.nextElement();
-            if (portId.getPortType() == CommPortIdentifier.PORT_SERIAL) {
-                if (medipi.getDebugMode() == MediPi.DEBUG) {
-                    System.out.println(portId.getName());
-                }
-                if (portId.getName().equals(portName)) {
-                    try {
-                        serialPort = (SerialPort) portId.open("Medipi", 2000);
-                    } catch (PortInUseException e) {
-                        errorString.append("Port:").append(portName).append(" is already in use by ").append(portId.getCurrentOwner()).append("\n");
-                        if (medipi.getDebugMode() == MediPi.DEBUG) {
-                            System.out.println(e);
-                        }
-                    }
-                    try {
-                        inputStream = serialPort.getInputStream();
-                    } catch (IOException e) {
-                        errorString.append("Port:").append(portName).append("- can't get serial data stream from device\n");
-                        if (medipi.getDebugMode() == MediPi.DEBUG) {
-                            System.out.println(e);
-                        }
-                    }
-                    try {
-                        serialPort.addEventListener(this);
-                    } catch (TooManyListenersException e) {
-                        errorString.append("Port:").append(portName).append("- too many listeners\n");
-                        if (medipi.getDebugMode() == MediPi.DEBUG) {
-                            System.out.println(e);
-                        }
-                    }
-                    serialPort.notifyOnDataAvailable(true);
-                    try {
-                        serialPort.setSerialPortParams(19200,
-                                SerialPort.DATABITS_8,
-                                SerialPort.STOPBITS_1,
-                                SerialPort.PARITY_ODD);
-                        nanoTime = System.nanoTime();
-                        epochTimeAtStart = System.currentTimeMillis();
-                        pos = new PipedOutputStream();
-                        PipedInputStream pis = new PipedInputStream(pos);
-                        dataReader = new BufferedReader(new InputStreamReader(pis));
-                        return dataReader;
-                    } catch (UnsupportedCommOperationException | IOException e) {
-                        errorString.append("Port:").append(portName).append("- device driver doesn't allow the serial port parameters\n");
-                        if (medipi.getDebugMode() == MediPi.DEBUG) {
-                            System.out.println(e);
-                        }
-                    }
-                }
-            }
+        endTime = time;
+        if (pulseRate != 0) {
+            sumPulseRate = sumPulseRate + pulseRate;
+            meanPulse = sumPulseRate / pulseRateDataCounter;
+            pulseRateDataCounter++;
         }
-        stopSerialDevice();
-        if (errorString.length() == 0) {
-            errorString.append("Device not accessible - is it attached/in range?");
+        if (spO2 != 0) {
+            sumSpO2Rate = sumSpO2Rate + spO2;
+            meanSpO2 = sumSpO2Rate / spO2DataCounter;
+            spO2DataCounter++;
         }
-        return null;
+        displayData(endTime, meanPulse, meanSpO2);
     }
-
-    /**
-     * Stops the USB serial port and resets the listeners
-     *
-     * @return boolean value of success of the connection closing
-     */
-    @Override
-    public boolean stopSerialDevice() {
-        stopping = true;
-        if (serialPort != null) {
-            serialPort.close();
-            serialPort.removeEventListener();
-            try {
-                dataReader.close();
-            } catch (IOException ex) {
-                MediPiLogger.getInstance().log(ContecCMS50DPlus.class.getName() + ".stopserialdevice-datareader", ex);
-            }
-            try {
-                pos.close();
-            } catch (IOException ex) {
-                MediPiLogger.getInstance().log(ContecCMS50DPlus.class.getName() + ".stopserialdevice-pos", ex);
-            }
-        }
-        return stopping;
-    }
-
-    /**
-     * For each serial event - digest the byte data and place into variables.
-     * unused variables are commented out
-     *
-     * @param event
-     */
-    @Override
-    public void serialEvent(SerialPortEvent event) {
-        switch (event.getEventType()) {
-            case SerialPortEvent.BI:
-                if (medipi.getDebugMode() == MediPi.DEBUG) {
-                    System.out.println("Break interrupt.");
-                }
-            case SerialPortEvent.OE:
-                if (medipi.getDebugMode() == MediPi.DEBUG) {
-                    System.out.println("Overrun error.");
-                }
-            case SerialPortEvent.FE:
-                if (medipi.getDebugMode() == MediPi.DEBUG) {
-                    System.out.println("Framing error.");
-                }
-            case SerialPortEvent.PE:
-                if (medipi.getDebugMode() == MediPi.DEBUG) {
-                    System.out.println("Parity error.");
-                }
-            case SerialPortEvent.CD:
-                if (medipi.getDebugMode() == MediPi.DEBUG) {
-                    System.out.println("Carrier detect.");
-                }
-            case SerialPortEvent.CTS:
-                if (medipi.getDebugMode() == MediPi.DEBUG) {
-                    System.out.println("Clear to send.");
-                }
-            case SerialPortEvent.DSR:
-                if (medipi.getDebugMode() == MediPi.DEBUG) {
-                    System.out.println("Data set ready.");
-                }
-            case SerialPortEvent.RI:
-                if (medipi.getDebugMode() == MediPi.DEBUG) {
-                    System.out.println("Ring indicator.");
-                }
-            case SerialPortEvent.OUTPUT_BUFFER_EMPTY:
-                if (medipi.getDebugMode() == MediPi.DEBUG) {
-                    System.out.println("Output buffer is empty.");
-                }
-                break;
-            case SerialPortEvent.DATA_AVAILABLE:
-                byte[] buffer = new byte[10];
-                int idx = 0;
-                int[] packet = new int[5];
-                try {
-                    while (inputStream.available() > 10) {
-                        inputStream.read(buffer);
-                        for (int b : buffer) {
-                            //System.out.println(String.format("%8s", Integer.toBinaryString(b & 0xFF)).replace(' ', '0'));
-                            if ((b & 128) != 0) {
-                                //System.out.println((b&0x80)+" "+idx);
-                                if (idx == 5 && (packet[0] & 128) != 0) {
-                                    String[] line = new String[3];
-                                    // 1st byte
-                                    // signalStrength
-                                    //output[0] = String.valueOf(packet[0] & 0x0f);
-                                    // fingerOut
-                                    fingerOut = ((packet[0] & 16) != 0);
-                                    // droppingSpO2
-                                    // output[2] = String.valueOf((packet[0] & 0x20) != 0);
-                                    // beep
-                                    // output[3] = String.valueOf((packet[0] & 0x40) != 0);
-                                    // # 2nd byte
-                                    // pulseWaveform
-                                    line[2] = String.valueOf(packet[1]);
-                                    // # 3rd byte
-                                    // barGraph
-                                    // output[5] = String.valueOf(packet[2] & 0x0f);
-                                    // probeError
-                                    probeError = ((packet[2] & 16) != 0);
-                                    // searching
-                                    // output[7] = String.valueOf((packet[2] & 0x20) != 0);
-                                    // pulseRate
-                                    // output[8] = String.valueOf(((packet[2] & 0x40) << 1));
-                                    // # 4th byte
-                                    // pulseRate
-                                    int i = (packet[2] & 0x40) << 1;
-                                    i |= packet[3] & 0x7f;
-                                    line[0] = String.valueOf(i);
-                                    //5th byte
-                                    //bloodSpO2
-                                    line[1] = String.valueOf(packet[4] & 127);
-                                    if (fingerOut) {
-                                        if (medipi.getDebugMode() == MediPi.DEBUG) {
-                                            System.out.println("finger out");
-                                        }
-                                        if (probeError) {
-                                            if (medipi.getDebugMode() == MediPi.DEBUG) {
-                                                System.out.println("probe error");
-                                            }
-                                            task.cancel();
-                                            stopSerialDevice();
-                                        }
-                                    }
-                                    if (!stopping) {
-                                        Instant time = Instant.ofEpochMilli(Math.round(System.nanoTime() / 1000000L) - Math.round(nanoTime / 1000000L) + epochTimeAtStart);
-                                        StringBuilder sb = new StringBuilder(Utilities.ISO8601FORMATDATEMILLI_UTC.format(time));
-                                        sb.append(separator);
-                                        sb.append(line[0]);
-                                        sb.append(separator);
-                                        sb.append(line[1]);
-                                        sb.append(separator);
-                                        sb.append(line[2]);
-                                        sb.append("\n");
-                                        pos.write(sb.toString().getBytes());
-                                        pos.flush();
-                                        if (medipi.getDebugMode() == MediPi.DEBUG) {
-                                            System.out.print(String.valueOf(fingerOut) + String.valueOf(probeError) + sb.toString());
-                                        }
-                                    }
-                                }
-                                packet = new int[5];
-                                idx = 0;
-                            }
-                            if (idx < 5) {
-                                packet[idx] = b;
-                                idx++;
-                            }
-                        }
-                    }
-                } catch (IOException e) {
-                    stopSerialDevice();
-                    MediPiMessageBox.getInstance().makeErrorMessage("Device no longer accessible", e);
-                    if (medipi.getDebugMode() == MediPi.DEBUG) {
-                        System.out.println(e);
-                    }
-                }
-                break;
-        }
-    }
-
 }

@@ -1,5 +1,5 @@
 /*
- Copyright 2016  Richard Robinson @ HSCIC <rrobinson@hscic.gov.uk, rrobinson@nhs.net>
+ Copyright 2016  Richard Robinson @ NHS Digital <rrobinson@nhs.net>
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -21,10 +21,13 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.UUID;
+import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
@@ -38,9 +41,12 @@ import javafx.scene.control.Separator;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
+import javafx.scene.text.Text;
 import org.medipi.utilities.ConfigurationStringTokeniser;
 import org.medipi.DashboardTile;
 import org.medipi.MediPi;
+import org.medipi.MediPiProperties;
 import org.medipi.model.DeviceDataDO;
 import org.medipi.utilities.Utilities;
 
@@ -52,12 +58,8 @@ import org.medipi.utilities.Utilities;
  * Ultimately the questionnaire ends when an advisory response is returned. The
  * results can transmitted. The transmittable data contains all the questions,
  * answers and advice given in plain text irrespective of ultimate advice
- *
- * There is no view mode for this UI.
- *
- * TODO does an alert message need to be sent only when particular outcomes are
- * reached? should this be automatic i.e. outside the normal transmit? what
- * should the message contain?
+ * 
+ * A questionnaire is ultimately judged on its outcome: green flag or red flag status
  *
  * @author rick@robinsonhq.com
  */
@@ -65,27 +67,29 @@ public class Questionnaire extends Device {
 
     private static final String PROFILEID = "urn:nhs-en:profile:Questionnaire";
     private static final String NAME = "Questionnaire";
-    private static final String POSITIVE_RESPONSE = "POSITIVE_RESPONSE";
-    private static final String NEGATIVE_RESPONSE = "NEGATIVE_RESPONSE";
-    private final HashMap<String, String> responses = new HashMap<>();
+    private static final String MAKE = "NONE";
+    private static final String MODEL = "NONE";
+    private static final String GREEN_FLAG = "GREEN_FLAG";
+    private static final String RED_FLAG = "RED_FLAG";
+    private final HashMap<String, String[]> responses = new HashMap<>();
     private final HashMap<String, String> questions = new HashMap<>();
     private final HashMap<String, String[]> questionnaire = new HashMap<>();
     private final ArrayList<String> data = new ArrayList<>();
-    private String questionnaireResult;
+    private String redFlagStatus;
+    private final StringProperty resultsSummary = new SimpleStringProperty();
     private Instant dataTime;
-    // property to indicate whether data has bee recorded for this device
-    private final BooleanProperty hasData = new SimpleBooleanProperty(false);
     private VBox questionnaireWindow;
-    private VBox questionList;
+    private HBox questionLine = new HBox();
     private Label responseLabel;
     private Button yes;
     private Button no;
     private Button startButton;
     private String firstRuleName = null;
     private String questionSet;
-    private Label question = new Label("");
+    private Text question = new Text("");
     private String titleName;
     private String questionnaireVersion = null;
+    private int questionNo = 0;
 
     /**
      * Constructor for Generic Questionnaire
@@ -115,36 +119,32 @@ public class Questionnaire extends Device {
         if (titleName == null || titleName.trim().length() == 0) {
             throw new Exception("The Questionnaire doesn't have a title name");
         }
+        //ascertain if this element is to be displayed on the dashboard
+        String b = MediPiProperties.getInstance().getProperties().getProperty(MediPi.ELEMENTNAMESPACESTEM + uniqueDeviceName +".showdashboardtile");
+        if (b == null || b.trim().length() == 0) {
+            showTile = new SimpleBooleanProperty(true);
+        } else {
+            showTile = new SimpleBooleanProperty(!b.toLowerCase().startsWith("n"));
+        }
         // Scrollable main window
         questionnaireWindow = new VBox();
         questionnaireWindow.setPadding(new Insets(0, 5, 0, 5));
         questionnaireWindow.setSpacing(5);
-        questionnaireWindow.setMinHeight(350);
-        questionnaireWindow.setMaxHeight(350);
+        questionnaireWindow.setMinHeight(300);
+        questionnaireWindow.setMaxHeight(300);
         questionnaireWindow.setMinWidth(800);
         questionnaireWindow.setMaxWidth(800);
-        questionList = new VBox();
-        questionList.setId("questionnaire-questionpanel");
-        ScrollPane questionSP = new ScrollPane();
-        questionSP.setContent(questionList);
-        questionSP.setFitToWidth(true);
-        questionSP.setFitToHeight(true);
-        questionSP.setMinHeight(210);
-        questionSP.setMaxHeight(210);
-        questionSP.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        questionSP.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
-        // Make sure that the latest question is always in view
-        DoubleProperty wProperty = new SimpleDoubleProperty();
-        // bind to Vbox width chnages
-        wProperty.bind(questionList.heightProperty());
-        wProperty.addListener(new ChangeListener() {
-            @Override
-            public void changed(ObservableValue ov, Object t, Object t1) {
-                //when ever Vbox width chnages set ScrollPane Hvalue
-                questionSP.setVvalue(questionSP.getVmax());
-            }
-        });
-
+        Text guide = new Text("Press \"Start Questionnaire\" button to start the questionnaire. Answer the Yes/No questions until MediPi populates the \"Advice to take\" box");
+        guide.setWrappingWidth(600);
+        guide.setId("questionnaire-title-label");
+        questionLine = new HBox();
+        questionLine.setPadding(new Insets(5, 5, 5, 5));
+        questionLine.setSpacing(5);
+        questionLine.setAlignment(Pos.CENTER);
+        questionLine.setId("questionnaire-questionpanel");
+        questionLine.setMinHeight(100);
+        questionLine.setMaxHeight(100);
+     
         // Scrollable result window
         ScrollPane listSP = new ScrollPane();
         responseLabel = new Label("");
@@ -158,21 +158,17 @@ public class Questionnaire extends Device {
         listSP.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
         startButton = new Button("Start Questionnaire", medipi.utils.getImageView("medipi.images.play", 20, 20));
         startButton.setId("questionnaire-button-start");
-        HBox buttonHbox = new HBox();
-        buttonHbox.setPadding(new Insets(5, 5, 5, 5));
-        buttonHbox.setSpacing(10);
-        buttonHbox.setAlignment(Pos.BASELINE_LEFT);
-//        questionnaireWindow.setAlignment(Pos.TOP_LEFT);
+        questionnaireWindow.setAlignment(Pos.CENTER_LEFT);
         Label responseTitleLabel = new Label("Action to take:");
         responseTitleLabel.setId("questionnaire-responsepanel");
         questionnaireWindow.getChildren().addAll(
-                buttonHbox,
-                questionSP,
-                new Separator(Orientation.HORIZONTAL),
+                guide,
+                questionLine,
                 responseTitleLabel,
-                listSP,
-                new Separator(Orientation.HORIZONTAL)
+                listSP
         );
+        listSP.visibleProperty().bind(responseLabel.textProperty().isNotEmpty());
+        responseTitleLabel.visibleProperty().bind(responseLabel.textProperty().isNotEmpty());
 
         // set main Element window
         window.setCenter(questionnaireWindow);
@@ -190,6 +186,8 @@ public class Questionnaire extends Device {
         setButton2(startButton);
 
         hasData.bind(responseLabel.textProperty().isNotEmpty());
+        // bind the button disable to the time sync indicator
+        startButton.disableProperty().bind(medipi.timeSync.not());
 
         // successful initiation of the this class results in a null return
         return null;
@@ -206,16 +204,14 @@ public class Questionnaire extends Device {
     }
 
     @Override
-    public String getName() {
-        return titleName;
-    }
-
-    @Override
     public void resetDevice() {
         question.setText("");
         responseLabel.setText("");
-        questionList.getChildren().clear();
+        questionLine.getChildren().clear();
         data.clear();
+        redFlagStatus = "";
+        resultsSummary.setValue("");
+        questionNo = 0;
     }
 
     // This is a recursive method used for each line of the questionnaire
@@ -244,14 +240,20 @@ public class Questionnaire extends Device {
             yes.setDisable(true);
             no.setDisable(true);
             no.setVisible(false);
-            String response = responses.get(rule[TRUE_RESPONSE]);
+            String[] response = responses.get(rule[TRUE_RESPONSE]);
             if (response != null) {
                 // add data to data arraylist for transmission later
                 // n.b. 1 millisecond is added to the response to differentiate it and maintain unique timestamps
-                data.add(response);
-                questionnaireResult = NEGATIVE_RESPONSE;
+                data.add(response[1]);
+                boolean redFlag = Boolean.valueOf(response[0]);
+                if (redFlag) {
+                    redFlagStatus = RED_FLAG;
+                } else {
+                    redFlagStatus = GREEN_FLAG;
+                }
+                resultsSummary.setValue(getDisplayName() + " completed");
                 dataTime = Instant.now();
-                responseLabel.setText(response);
+                responseLabel.setText(response[1]);
                 if (isSchedule.get()) {
                     button1.setDisable(false);
                     button3.setDisable(false);
@@ -272,14 +274,20 @@ public class Questionnaire extends Device {
             yes.setDisable(true);
             yes.setVisible(false);
             no.setDisable(true);
-            String response = responses.get(rule[FALSE_RESPONSE]);
+            String[] response = responses.get(rule[FALSE_RESPONSE]);
             if (response != null) {
                 // add data to data arraylist for transmission later
                 // n.b. 1 millisecond is added to the response to differentiate it and maintain unique timestamps
-                data.add(response);
-                questionnaireResult = POSITIVE_RESPONSE;
+                data.add(response[1]);
+                boolean redFlag = Boolean.valueOf(response[0]);
+                if (redFlag) {
+                    redFlagStatus = RED_FLAG;
+                } else {
+                    redFlagStatus = GREEN_FLAG;
+                }
+                resultsSummary.setValue(getDisplayName() + " completed");
                 dataTime = Instant.now();
-                responseLabel.setText(response);
+                responseLabel.setText(response[1]);
                 if (isSchedule.get()) {
                     button1.setDisable(false);
                     button3.setDisable(false);
@@ -291,18 +299,15 @@ public class Questionnaire extends Device {
                 execute(rule[FALSE_RESPONSE]);
             }
         });
-        question = new Label(questions.get(rule[QUESTION]));
-        HBox questionLine = new HBox();
-        questionLine.setPadding(new Insets(5, 5, 5, 5));
-        questionLine.setSpacing(5);
-        questionLine.setAlignment(Pos.CENTER);
-        questionLine.setId("questionnaire-questionpanel");
+        questionNo++;
+        question = new Text("Q" + questionNo + ". " + questions.get(rule[QUESTION]));
+        question.setWrappingWidth(580);
+        questionLine.getChildren().clear();
         questionLine.getChildren().addAll(
                 question,
                 yes,
                 no
         );
-        questionList.getChildren().add(questionLine);
 
     }
 
@@ -419,10 +424,11 @@ public class Questionnaire extends Device {
     private void addResponse(String line)
             throws Exception {
         ConfigurationStringTokeniser st = new ConfigurationStringTokeniser(line);
-        if (st.countTokens() <= 2) {
+        if (st.countTokens() <= 3) {
             throw new Exception("Syntax error in " + questionSet + " defining response: " + line);
         }
         String ruleName = st.nextToken();
+        String redFlag = st.nextToken();
         StringBuilder text = new StringBuilder();
         while (st.hasMoreTokens()) {
             text.append(st.nextToken());
@@ -430,7 +436,7 @@ public class Questionnaire extends Device {
                 text.append(" ");
             }
         }
-        responses.put(ruleName, text.toString());
+        responses.put(ruleName, new String[]{redFlag, text.toString()});
     }
 
     // Parses the QUESTIONS part of the ruleset. 
@@ -453,17 +459,6 @@ public class Questionnaire extends Device {
     }
 
     /**
-     * Method which returns a booleanProperty which UI elements can be bound to,
-     * to discover whether there is data to be downloaded
-     *
-     * @return BooleanProperty signalling the presence of downloaded data
-     */
-    @Override
-    public BooleanProperty hasDataProperty() {
-        return hasData;
-    }
-
-    /**
      * Gets a DevicedataDO containing the payload
      *
      *
@@ -476,7 +471,9 @@ public class Questionnaire extends Device {
         //Add MetaData
         sb.append("metadata->persist->medipiversion->").append(medipi.getVersion()).append("\n");
         sb.append("metadata->persist->questionnaireversion->").append(titleName).append("\n");
-        sb.append("metadata->subtype->").append(getName()).append("\n");
+        sb.append("metadata->make->").append(getMake()).append("\n");
+        sb.append("metadata->model->").append(getModel()).append("\n");
+        sb.append("metadata->displayname->").append(getDisplayName()).append("\n");
         sb.append("metadata->datadelimiter->").append(medipi.getDataSeparator()).append("\n");
         if (scheduler != null) {
             sb.append("metadata->scheduleeffectivedate->").append(Utilities.ISO8601FORMATDATEMILLI_UTC.format(scheduler.getCurrentScheduledEventTime())).append("\n");
@@ -499,7 +496,7 @@ public class Questionnaire extends Device {
         sb.append(medipi.getDataSeparator());
         sb.append(String.join("|", data));
         sb.append(medipi.getDataSeparator());
-        sb.append(questionnaireResult);
+        sb.append(redFlagStatus);
         sb.append("\n");
         payload.setProfileId(PROFILEID);
         payload.setPayload(sb.toString());
@@ -508,9 +505,49 @@ public class Questionnaire extends Device {
 
     @Override
     public BorderPane getDashboardTile() throws Exception {
-        DashboardTile dashComponent = new DashboardTile(this);
-        dashComponent.addTitle(getName());
+        DashboardTile dashComponent = new DashboardTile(this, showTile);
+        dashComponent.addTitle(getDisplayName());
+        dashComponent.addOverlay(Color.LIGHTGREEN, hasDataProperty());
         return dashComponent.getTile();
+    }
+
+    /**
+     * method to get the Make of the device
+     *
+     * @return make and model of device
+     */
+    @Override
+    public String getMake() {
+        return MAKE;
+    }
+
+    /**
+     * method to get the Model of the device
+     *
+     * @return model of device
+     */
+    @Override
+    public String getModel() {
+        return MODEL;
+    }
+
+    /**
+     * method to get the Display Name of the device
+     *
+     * @return displayName of device
+     */
+    @Override
+    public String getDisplayName() {
+        return titleName;
+    }
+
+    @Override
+    public StringProperty getResultsSummary() {
+        return resultsSummary;
+    }
+    @Override
+    public void setData(ArrayList<ArrayList<String>> deviceData) {
+        throw new UnsupportedOperationException("This method is not used as the class has no extensions");
     }
 
 }

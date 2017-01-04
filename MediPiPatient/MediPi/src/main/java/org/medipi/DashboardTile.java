@@ -1,5 +1,5 @@
 /*
- * Copyright 2016  Richard Robinson @ HSCIC <rrobinson@hscic.gov.uk, rrobinson@nhs.net>
+ * Copyright 2016  Richard Robinson @ NHS Digital <rrobinson@nhs.net>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.medipi;
 
 import java.util.ArrayList;
+import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.geometry.Insets;
@@ -23,10 +24,16 @@ import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
+import javafx.scene.text.Text;
+import javafx.scene.text.TextAlignment;
 import org.medipi.devices.Element;
 
 /**
@@ -34,7 +41,8 @@ import org.medipi.devices.Element;
  * dashboard. This class creates and handles the dashboard Tile and its
  * contents, allowing the tile to be clicked and the Element to be called.
  * Overlays can be added to the tile so that dynamically changing data can be
- * displayed or an alert when actions are required in the related Element
+ * displayed or an alert when actions are required in the related Element.
+ * The tile can be configured to be visible or not
  *
  * @author rick@robinsonhq.com
  */
@@ -51,8 +59,13 @@ public class DashboardTile {
      *
      * @param elem The element which this tile relates to
      */
-    public DashboardTile(Element elem) {
+    public DashboardTile(Element elem, BooleanProperty bprop) {
+        if(bprop!=null){
+            component.visibleProperty().bind(bprop);
+            component.managedProperty().bind(bprop);
+        }
         component.setId("mainwindow-dashboard-component");
+        component.setBackground(new Background(new BackgroundFill(Color.WHITE, new CornerRadii(10), Insets.EMPTY)));
         component.setPrefSize(190, 170);
 
         component.setOnMouseClicked((MouseEvent event) -> {
@@ -74,8 +87,10 @@ public class DashboardTile {
      */
     public void addTitle(String title) {
 
-        Label t = new Label(title);
+        Text t = new Text(title);
         t.setId("mainwindow-dashboard-component-title");
+        t.setWrappingWidth(180);
+        t.setTextAlignment(TextAlignment.CENTER);
         HBox h = new HBox(t);
         h.setAlignment(Pos.CENTER);
         component.setTop(h);
@@ -141,6 +156,21 @@ public class DashboardTile {
                 foregroundImage.setVisible(false);
             }
         });
+    }
+
+    /**
+     * Method to add a Colour to the Tile.
+     *
+     * To paint the tile a background colour on tile
+     *
+     * @param colour Background colour of the tile
+     * @param bp BooleanProperty to dynamically control whether the colour should be changed
+     */
+    public void addOverlay(Color colour, BooleanProperty bp) {
+        
+        component.backgroundProperty().bind(Bindings.when(bp)
+                .then(new Background(new BackgroundFill(colour, new CornerRadii(10), Insets.EMPTY)))
+                .otherwise(new Background(new BackgroundFill(Color.WHITE, new CornerRadii(10), Insets.EMPTY))));
     }
 
     /**

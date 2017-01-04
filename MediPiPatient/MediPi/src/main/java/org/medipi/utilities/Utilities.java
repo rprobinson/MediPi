@@ -1,5 +1,5 @@
 /*
- Copyright 2016  Richard Robinson @ HSCIC <rrobinson@hscic.gov.uk, rrobinson@nhs.net>
+ Copyright 2016  Richard Robinson @ NHS Digital <rrobinson@nhs.net>
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -25,8 +25,7 @@ import javafx.scene.image.ImageView;
 /**
  * Utilities class to allow universal access to useful methods or public Objects
  *
- * TODO: Need to extract out these methods from MediPi
- *
+ * 
  * @author rick@robinsonhq.com
  */
 public class Utilities {
@@ -39,7 +38,8 @@ public class Utilities {
     public static final DateFormat DISPLAY_OXIMETER_TIME_FORMAT_DATE = new SimpleDateFormat("HH:mm:ss");
 
     public static final DateTimeFormatter DISPLAY_DOB_FORMAT = DateTimeFormatter.ofPattern("dd-MMM-yyyy");
-    public static final DateTimeFormatter DISPLAY_SCHEDULE_FORMAT_LOCALTIME = DateTimeFormatter.ofPattern("HH:mm:ss dd/MM/yyyy").withZone(ZoneId.systemDefault());
+    public static final DateTimeFormatter DISPLAY_DEVICE_FORMAT_LOCALTIME = DateTimeFormatter.ofPattern("HH:mm:ss dd/MM/yyyy").withZone(ZoneId.systemDefault());
+    public static final DateTimeFormatter DISPLAY_SCHEDULE_FORMAT_LOCALTIME = DateTimeFormatter.ofPattern("EEE d MMM, h:mma").withZone(ZoneId.systemDefault());
     public static final DateTimeFormatter INTERNAL_FORMAT_UTC = DateTimeFormatter.ofPattern("yyyyMMddHHmmss").withZone(ZoneId.of("Z"));
     public static final DateTimeFormatter INTERNAL_SPINE_FORMAT_UTC = DateTimeFormatter.ofPattern("yyyyMMddHHmmss.SSS").withZone(ZoneId.of("Z"));
     public static final DateTimeFormatter DISPLAY_FORMAT_LOCALTIME = DateTimeFormatter.ofPattern("EEE d MMM yyyy HH:mm:ss z").withZone(ZoneId.systemDefault());

@@ -1,5 +1,5 @@
 /*
- Copyright 2016  Richard Robinson @ HSCIC <rrobinson@hscic.gov.uk, rrobinson@nhs.net>
+ Copyright 2016  Richard Robinson @ NHS Digital <rrobinson@nhs.net>
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -26,12 +26,17 @@ import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.Collator;
+import java.text.DateFormat;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Comparator;
 import java.util.UUID;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -40,10 +45,16 @@ import java.util.logging.Logger;
 import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.ObservableMap;
+import javafx.collections.transformation.FilteredList;
+import javafx.collections.transformation.SortedList;
 import javafx.event.ActionEvent;
+import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
@@ -52,7 +63,9 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Separator;
+import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.cell.PropertyValueFactory;
@@ -62,13 +75,19 @@ import javafx.scene.effect.ColorAdjust;
 import javafx.scene.effect.ColorInput;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.ColumnConstraints;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.scene.text.Text;
+import javafx.util.Callback;
 import org.medipi.utilities.ConfigurationStringTokeniser;
 import org.medipi.DashboardTile;
 import org.medipi.MediPi;
+import org.medipi.MediPiMessageBox;
+import org.medipi.MediPiProperties;
 import org.medipi.model.DeviceDataDO;
 import org.medipi.utilities.Utilities;
 
@@ -98,9 +117,8 @@ import org.medipi.utilities.Utilities;
  * Each of the scheduled elements are executed in turn and a transmitter is
  * called
  *
- * Dependent on the view mode the UI displays either a table of the scheduled
- * lines from the .scheduler file or a graphical representation of each of the
- * elements and the order in which they will be executed.
+ * The view shows information about the most recent schedule in words and a list
+ * of activity over a configurable period (default period 7 days)
  *
  * The scheduler will provide data to the transmitter of this schedule only -
  * metadata is added to identify it.
@@ -108,21 +126,17 @@ import org.medipi.utilities.Utilities;
  * After a schedule has been transmitted, new STARTED, MEASURED and TRANSMITTED
  * lines are added to the .scheduler file
  *
- *
- * TODO: This is a new class and some of the UI needs some work - advanced view
- * is out of alignment and certain information is not being shown in the basic
- * view e.g. status
- *
  * @author rick@robinsonhq.com
  */
 public class Scheduler extends Device {
 
     private static final String NAME = "Scheduler";
     private static final String PROFILEID = "urn:nhs-en:profile:Scheduler";
+    private static final String MAKE = "NONE";
+    private static final String MODEL = "NONE";
+    private static final String DISPLAYNAME = "MediPi Scheduler";
     private static final String MEDIPIIMAGESEXCLAIM = "medipi.images.exclaim";
-    private static final String MEDIPIIMAGESARROW = "medipi.images.arrow";
-    private static final String MEDIPIIMAGESPASS = "medipi.images.pass";
-    private static final String MEDIPIIMAGESFAIL = "medipi.images.fail";
+    private static final String SCHEDTAKEN = "Schedule taken";
     private VBox schedulerWindow;
     private TableView<Schedule> schedulerList;
     // not sure what the best setting for this thread pool is but 3 seems to work
@@ -130,18 +144,23 @@ public class Scheduler extends Device {
     private String schedulerFile;
     private ImageView alertImageView;
     private final ArrayList<Schedule> deviceData = new ArrayList<>();
-    // property to indicate whether data has bee recorded for this device
-    private final BooleanProperty hasData = new SimpleBooleanProperty(false);
 
     private ObservableList<Schedule> items;
     private Instant currentScheduledEventTime = Instant.EPOCH;
     private Instant nextScheduledEventTime = Instant.EPOCH;
     private int missedReadings = 0;
     private final BooleanProperty alertBooleanProperty = new SimpleBooleanProperty(false);
+    private ObservableMap alertBanner;
+    private final StringProperty resultsSummary = new SimpleStringProperty();
 
-    private TextArea scheduleStatus;
-    private Button left;
+    private final Text schedRepeatText = new Text();
+    private final Text schedPressRunText = new Text();
+    private final Text schedInfoText = new Text("* You may run and submit a schedule at any time");
+    private final Text schedNextText = new Text();
+    private Button runScheduleNowButton;
+    //This is the most recent schedule
     private Schedule lastSchedule = null;
+    private int schedulerHistoryPeriod;//(default 7)
 
     private final BooleanProperty runningSchedule = new SimpleBooleanProperty(false);
 
@@ -191,19 +210,35 @@ public class Scheduler extends Device {
         schedulerWindow = new VBox();
         schedulerWindow.setPadding(new Insets(0, 5, 0, 5));
         schedulerWindow.setSpacing(10);
-        schedulerWindow.setMinSize(800, 350);
-        schedulerWindow.setMaxSize(800, 350);
+        schedulerWindow.setMinSize(800, 300);
+        schedulerWindow.setMaxSize(800, 300);
         schedulerWindow.setAlignment(Pos.TOP_CENTER);
         // get details of all images which are required
         String alertImageFile = medipi.getProperties().getProperty(MEDIPIIMAGESEXCLAIM);
         alertImageView = new ImageView("file:///" + alertImageFile);
-
+        //ascertain if this element is to be displayed on the dashboard
+        String b = MediPiProperties.getInstance().getProperties().getProperty(MediPi.ELEMENTNAMESPACESTEM + uniqueDeviceName + ".showdashboardtile");
+        if (b == null || b.trim().length() == 0) {
+            showTile = new SimpleBooleanProperty(true);
+        } else {
+            showTile = new SimpleBooleanProperty(!b.toLowerCase().startsWith("n"));
+        }
         // Find location of scheduler file
         schedulerFile = medipi.getProperties().getProperty(MediPi.ELEMENTNAMESPACESTEM + uniqueDeviceName + ".scheduler");
         if (schedulerFile == null || schedulerFile.trim().length() == 0) {
             return "Scheduler Directory parameter not configured";
         }
-
+        // get the parameter for number of past readings to display
+        try {
+            String time = medipi.getProperties().getProperty(MediPi.ELEMENTNAMESPACESTEM + uniqueDeviceName + ".schedulerhistoryperiod");
+            if (time == null || time.trim().length() == 0) {
+                time = "7";
+            }
+            schedulerHistoryPeriod = Integer.parseInt(time);
+        } catch (NumberFormatException e) {
+            throw new Exception("Unable to set the period of history to display in scheduler - make sure that " + MediPi.ELEMENTNAMESPACESTEM + uniqueDeviceName + ".schedulerhistoryperiod property is set correctly");
+        }
+        //set up watch on the schedule.schedule file
         File f = new File(schedulerFile);
         String file = f.getName();
         Path dir = f.getParentFile().toPath();
@@ -215,35 +250,57 @@ public class Scheduler extends Device {
         } catch (Exception e) {
             return "Message Watcher failed to initialise" + e.getMessage();
         }
+
         //Create the table of the .scheduler items
         schedulerList = new TableView<>();
         schedulerList.setId("scheduler-schedulelist");
         items = FXCollections.observableArrayList();
-        TableColumn uuidTC = new TableColumn("UUID");
-        uuidTC.setMinWidth(50);
-        uuidTC.setCellValueFactory(
-                new PropertyValueFactory<>("eventIdDisp"));
-        TableColumn eventTypeTC = new TableColumn("Type");
-        eventTypeTC.setMinWidth(150);
-        eventTypeTC.setCellValueFactory(
-                new PropertyValueFactory<>("eventTypeDisp"));
         TableColumn scheduleTimeTC = new TableColumn("Time");
         scheduleTimeTC.setMinWidth(150);
         scheduleTimeTC.setCellValueFactory(
-                new PropertyValueFactory<>("timeDisp"));
-        TableColumn repeatTC = new TableColumn("Repeat");
-        repeatTC.setMinWidth(70);
-        repeatTC.setCellValueFactory(
-                new PropertyValueFactory<>("repeatDisp"));
-        TableColumn schedDevicesTC = new TableColumn("Devices");
-        schedDevicesTC.setMinWidth(400);
-        schedDevicesTC.setCellValueFactory(
-                new PropertyValueFactory<>("deviceSchedDisp"));
-        schedulerList.setMinHeight(180);
-        schedulerList.setMaxHeight(180);
+                new Callback<TableColumn.CellDataFeatures<Schedule, String>, ObservableValue<String>>() {
+            @Override
+            public ObservableValue<String> call(TableColumn.CellDataFeatures<Schedule, String> schedule) {
+                SimpleStringProperty property = new SimpleStringProperty();
+                Instant t = Instant.ofEpochMilli(schedule.getValue().getTime());
+                property.setValue(Utilities.DISPLAY_SCHEDULE_FORMAT_LOCALTIME.format(t));
+
+                return property;
+            }
+        });
+        TableColumn eventTypeTC = new TableColumn("Status");
+        eventTypeTC.setMinWidth(150);
+        eventTypeTC.setCellValueFactory(new PropertyValueFactory<>("eventTypeDisp"));
+        eventTypeTC.setCellFactory(column -> {
+            return new TableCell<Schedule, String>() {
+                @Override
+                protected void updateItem(String item, boolean empty) {
+                    super.updateItem(item, empty);
+
+                    setText(empty ? "" : getItem().toString());
+                    setGraphic(null);
+
+                    TableRow<Schedule> currentRow = getTableRow();
+
+                    if (!isEmpty()) {
+
+                        if (item.equals("MISSING")) {
+                            currentRow.setStyle("-fx-background-color:lightcoral");
+                        } else if (item.equals("SCHEDULE NOW DUE")) {
+                            currentRow.setStyle("-fx-background-color:lightcoral");
+                        } else if (item.equals("SCHEDULE DUE AT")) {
+                            currentRow.setStyle("-fx-background-color:yellow");
+                        } else if (item.equals(TRANSMITTED)) {
+                            currentRow.setStyle("-fx-background-color:lightgreen");
+                        }
+                    }
+                }
+            };
+        });
         schedulerList.setItems(items);
+
         schedulerList.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-        schedulerList.getColumns().addAll(uuidTC, eventTypeTC, scheduleTimeTC, repeatTC, schedDevicesTC);
+        schedulerList.getColumns().addAll(scheduleTimeTC, eventTypeTC);
         ScrollPane listSP = new ScrollPane();
         listSP.setContent(schedulerList);
         listSP.setFitToWidth(true);
@@ -251,42 +308,58 @@ public class Scheduler extends Device {
         listSP.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         listSP.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
         schedulerList.getSelectionModel().select(0);
-        // text area to contain the status of the schedule event
-        scheduleStatus = new TextArea();
-        scheduleStatus.setWrapText(true);
-        scheduleStatus.isResizable();
-        scheduleStatus.setEditable(false);
-        scheduleStatus.setId("messenger-messagecontent");
-        scheduleStatus.setMinHeight(70);
-        scheduleStatus.setMaxHeight(70);
-        ScrollPane viewStatus = new ScrollPane();
-        viewStatus.setContent(scheduleStatus);
-        viewStatus.setFitToWidth(true);
-        viewStatus.setFitToHeight(true);
-        viewStatus.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        viewStatus.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
-        left = new Button("Run Schedule Now", medipi.utils.getImageView("medipi.images.play", 20, 20));
-        left.setId("button-runschednow");
+        runScheduleNowButton = new Button("Run Schedule Now", medipi.utils.getImageView("medipi.images.play", 20, 20));
+        runScheduleNowButton.setId("button-runschednow");
+        schedRepeatText.setId("schedule-text");
+        schedRepeatText.setWrappingWidth(340);
+        schedNextText.setId("schedule-text");
+        schedNextText.setWrappingWidth(340);
+        schedPressRunText.setId("schedule-text");
+        schedPressRunText.setWrappingWidth(340);
+        schedInfoText.setId("schedule-text");
+        schedInfoText.setWrappingWidth(340);
+        Text schedListTitle = new Text("Schedule List");
+        schedListTitle.setId("schedule-text");
+        VBox schedRHS = new VBox();
+        schedRHS.setPadding(new Insets(20, 5, 20, 5));
 
-        Label title = new Label("List of schedules");
-        title.setId("schedule-title");
-        Label status = new Label("Status");
-        status.setId("schedule-title");
+        schedRHS.getChildren().addAll(
+                schedListTitle,
+                schedulerList
+        );
+        VBox schedLHS = new VBox();
+        schedLHS.setPadding(new Insets(20, 5, 20, 5));
+        schedLHS.setSpacing(20);
+        schedLHS.getChildren().addAll(
+                schedRepeatText,
+                schedNextText,
+                schedPressRunText,
+                schedInfoText
+        );
 
-        //Decide whether to show basic or advanced view
-        if (!medipi.isBasicDataView()) {
-            schedulerWindow.getChildren().addAll(
-                    title,
-                    schedulerList,
-                    status,
-                    scheduleStatus,
-                    new Separator(Orientation.HORIZONTAL)
-            );
-        }
+        GridPane schedGrid = new GridPane();
+        ColumnConstraints col1 = new ColumnConstraints();
+        col1.setPercentWidth(350);
+        col1.setHalignment(HPos.CENTER);
+        ColumnConstraints col2 = new ColumnConstraints();
+        col2.setPercentWidth(300);
+        col2.setHalignment(HPos.CENTER);
+        schedGrid.getColumnConstraints().addAll(col1, col2);
+        schedGrid.setId("scheduler-grid-border");
+        schedGrid.setPadding(new Insets(5, 10, 10, 10));
+        schedGrid.setMinSize(800, 300);
+        schedGrid.setMaxSize(800, 300);
+        schedGrid.add(schedLHS, 0, 0);
+        schedGrid.add(schedRHS, 1, 0);
 
+        schedulerWindow.getChildren().addAll(
+                schedGrid
+        );
+
+        alertBanner = medipi.getLowerBannerAlert();
         // set main Element window
         window.setCenter(schedulerWindow);
-        setButton2(left);
+        setButton2(runScheduleNowButton);
         refreshSchedule();
         //set the scheduler on all devices(elements)
         // This relies on the fact that the scheduler is called AFTER all the measurement devices
@@ -326,9 +399,9 @@ public class Scheduler extends Device {
                 }
             }, 0L, (long) scheduleCheckPeriod, TimeUnit.SECONDS);
         } catch (NumberFormatException e) {
-            throw new Exception("Unable to start the incoming message service - make sure that " + MediPi.ELEMENTNAMESPACESTEM + uniqueDeviceName + ".pollincomingmsgperiod property is set correctly");
+            throw new Exception("Unable to get the poll period to schedule - make sure that " + MediPi.ELEMENTNAMESPACESTEM + uniqueDeviceName + ".pollscheduletimer property is set correctly");
         }
-        left.setOnAction((ActionEvent t) -> {
+        runScheduleNowButton.setOnAction((ActionEvent t) -> {
             runSchedule();
         });
         // bind the running and the has data properties
@@ -375,147 +448,12 @@ public class Scheduler extends Device {
         return NAME;
     }
 
-    @Override
-    public String getName() {
-        return NAME;
-    }
-
     /**
-     *
-     * @return
+     * property to inform other classes as to whether a schedule is currently being run
+     * @return Boolean property describing run status
      */
     public BooleanProperty runningProperty() {
         return runningSchedule;
-    }
-
-    // Method to create/update the basic view of the scheduler 
-    private void updateBasicSchedView(Schedule sched, Schedule trans) {
-        HBox scheduled = new HBox();
-        scheduled.setAlignment(Pos.CENTER);
-        HBox transmitted = new HBox();
-        transmitted.setAlignment(Pos.CENTER);
-        ArrayList<String> transmittedDevices;
-
-        // defining details of the last transmitted schedule - if present
-        Label lastTransmittedLabel;
-        if (trans == null) {
-            transmittedDevices = new ArrayList<>(Arrays.asList(""));
-            lastTransmittedLabel = getLabel("No previous transmitted schedules", "schedule-text");
-        } else {
-            transmittedDevices = trans.getDeviceSched();
-            lastTransmittedLabel = getLabel("Last Recorded Schedule: " + trans.getTimeDisp(), "schedule-text");
-
-        }
-
-        // Defining details of the Status of the schedule
-        Label status;
-        if (missedReadings == 0) {
-            status = getLabel("No schedules are due", "schedule-title");
-            status.setTextFill(Color.GREEN);
-        } else {
-            status = getLabel("Please 'Run Schedule Now'. You have missed " + missedReadings + " measurements", "schedule-title");
-            status.setTextFill(Color.RED);
-        }
-
-        // create flow diagrams of the images of elements to be run in future schedules
-        // (painted red or green depending on whether they are overdue or on time)
-        // and those that have been run in the last schedule executed 
-        // (with a pass or fail badge superimposed).
-        for (String s : sched.getDeviceSched()) {
-            Element elem = medipi.getElement(s);
-
-            Transmitter st = null;
-            if (Transmitter.class.isAssignableFrom(elem.getClass())) {
-                st = (Transmitter) elem;
-            }
-            if (st == null) {
-                boolean found = false;
-                for (String t : transmittedDevices) {
-                    // if transmitted element found in list of scheduled elements then pass badge
-                    if (s.equals(t)) {
-                        found = true;
-                        transmitted.getChildren().add(getImage(elem, true));
-                        transmitted.getChildren().add(medipi.utils.getImageView(MEDIPIIMAGESARROW, 40, 40));
-                    }
-                }
-                // if transmitted element not found in list of scheduled elements then fail badge
-                if (!found) {
-                    transmitted.getChildren().add(getImage(elem, false));
-                    transmitted.getChildren().add(medipi.utils.getImageView(MEDIPIIMAGESARROW, 40, 40));
-                }
-            }
-            scheduled.getChildren().add(getImage(elem, null));
-            scheduled.getChildren().add(medipi.utils.getImageView(MEDIPIIMAGESARROW, 40, 40));
-        }
-        // remove the last element which will be an arrow
-        scheduled.getChildren().remove(scheduled.getChildren().size() - 1);
-        transmitted.getChildren().remove(transmitted.getChildren().size() - 1);
-
-        Platform.runLater(() -> {
-            // update the scheduler window
-            if (schedulerWindow.getChildren().size() > 0) {
-                schedulerWindow.getChildren().clear();
-            }
-            schedulerWindow.getChildren().addAll(
-                    status,
-                    new Separator(Orientation.HORIZONTAL),
-                    lastTransmittedLabel,
-                    transmitted,
-                    new Separator(Orientation.HORIZONTAL),
-                    getLabel("Next Scheduled Event: " + Utilities.DISPLAY_SCHEDULE_FORMAT_LOCALTIME.format(nextScheduledEventTime), "schedule-text"),
-                    scheduled,
-                    new Separator(Orientation.HORIZONTAL)
-            );
-        });
-    }
-
-    // private method for adding the CSS id to a Label - should be subsumed into Utilities generally 
-    private Label getLabel(String text, String id) {
-        Label l = new Label(text);
-        l.setId(id);
-        return l;
-    }
-
-    // private method for returning a node containing and image for the element passed
-    // depending on the state of the Measured Boolean: 
-    //      null => colours red or green depening if its overdue
-    //      true/false => pass/fail badge superimposed
-    private BorderPane getImage(Element e, Boolean measured) {
-        ImageView image = e.getImage();
-        image.setFitHeight(80);
-        image.setFitWidth(80);
-
-        StackPane imageSP = new StackPane(image);
-        BorderPane imageBP = new BorderPane(imageSP);
-        if (measured == null) {
-            ColorAdjust monochrome = new ColorAdjust();
-            monochrome.setSaturation(-1.0);
-
-            ColorInput ci;
-            if (missedReadings == 0) {
-                ci = new ColorInput(0, 0, 80, 80, Color.LIGHTGREEN);
-                imageBP.setStyle("-fx-background-color: lightgreen;");
-            } else {
-                ci = new ColorInput(0, 0, 80, 80, Color.LIGHTPINK);
-                imageBP.setStyle("-fx-background-color: lightpink;");
-            }
-
-            Blend blush = new Blend(
-                    BlendMode.MULTIPLY,
-                    monochrome,
-                    ci
-            );
-            image.setEffect(blush);
-            image.setCache(true);
-            image.setCacheHint(CacheHint.SPEED);
-        } else if (measured) {
-            imageSP.getChildren().add(medipi.utils.getImageView(MEDIPIIMAGESPASS, 70, 70));
-        } else {
-            imageSP.getChildren().add(medipi.utils.getImageView(MEDIPIIMAGESFAIL, 70, 70));
-        }
-        imageBP.setMinSize(90, 90);
-        imageBP.setId("schedule-component");
-        return imageBP;
     }
 
     /**
@@ -546,10 +484,12 @@ public class Scheduler extends Device {
                 if (line.trim().startsWith("#")) {
                     continue;
                 }
+                if (line.trim().isEmpty()) {
+                    continue;
+                }
                 ConfigurationStringTokeniser st = new ConfigurationStringTokeniser(line);
                 if (st.countTokens() < 4) {
-                    throw new Exception();
-                    // any exception here returns null to report that an error has occured loading scheduler file
+                    throw new Exception("The schdule file has become corrupted");
                 }
                 //schedule number
                 UUID uuid = UUID.fromString(st.nextToken());
@@ -578,26 +518,31 @@ public class Scheduler extends Device {
                     latestTrans = new Schedule(uuid, status, time, repeat, deviceList);
                 }
 
-                items.add(new Schedule(uuid, status, time, repeat, deviceList));
+                Instant historicalStart = Instant.now().minus(schedulerHistoryPeriod, ChronoUnit.DAYS);
+                if (time.isAfter(historicalStart) && status.equals(TRANSMITTED)) {
+                    items.add(new Schedule(uuid, status, time, repeat, deviceList));
+                }
             }
             //Empty schedule file or no entries with type SCHEDULED or latest date in the future
             if (latestSched == null || latestSchedDate.isAfter(Instant.now())) {
                 Platform.runLater(() -> {
-                    scheduleStatus.setText("Loading the schedule file has encountered problems. It is empty, contains no scheduled events or corrupt");
-                    left.setDisable(true);
+                    MediPiMessageBox.getInstance().makeErrorMessage("Loading the schedule file has encountered problems. It is empty, contains no scheduled events or corrupt", null);
+                    runScheduleNowButton.setDisable(true);
                 });
             } else {
                 lastSchedule = latestSched;
                 //check to see if the latest entry is valid
                 Instant lastTime = Instant.ofEpochMilli(lastSchedule.getTime());
-                left.setDisable(false);
+                runScheduleNowButton.setDisable(false);
                 // find next scheduled measurements
                 findNextSchedule(lastSchedule, latestTrans);
                 // No missed readings = due to be run now
                 if (missedReadings == 0) {
                     alertBooleanProperty.set(false);
                     Platform.runLater(() -> {
-                        scheduleStatus.setText("You are up to date with your scheduled measurements. The next scheduled measurement is due at " + Utilities.DISPLAY_SCHEDULE_FORMAT_LOCALTIME.format(nextScheduledEventTime) + ". If you would like to perform measurements now press the run measurements now button");
+                        alertBanner.remove(getClassTokenName());
+                        schedNextText.setText("* Your next schedule is due at " + Utilities.DISPLAY_SCHEDULE_FORMAT_LOCALTIME.format(nextScheduledEventTime));
+                        schedPressRunText.setText("");
                     });
                 } else {
                     // more than 1 missed reading
@@ -605,19 +550,37 @@ public class Scheduler extends Device {
                     Platform.runLater(new Runnable() {
                         @Override
                         public void run() {
-                            scheduleStatus.setText("You have missed " + missedReadings + " scheduled measurements. The next scheduled measurement is due at " + Utilities.DISPLAY_SCHEDULE_FORMAT_LOCALTIME.format(nextScheduledEventTime) + ". If you would like to perform measurements now press the run measurements now button");
+                            alertBanner.put(getClassTokenName(), "You have measurements to take");
+                            schedNextText.setText("* Your next schedule was due at " + Utilities.DISPLAY_SCHEDULE_FORMAT_LOCALTIME.format(nextScheduledEventTime));
+                            schedPressRunText.setText("* Please press 'Run Schedule Now'");
                         }
                     });
                 }
-                if (medipi.isBasicDataView()) {
-                    updateBasicSchedView(lastSchedule, latestTrans);
-                }
             }
+            //now add the latest schedule to the item list
+            String schedType;
+            if (missedReadings > 0) {
+                schedType = "SCHEDULE NOW DUE";
+            } else {
+                schedType = "SCHEDULE DUE AT";
+            }
+            items.add(new Schedule(
+                    lastSchedule.getUUID(),
+                    schedType,
+                    nextScheduledEventTime,
+                    lastSchedule.getRepeat(),
+                    lastSchedule.getDeviceSched()
+            ));
+            items.sort(Comparator.comparing(Schedule::getTime).reversed());
+
+            double days = lastSchedule.getRepeat() / 1440;
+            schedRepeatText.setText("* Your schedule occurs every " + days + " day(s)");
+
         } catch (Exception e) {
             // any exception here returns null to report that an error has occured loading scheduler file
             Platform.runLater(() -> {
-                scheduleStatus.setText("Loading the schedule file has encountered problems. It is empty, contains no scheduled events or corrupt");
-                left.setDisable(true);
+                MediPiMessageBox.getInstance().makeErrorMessage("Loading the schedule file has encountered problems. It is empty, contains no scheduled events or corrupt", e);
+                runScheduleNowButton.setDisable(true);
             });
         }
 
@@ -634,20 +597,45 @@ public class Scheduler extends Device {
         }
         Instant schedTime = Instant.ofEpochMilli(latestSched.getTime());
         int repeat = latestSched.getRepeat();
-        Instant schedCal = schedTime.plus(repeat, ChronoUnit.MINUTES);
+        Instant schedEnd = schedTime.plus(repeat, ChronoUnit.MINUTES);
         //knowing that the time is in the past get next scheduled time before we test if it has been missed
         missedReadings = 0;
         while (true) {
-            if (schedCal.isAfter(Instant.now())) {
-                nextScheduledEventTime = schedCal;
-                schedCal = schedCal.minus(repeat, ChronoUnit.MINUTES);
-                currentScheduledEventTime = schedCal;
+            Instant schedStart = schedEnd.minus(repeat, ChronoUnit.MINUTES);
+
+            if (schedStart.isAfter(Instant.now().minus(schedulerHistoryPeriod, ChronoUnit.DAYS))) {
+                boolean found = false;
+                for (Schedule s : items) {
+                    if (s.getEventTypeDisp().equals(TRANSMITTED)) {
+                        Instant i = Instant.ofEpochMilli(s.getTime());
+                        if (schedStart.isBefore(i) && schedEnd.isAfter(i)) {
+                            //We have found a transmission for this schedCal iteration
+                            found = true;
+                            break;
+                        }
+                    }
+                }
+                if (!found) {
+                    items.add(new Schedule(
+                            UUID.randomUUID(),
+                            "MISSING",
+                            schedStart,
+                            0,
+                            lastSchedule.getDeviceSched()
+                    ));
+                }
+            }
+
+            if (schedEnd.isAfter(Instant.now())) {
+                nextScheduledEventTime = schedEnd;
+                currentScheduledEventTime = schedStart;
                 break;
             }
-            if (transTime.isBefore(schedCal)) {
+            if (transTime.isBefore(schedEnd)) {
                 missedReadings++;
             }
-            schedCal = schedCal.plus(repeat, ChronoUnit.MINUTES);
+
+            schedEnd = schedEnd.plus(repeat, ChronoUnit.MINUTES);
         }
     }
 
@@ -668,12 +656,22 @@ public class Scheduler extends Device {
                 // Reset all the devices to be taken
                 for (String s : lastSchedule.getDeviceSched()) {
                     Element e = medipi.getElement(s);
+                    if (e == null) {
+                        MediPiMessageBox.getInstance().makeErrorMessage("Scheduler is expecting a device called '" + s + "' but cannot find it in the schedule.schedule file", null);
+                        throw new Exception("Scheduler is expecting a device called '" + s + "' but cannot find it in the schedule.schedule file", null);
+                    }
                     if (Device.class.isAssignableFrom(e.getClass())) {
                         Device d = (Device) e;
-                        d.resetDevice();
+                        if (d.confirmReset()) {
+                            d.resetDevice();
+                        } else {
+                            runningSchedule.set(false);
+                            return;
+                        }
                     }
 
                 }
+
                 //Call the first device in the list and pass the remaining ones into the recursive Element.callDeviceWindow() 
                 ArrayList<String> d = lastSchedule.getDeviceSched();
                 String firstDevice = d.get(0);
@@ -717,21 +715,11 @@ public class Scheduler extends Device {
 
     @Override
     public BorderPane getDashboardTile() throws Exception {
-        DashboardTile dashComponent = new DashboardTile(this);
-        dashComponent.addTitle(getName());
+        DashboardTile dashComponent = new DashboardTile(this, showTile);
+        dashComponent.addTitle(NAME);
         dashComponent.addOverlay(alertImageView, alertBooleanProperty);
+        dashComponent.addOverlay(Color.LIGHTPINK, alertBooleanProperty);
         return dashComponent.getTile();
-    }
-
-    /**
-     * Method which returns a booleanProperty which UI elements can be bound to,
-     * to discover whether there is data to be downloaded
-     *
-     * @return BooleanProperty signalling the presence of downloaded data
-     */
-    @Override
-    public BooleanProperty hasDataProperty() {
-        return hasData;
     }
 
     @Override
@@ -741,7 +729,9 @@ public class Scheduler extends Device {
         StringBuilder sb = new StringBuilder();
         //Add MetaData
         sb.append("metadata->persist->medipiversion->").append(medipi.getVersion()).append("\n");
-        sb.append("metadata->subtype->").append(getName()).append("\n");
+        sb.append("metadata->make->").append(getMake()).append("\n");
+        sb.append("metadata->model->").append(getModel()).append("\n");
+        sb.append("metadata->displayname->").append(getDisplayName()).append("\n");
         sb.append("metadata->datadelimiter->").append(medipi.getDataSeparator()).append("\n");
         sb.append("metadata->scheduleeffectivedate->").append(Utilities.ISO8601FORMATDATEMILLI_UTC.format(scheduler.getCurrentScheduledEventTime())).append("\n");
         sb.append("metadata->scheduleexpirydate->").append(Utilities.ISO8601FORMATDATEMILLI_UTC.format(scheduler.getNextScheduledEventTime())).append("\n");
@@ -786,6 +776,7 @@ public class Scheduler extends Device {
         lastSchedule = null;
         items.clear();
         refreshSchedule();
+        resultsSummary.setValue("");
     }
 
     // method to add new .scheduler lines ready to be written to the .scheduler file
@@ -795,5 +786,48 @@ public class Scheduler extends Device {
         if (type.equals(TRANSMITTED)) {
             writeNewScheduleLineToFile(deviceData);
         }
+        resultsSummary.setValue(SCHEDTAKEN);
+
     }
+
+    /**
+     * method to get the Make of the device
+     *
+     * @return make and model of device
+     */
+    @Override
+    public String getMake() {
+        return MAKE;
+    }
+
+    /**
+     * method to get the Model of the device
+     *
+     * @return model of device
+     */
+    @Override
+    public String getModel() {
+        return MODEL;
+    }
+
+    /**
+     * method to get the Display Name of the device
+     *
+     * @return displayName of device
+     */
+    @Override
+    public String getDisplayName() {
+        return DISPLAYNAME;
+    }
+
+    @Override
+    public StringProperty getResultsSummary() {
+        return resultsSummary;
+    }
+
+    @Override
+    public void setData(ArrayList<ArrayList<String>> deviceData) {
+        throw new UnsupportedOperationException("This method is not used as the class has no extensions");
+    }
+
 }

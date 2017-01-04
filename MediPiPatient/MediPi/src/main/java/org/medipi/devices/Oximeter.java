@@ -1,5 +1,5 @@
 /*
- Copyright 2016  Richard Robinson @ HSCIC <rrobinson@hscic.gov.uk, rrobinson@nhs.net>
+ Copyright 2016  Richard Robinson @ NHS Digital <rrobinson@nhs.net>
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -15,39 +15,31 @@
  */
 package org.medipi.devices;
 
-import extfx.scene.chart.DateAxis;
-import java.io.BufferedReader;
-import java.io.IOException;
 import java.time.Instant;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.UUID;
-import java.util.regex.Pattern;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
-import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleBooleanProperty;
-import javafx.concurrent.Task;
+import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
-import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.chart.LineChart;
-import javafx.scene.chart.NumberAxis;
-import javafx.scene.chart.XYChart;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.control.Separator;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import javafx.util.StringConverter;
-import javafx.util.converter.DateStringConverter;
+import javafx.scene.paint.Color;
 import org.medipi.DashboardTile;
 import org.medipi.MediPi;
 import org.medipi.MediPiMessageBox;
+import org.medipi.MediPiProperties;
+import org.medipi.devices.drivers.domain.DeviceTimestampChecker;
 import org.medipi.model.DeviceDataDO;
 import org.medipi.utilities.Utilities;
 
@@ -55,88 +47,46 @@ import org.medipi.utilities.Utilities;
  * Class to display and handle the functionality for a generic Pulse Oximeter
  * Medical Device.
  *
- * Dependent on the view mode the UI displays either a graphical representation
- * of the results (pulse rate, oxygen saturation and pulse waveform) or a visual
- * guide to using the device. When data is taken from the device metadata is
- * added to identify it. The large type result display shows an average heart
- * rate and SpO2 level over the period of measurement. The data is received
- * serially "in real time" and not in the "download" paradigm
- *
- * This class expects each line of data coming in from the driver to conform to
- * the following format:
- *
- * Date in UNIX epoch time, heart rate in BPM, SpO2 in %, heart waveform range
- * 0-99. All individual data points within a line are separated using the
- * configurable separator
- *
- * JavaFX has no implementation for a Date axis in its graphs so the extFX
- * library has been used (Published under the MIT OSS licence. This may need to
- * be altered/changed (https://bitbucket.org/sco0ter/extfx)
- *
- * TODO: This class expect measurements for Heart rate , SpO2 and heart waveform
- * which for any specific scale might not be appropriate. The fact that the
- * large results box is showing averaged results is not being displayed. The
- * start and finish times are recorded internally but not displayed
+ * Generic Oximeter class which exposes basic generic information and the data
+ * to other classes and allows the classes which are specific to a particular
+ * device to set data
  *
  * @author rick@robinsonhq.com
  */
 public abstract class Oximeter extends Device {
 
-    private final String DEVICE_TYPE = "Finger Oximeter";
+    private final String DEVICE_TYPE = "Oximeter";
     private static final String PROFILEID = "urn:nhs-en:profile:Oximeter";
-    private XYChart.Series pulseSeries;
-    private DateAxis xAxis;
-    private NumberAxis yAxis;
-    private Button recordButton;
-    private ArrayList<String[]> deviceData = new ArrayList<>();
-    // property to indicate whether data has bee recorded for this device
-    private final BooleanProperty hasData = new SimpleBooleanProperty(false);
+    protected Button actionButton;
+    private ArrayList<ArrayList<String>> deviceData = new ArrayList<>();
+
     private VBox oxiWindow;
-    private LineChart<Date, Number> lineChart;
-    //defining a series
-    private XYChart.Series spO2Series;
-    private XYChart.Series waveFormSeries;
-    private int spO2DataCounter = 1;
-    private int pulseRateDataCounter = 1;
-    private int sumPulseRate = 0;
-    private int sumSpO2Rate = 0;
-    private int maxPulse = 0;
-    private int minPulse = 999;
-    private int meanPulse = 0;
-    private Label maxPulseTF;
-    private Label minPulseTF;
     private Label meanPulseTF;
     private Label meanPulseDB;
-    private Label currentPulseTF;
-    private int maxSpO2 = 0;
-    private int minSpO2 = 100;
-    private int meanSpO2 = 0;
-    private Label maxSpO2TF;
-    private Label minSpO2TF;
     private Label meanSpO2TF;
     private Label meanSpO2DB;
-    private Label currentSpO2TF;
-    private Label startTimeTF;
-    private Label endTimeTF;
+    private Label measurementTimeTF;
+    private Label measurementTimeLabel;
     private VBox resultsVBox;
-    private Instant endTime;
+    private final IntegerProperty pulse = new SimpleIntegerProperty(0);
+    private final IntegerProperty spO2 = new SimpleIntegerProperty(0);
+    private final StringProperty lastMeasurementTime = new SimpleStringProperty();
+    private final StringProperty resultsSummary = new SimpleStringProperty();
+    private DeviceTimestampChecker deviceTimestampChecker;
+    protected static String initialButtonText;
+    protected static Node initialGraphic = null;
 
-    private Node dataBox;
-    private boolean transmitAverages = true;
+    protected ArrayList<String> metadata = new ArrayList<>();
+
+    protected ArrayList<String> columns = new ArrayList<>();
+    protected ArrayList<String> format = new ArrayList<>();
+    protected ArrayList<String> units = new ArrayList<>();
 
     /**
      * This is the data separator from the MediPi.properties file
      *
      */
     protected String separator;
-
-    /**
-     * The main task. It is exposed to allow the concrete driver class to
-     * control the main task. This is due to the fact that the device is
-     * serially pushing data to this class, so that when it stops it needs
-     * access to the task itself.
-     */
-    protected Task task;
 
     /**
      * Constructor for a Generic Oximeter
@@ -160,144 +110,122 @@ public abstract class Oximeter extends Device {
 
         String uniqueDeviceName = getClassTokenName();
         separator = medipi.getDataSeparator();
-        recordButton = new Button("Record", medipi.utils.getImageView("medipi.images.record", 20, 20));
-        recordButton.setId("button-record");
+        actionButton = new Button(initialButtonText, initialGraphic);
+        actionButton.setId("button-record");
+        actionButton.setMaxHeight(20);
 
         oxiWindow = new VBox();
         oxiWindow.setPadding(new Insets(0, 5, 0, 5));
         oxiWindow.setSpacing(5);
-        oxiWindow.setMinSize(800, 350);
-        oxiWindow.setMaxSize(800, 350);
-        // Decide whether to transmit the full set of streamed data points or just the averages
-        String b = medipi.getProperties().getProperty(MediPi.ELEMENTNAMESPACESTEM + uniqueDeviceName + ".data.transmitaverages");
+        oxiWindow.setMinSize(800, 300);
+        oxiWindow.setMaxSize(800, 300);
+        //ascertain if this element is to be displayed on the dashboard
+        String b = MediPiProperties.getInstance().getProperties().getProperty(MediPi.ELEMENTNAMESPACESTEM + uniqueDeviceName + ".showdashboardtile");
         if (b == null || b.trim().length() == 0) {
-            transmitAverages = true;
+            showTile = new SimpleBooleanProperty(true);
         } else {
-            // If not set then  start in basic view mode
-            transmitAverages = !b.toLowerCase().startsWith("n");
+            showTile = new SimpleBooleanProperty(!b.toLowerCase().startsWith("n"));
         }
-
-        //Decide whether to show basic or advanced view
-        if (medipi.isBasicDataView()) {
-            Guide guide = new Guide(MediPi.ELEMENTNAMESPACESTEM + uniqueDeviceName);
-            dataBox = guide.getGuide();
-        } else {
-            //creating the chart
-            yAxis = new NumberAxis(0, 120, 10);
-            xAxis = new DateAxis();
-            StringConverter sc = new DateStringConverter(Utilities.DISPLAY_OXIMETER_TIME_FORMAT_DATE);
-            xAxis.setTickLabelFormatter(sc);
-            xAxis.setLabel("Time");
-            lineChart = new LineChart<>(xAxis, yAxis);
-            lineChart.setTitle("Finger Oximeter");
-            lineChart.setCreateSymbols(false);
-            lineChart.setMinWidth(600);
-            dataBox = lineChart;
-        }
-        startTimeTF = new Label("-");
-        startTimeTF.setMaxWidth(200);
-        startTimeTF.setMinWidth(200);
-        endTimeTF = new Label("-");
-        endTimeTF.setMaxWidth(200);
-        endTimeTF.setMinWidth(200);
-
-        //defining a series
-        maxPulseTF = new Label("-");
-        maxPulseTF.setMaxWidth(50);
-        maxPulseTF.setMinWidth(50);
-        minPulseTF = new Label("-");
-        minPulseTF.setMaxWidth(50);
-        minPulseTF.setMinWidth(50);
-        meanPulseDB = new Label("");        // Setup download button action to run in its own thread
-
+        Guide guide = new Guide(MediPi.ELEMENTNAMESPACESTEM + uniqueDeviceName + ".guide");
+        meanPulseDB = new Label("");
         meanPulseTF = new Label("--");
         meanPulseTF.setId("resultstext");
 
-        currentPulseTF = new Label("-");
-        currentPulseTF.setMaxWidth(50);
-        currentPulseTF.setMinWidth(50);
-        maxSpO2TF = new Label("-");
-        maxSpO2TF.setMaxWidth(50);
-        maxSpO2TF.setMinWidth(50);
-        minSpO2TF = new Label("-");
-        minSpO2TF.setMaxWidth(50);
-        minSpO2TF.setMinWidth(50);
-        meanSpO2DB = new Label("-");
+        meanSpO2DB = new Label("");
         meanSpO2TF = new Label("--");
         meanSpO2TF.setId("resultstext");
-        currentSpO2TF = new Label("-");
-        currentSpO2TF.setMaxWidth(50);
-        currentSpO2TF.setMinWidth(50);
-        resetDevice();
+
+        measurementTimeTF = new Label("");
+        measurementTimeTF.setId("resultstimetext");
+        measurementTimeLabel = new Label("");
+        this.resetDevice();
 
         // create the large result box for the average value of the measurements
         // taken over the period
         // heart rate reading
         HBox pulseRateHbox = new HBox();
-        pulseRateHbox.setAlignment(Pos.CENTER);
+        pulseRateHbox.setAlignment(Pos.CENTER_LEFT);
+        pulseRateHbox.setPadding(new Insets(0, 0, 0, 10));
         Label bpm = new Label("BPM");
-        bpm.setId("resultstext");
-        bpm.setStyle("-fx-font-size:10px;");
+        bpm.setId("resultsunits");
         pulseRateHbox.getChildren().addAll(
                 meanPulseTF,
                 bpm
         );
         // SpO2 reading
         HBox spO2RateHbox = new HBox();
-        spO2RateHbox.setAlignment(Pos.CENTER);
-        Label spo2 = new Label("SpO2");
-        spo2.setId("resultstext");
-        spo2.setStyle("-fx-font-size:10px;");
+        spO2RateHbox.setAlignment(Pos.CENTER_LEFT);
+        spO2RateHbox.setPadding(new Insets(0, 0, 0, 10));
+        Label spO2Label = new Label("SpO2");
+        spO2Label.setId("resultsunits");
         spO2RateHbox.getChildren().addAll(
                 meanSpO2TF,
-                spo2
+                spO2Label
         );
-        HBox timeHbox = new HBox();
-        timeHbox.setSpacing(5);
-        timeHbox.setAlignment(Pos.CENTER);
-        timeHbox.getChildren().addAll(
-                new Label("Time Started:"),
-                startTimeTF,
-                new Label("Time Finished:"),
-                endTimeTF);
+
         resultsVBox = new VBox();
         resultsVBox.setPrefWidth(200);
         resultsVBox.setId("resultsbox");
         resultsVBox.getChildren().addAll(
                 pulseRateHbox,
-                spO2RateHbox
+                spO2RateHbox,
+                measurementTimeLabel,
+                measurementTimeTF
         );
         //create the main window HBox
         HBox dataHBox = new HBox();
         dataHBox.getChildren().addAll(
-                dataBox,
+                guide.getGuide(),
                 resultsVBox
         );
         oxiWindow.getChildren().addAll(
-                dataHBox,
-                new Separator(Orientation.HORIZONTAL)
+                dataHBox
         );
         // set main Element window
         window.setCenter(oxiWindow);
-        setButton2(recordButton);
+        setButton2(actionButton);
 
         // Setup reccord button action to start or stop the main task
-        recordButton.setOnAction((ActionEvent t) -> {
-            if (recordButton.getText().equals("Record")) {
-                resetDevice();
-                record();
-            } else {
-                Platform.runLater(() -> {
-                    task.cancel();
-                    if (stopSerialDevice()) {
-                    } else {
-                        // serial device cant stop
-                    }
-                });
-
-            }
+        actionButton.setOnAction((ActionEvent t) -> {
+            downloadData();
         });
 
+        meanPulseTF.textProperty().bind(
+                Bindings.when(pulse.isEqualTo(0))
+                .then("--")
+                .otherwise(pulse.asString())
+        );
+        meanPulseDB.textProperty().bind(
+                Bindings.when(pulse.isEqualTo(0))
+                .then("")
+                .otherwise(pulse.asString())
+        );
+        meanSpO2TF.textProperty().bind(
+                Bindings.when(spO2.isEqualTo(0))
+                .then("--")
+                .otherwise(spO2.asString())
+        );
+        meanSpO2DB.textProperty().bind(
+                Bindings.when(spO2.isEqualTo(0))
+                .then("")
+                .otherwise(spO2.asString())
+        );
+        measurementTimeTF.textProperty().bind(
+                Bindings.when(lastMeasurementTime.isEqualTo(""))
+                .then("")
+                .otherwise(lastMeasurementTime)
+        );
+        measurementTimeLabel.textProperty().bind(
+                Bindings.when(lastMeasurementTime.isEqualTo(""))
+                .then("")
+                .otherwise("measured at")
+        );
+
+        // bind the button disable to the time sync indicator
+        actionButton.disableProperty().bind(medipi.timeSync.not());
+
+        // This class is used to deny access to recording data if time has not been synchronised
+        deviceTimestampChecker = new DeviceTimestampChecker(medipi, this);
         // successful initiation of the this class results in a null return
         return null;
     }
@@ -317,165 +245,16 @@ public abstract class Oximeter extends Device {
         return PROFILEID;
     }
 
-    // initialises the device window and the data behind it
+    // resets the device
     @Override
     public void resetDevice() {
         deviceData = new ArrayList<>();
         hasData.set(false);
-        if (!medipi.isBasicDataView()) {
-            lineChart.getData().removeAll(pulseSeries, spO2Series, waveFormSeries);
-            pulseSeries = new XYChart.Series();
-            spO2Series = new XYChart.Series();
-            waveFormSeries = new XYChart.Series();
-            pulseSeries.setName("PulseRate (BPM)");
-            spO2Series.setName("SpO2 (%)");
-            waveFormSeries.setName("Pulse WaveForm");
-            lineChart.getData().add(pulseSeries);
-            lineChart.getData().add(spO2Series);
-            lineChart.getData().add(waveFormSeries);
-        }
-        spO2DataCounter = 1;
-        pulseRateDataCounter = 1;
-        sumPulseRate = 0;
-        sumSpO2Rate = 0;
-        maxPulse = 0;
-        minPulse = 999;
-        meanPulse = 0;
-        maxSpO2 = 0;
-        minSpO2 = 100;
-        meanSpO2 = 0;
-        endTime = null;
-        maxPulseTF.setText("-");
-        maxSpO2TF.setText("-");
-        minPulseTF.setText("-");
-        minSpO2TF.setText("-");
-        meanPulseTF.setText("--");
-        meanPulseDB.setText("");
-        meanSpO2TF.setText("--");
-        meanSpO2DB.setText("");
-        currentPulseTF.setText("-");
-        currentSpO2TF.setText("-");
-        startTimeTF.setText("-");
-        endTimeTF.setText("-");
-
-    }
-
-    // Method to handle the recording of the serial device data
-    private void record() {
-        task = new Task<String>() {
-            @Override
-            protected String call() throws Exception {
-                try {
-                    updateValue("NOTSTARTED");
-                    BufferedReader stdInput = startSerialDevice();
-                    if (stdInput != null) {
-                        String readData = new String();
-                        while (true) {
-                            try {
-                                readData = stdInput.readLine();
-                            } catch (IOException i) {
-                                // This happens when the connection is dropped when stop is pressed
-                                break;
-                            }
-                            if (readData == null) {
-                                return "no data from device";
-                            } else if (readData.equals("-1")) {
-                                return "end of data stream from oximeter";
-                            } else {
-                                updateValue("INPROGRESS");
-                                String[] line = readData.split(Pattern.quote(separator));
-                                ZonedDateTime zdt = ZonedDateTime.parse(line[0], Utilities.ISO8601FORMATDATEMILLI_UTC);
-                                final Instant timestamp = zdt.toInstant();
-                                final int pulse = Integer.parseInt(line[1]);
-                                final int spO2 = Integer.parseInt(line[2]);
-                                final int wave = Integer.parseInt(line[3]);
-                                // add the data to the data array
-                                deviceData.add(line);
-                                // add the data to the screen display - this might be a graph/table 
-                                // or just a simple result of the last measure
-                                Platform.runLater(() -> {
-                                    addDataPoint(timestamp, pulse, spO2, wave);
-                                });
-
-                            }
-                        }
-                    }
-                    return "Is the device plugged in/within range?";
-                } catch (Exception ex) {
-                    return ex.getLocalizedMessage();
-                }
-            }
-
-            // the measure of completion and success is returning "SUCCESS"
-            // all other outcomes indicate failure and pipe the failure 
-            // reason given from the device to the error message box
-            @Override
-            protected void succeeded() {
-                super.succeeded();
-                if (getValue().equals("INPROGRESS")) {
-                    if (!deviceData.isEmpty()) {
-                        hasData.set(true);
-                    }
-                } else {
-                    MediPiMessageBox.getInstance().makeErrorMessage(getValue(), null);
-                }
-
-            }
-
-            @Override
-            protected void scheduled() {
-                super.scheduled();
-            }
-
-            @Override
-            protected void failed() {
-                super.failed();
-                MediPiMessageBox.getInstance().makeErrorMessage(getValue(), null);
-            }
-
-            @Override
-            // Also counts as a positive outcome as the straeming of data is stopped by cancelling
-            protected void cancelled() {
-                super.succeeded();
-                if (getValue().equals("INPROGRESS")) {
-                    if (!deviceData.isEmpty()) {
-                        hasData.set(true);
-                    }
-                } else {
-                    MediPiMessageBox.getInstance().makeErrorMessage(getValue(), null);
-                }
-            }
-        };
-
-        // Set up the bindings to control the UI elements during the running of the task
-        recordButton.textProperty().bind(
-                Bindings.when(task.runningProperty())
-                .then("Stop")
-                .otherwise("Record")
-        );
-        recordButton.graphicProperty().bind(
-                Bindings.when(task.runningProperty())
-                .then(medipi.utils.getImageView("medipi.images.stop", 20, 20))
-                .otherwise(medipi.utils.getImageView("medipi.images.record", 20, 20))
-        );
-        button3.disableProperty().bind(
-                Bindings.when(task.runningProperty().and(isSchedule))
-                .then(true)
-                .otherwise(false)
-        );
-
-        new Thread(task).start();
-    }
-
-    /**
-     * Method which returns a booleanProperty which UI elements can be bound to,
-     * to discover whether there is data to be downloaded
-     *
-     * @return BooleanProperty signalling the presence of downloaded data
-     */
-    @Override
-    public BooleanProperty hasDataProperty() {
-        return hasData;
+        metadata.clear();
+        pulse.set(0);
+        spO2.set(0);
+        lastMeasurementTime.set("");
+        resultsSummary.setValue("");
     }
 
     /**
@@ -490,119 +269,79 @@ public abstract class Oximeter extends Device {
 
         //Add MetaData
         sb.append("metadata->persist->medipiversion->").append(medipi.getVersion()).append("\n");
-        sb.append("metadata->subtype->").append(getName()).append("\n");
-        sb.append("metadata->datadelimiter->").append(medipi.getDataSeparator()).append("\n");
+        for (String s : metadata) {
+            sb.append("metadata->persist->").append(s).append("\n");
+        }
+        sb.append("metadata->make->").append(getMake()).append("\n");
+        sb.append("metadata->model->").append(getModel()).append("\n");
+        sb.append("metadata->displayname->").append(getDisplayName()).append("\n");
+        sb.append("metadata->datadelimiter->").append(separator).append("\n");
         if (scheduler != null) {
             sb.append("metadata->scheduleeffectivedate->").append(Utilities.ISO8601FORMATDATEMILLI_UTC.format(scheduler.getCurrentScheduledEventTime())).append("\n");
             sb.append("metadata->scheduleexpirydate->").append(Utilities.ISO8601FORMATDATEMILLI_UTC.format(scheduler.getNextScheduledEventTime())).append("\n");
         }
-        // Add Downloaded data
-        if (transmitAverages) {
-            sb.append("metadata->columns->")
-                    .append("iso8601time").append(medipi.getDataSeparator())
-                    .append("pulse").append(medipi.getDataSeparator())
-                    .append("spo2").append("\n");
-            sb.append("metadata->format->")
-                    .append("DATE").append(medipi.getDataSeparator())
-                    .append("INTEGER").append(medipi.getDataSeparator())
-                    .append("INTEGER").append("\n");
-            sb.append("metadata->units->")
-                    .append("NONE").append(medipi.getDataSeparator())
-                    .append("BPM").append(medipi.getDataSeparator())
-                    .append("%").append("\n");
-            sb.append(Utilities.ISO8601FORMATDATEMILLI_UTC.format(endTime));
-            sb.append(separator);
-            sb.append(meanPulse);
-            sb.append(separator);
-            sb.append(meanSpO2);
-            sb.append("\n");
-        } else {
-            sb.append("metadata->columns->")
-                    .append("iso8601time").append(medipi.getDataSeparator())
-                    .append("pulse").append(medipi.getDataSeparator())
-                    .append("spo2").append(medipi.getDataSeparator())
-                    .append("wave").append("\n");
-            sb.append("metadata->format->")
-                    .append("DATE").append(medipi.getDataSeparator())
-                    .append("INTEGER").append(medipi.getDataSeparator())
-                    .append("INTEGER").append(medipi.getDataSeparator())
-                    .append("DOUBLE").append("\n");
-            sb.append("metadata->units->")
-                    .append("").append(medipi.getDataSeparator())
-                    .append("BPM").append(medipi.getDataSeparator())
-                    .append("%").append(medipi.getDataSeparator())
-                    .append("").append("\n");
-            for (String[] s : deviceData) {
-                sb.append(s[0]);
-                sb.append(separator);
-                sb.append(s[1]);
-                sb.append(separator);
-                sb.append(s[2]);
-                sb.append(separator);
-                sb.append(s[3]);
-                sb.append("\n");
-            }
+        sb.append("metadata->columns->");
+        for (String string : columns) {
+            sb.append(string).append(separator);
         }
+        //replace the last separator with a new line
+        sb.replace(sb.length() - separator.length(), sb.length(), "\n");
+
+        sb.append("metadata->format->");
+        for (String string : format) {
+            sb.append(string).append(separator);
+        }
+        //replace the last separator with a new line
+        sb.replace(sb.length() - separator.length(), sb.length(), "\n");
+
+        sb.append("metadata->units->");
+        for (String string : units) {
+            sb.append(string).append(separator);
+        }
+        //replace the last separator with a new line
+        sb.replace(sb.length() - separator.length(), sb.length(), "\n");
+
+        // Add Downloaded data
+        for (ArrayList<String> dataLine : deviceData) {
+            for (String data : dataLine) {
+                sb.append(data).append(separator);
+            }
+            //replace the last separator with a new line
+            sb.replace(sb.length() - separator.length(), sb.length(), "\n");
+        }
+
         payload.setProfileId(PROFILEID);
         payload.setPayload(sb.toString());
         return payload;
     }
 
-    /**
-     * Add data to the graph
-     *
-     * @param time as UNIX epoch time format
-     * @param pulseRate in BPM
-     * @param spO2 in %
-     * @param waveForm
-     */
-    public void addDataPoint(Instant time, int pulseRate, int spO2, int waveForm) {
+    @Override
+    public void setData(ArrayList<ArrayList<String>> data) {
+        data = deviceTimestampChecker.checkTimestamp(data);
+        if (data == null || data.isEmpty()) {
+            MediPiMessageBox.getInstance().makeMessage("No data is available from " + getDisplayName());
+        } else {
+            for (ArrayList<String> a : data) {
+                Instant i = Instant.parse(a.get(0));
+                final int pulse = Integer.parseInt(a.get(1));
+                final int spO2 = Integer.parseInt(a.get(2));
+                displayData(i, pulse, spO2);
+                hasData.set(true);
+            }
+            deviceData = data;
+        }
+    }
 
-        if (startTimeTF.getText().equals("-")) {
-            startTimeTF.setText(Utilities.DISPLAY_FORMAT_LOCALTIME.format(time));
-        }
-        endTimeTF.setText(Utilities.DISPLAY_FORMAT_LOCALTIME.format(time));
-        endTime = time;
-        if (!medipi.isBasicDataView()) {
-            XYChart.Data<Date, Number> pulseXYData = new XYChart.Data<>(Date.from(time), pulseRate);
-            pulseSeries.getData().add(pulseXYData);
-            XYChart.Data<Date, Number> spO2XYData = new XYChart.Data<>(Date.from(time), spO2);
-            spO2Series.getData().add(spO2XYData);
-            XYChart.Data<Date, Number> waveFormXYData = new XYChart.Data<>(Date.from(time), waveForm);
-            waveFormSeries.getData().add(waveFormXYData);
-        }
-        if (pulseRate != 0) {
-            if (pulseRate > maxPulse) {
-                maxPulse = pulseRate;
-                maxPulseTF.setText(String.valueOf(maxPulse));
-            }
-            if (pulseRate != 0 && pulseRate < minPulse) {
-                minPulse = pulseRate;
-                minPulseTF.setText(String.valueOf(minPulse));
-            }
-            sumPulseRate = sumPulseRate + pulseRate;
-            meanPulse = sumPulseRate / pulseRateDataCounter;
-            meanPulseTF.setText(String.valueOf(meanPulse));
-            meanPulseDB.setText(String.valueOf(meanPulse));
-            pulseRateDataCounter++;
-        }
-        currentPulseTF.setText(String.valueOf(pulseRate));
-        if (spO2 != 0) {
-            if (spO2 > maxSpO2) {
-                maxSpO2 = spO2;
-                maxSpO2TF.setText(String.valueOf(maxSpO2));
-            }
-            if (spO2 != 0 && spO2 < minSpO2) {
-                minSpO2 = spO2;
-                minSpO2TF.setText(String.valueOf(minSpO2));
-            }
-            sumSpO2Rate = sumSpO2Rate + spO2;
-            meanSpO2 = sumSpO2Rate / spO2DataCounter;
-            meanSpO2TF.setText(String.valueOf(meanSpO2));
-            meanSpO2DB.setText(String.valueOf(meanSpO2));
-            spO2DataCounter++;
-        }
-        currentSpO2TF.setText(String.valueOf(spO2));
+    protected void displayData(Instant time, int pulse, int spo2) {
+        Platform.runLater(() -> {
+            this.pulse.set(pulse);
+            this.spO2.set(spo2);
+            this.lastMeasurementTime.set(Utilities.DISPLAY_DEVICE_FORMAT_LOCALTIME.format(time));
+            resultsSummary.set(
+                    getType() + " - "
+                    + this.pulse.getValue().toString() + "BPM, "
+                    + this.spO2.getValue().toString() + "%SpO2");
+        });
     }
 
     /**
@@ -612,25 +351,23 @@ public abstract class Oximeter extends Device {
      */
     @Override
     public BorderPane getDashboardTile() throws Exception {
-        DashboardTile dashComponent = new DashboardTile(this);
+        DashboardTile dashComponent = new DashboardTile(this, showTile);
         dashComponent.addTitle(getType());
         dashComponent.addOverlay(meanPulseDB, "BPM");
         dashComponent.addOverlay(meanSpO2DB, "SpO2");
+        dashComponent.addOverlay(Color.LIGHTGREEN, hasDataProperty());
         return dashComponent.getTile();
     }
 
-    /**
-     * Opens the USB serial connection and prepares for serial data
-     *
-     * @return bufferedReader to pass data serially with the device class
-     */
-    public abstract BufferedReader startSerialDevice();
+    @Override
+    public StringProperty getResultsSummary() {
+        return resultsSummary;
+    }
 
     /**
-     * Stops the USB serial port and resets the listeners
+     * Abstract method to download data from the device driver
      *
-     * @return boolean value of success of the connection closing
      */
-    public abstract boolean stopSerialDevice();
+    protected abstract void downloadData();
 
 }

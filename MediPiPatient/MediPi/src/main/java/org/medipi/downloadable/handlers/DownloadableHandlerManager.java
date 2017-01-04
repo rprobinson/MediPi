@@ -1,5 +1,5 @@
 /*
- Copyright 2016  Richard Robinson @ HSCIC <rrobinson@hscic.gov.uk, rrobinson@nhs.net>
+ Copyright 2016  Richard Robinson @ NHS Digital <rrobinson@nhs.net>
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ import org.medipi.model.DownloadableDO;
 public class DownloadableHandlerManager {
 
     private HashMap<String, DownloadableHandler> handlers = null;
-    private Exception bootException = null;
+    private final Exception bootException = null;
 
     /**
      * Constructor

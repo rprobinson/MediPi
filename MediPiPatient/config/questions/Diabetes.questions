@@ -1,0 +1,43 @@
+BEGIN VERSION
+version 1.1 21/11/2016
+END VERSION
+
+# Questions are parsed in 2 parts: name, text
+BEGIN QUESTIONS
+Question1 Are you feeling well today?
+Question2 Have you felt excessively thirsty?
+Question3 Have you felt excessively thirsty?
+Question4 Have you had any hypos since you last spoke to your key worker?
+Question5 Are you very tired, or more tired than usual?
+Question6 Is this new?
+Question7 Do you have any symptoms of chest, urine or skin infection? Please see your card for a list of these symptoms
+Question8 Have you had foot problems in the past?
+Question9 Anyone with diabetes can  develop foot problems therefore you should examine your feet daily. Do  you examine your feet each day?
+Question10 Do you have any wounds, or sore areas, on your feet?
+Question11 Are the wounds being treated by your podiatrist or nurse?
+END QUESTIONS
+
+# Responses are parsed in 3 parts: name, Red flag status, text
+BEGIN RESPONSES
+Response1 true Please contact your diabetes nurse for further advice
+Response2 true Please record any hypo episodes you may have had. If you are concerned, contact your key worker
+Response3 true Please contact your GP for further advice
+Response4 false Good. Please contact your GP or diabetes nurse if  you require further advice
+Response5 false Good. Contact your podiatrist if you notice any changes to your feet which are different to how they look normally
+Response6 true Check the dressing is secure and contact your podiatrist or nurse if the wound deteriorates or becomes infected
+Response7 true Cover the wound with a clean dressing and contact your podiatrist or key worker
+END RESPONSES
+
+BEGIN QUESTIONNAIRE
+Rule1 IF Question1 TRUE Rule2 FALSE Rule3
+Rule2 IF Question2 TRUE Response1 FALSE Rule4
+Rule3 IF Question3 TRUE Response1 FALSE Rule5
+Rule4 IF Question4 TRUE Response2 FALSE Rule8
+Rule5 IF Question5 TRUE Rule6 FALSE Rule7
+Rule6 IF Question6 TRUE Response1 FALSE Rule7
+Rule7 IF Question7 TRUE Response3 FALSE Rule8
+Rule8 IF Question8 TRUE Rule9 FALSE Response4
+Rule9 IF Question9 TRUE Rule10 FALSE Rule10
+Rule10 IF Question10 TRUE Rule11 FALSE Response5
+Rule11 IF Question11 TRUE Response6 FALSE Response7
+END QUESTIONNAIRE

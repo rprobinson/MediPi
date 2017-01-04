@@ -1,5 +1,5 @@
 /*
- Copyright 2016  Richard Robinson @ HSCIC <rrobinson@hscic.gov.uk, rrobinson@nhs.net>
+ Copyright 2016  Richard Robinson @ NHS Digital <rrobinson@nhs.net>
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -18,31 +18,31 @@ package org.medipi.devices;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.UUID;
+import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
 
-import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
+import javafx.beans.property.StringProperty;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
-import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
-import javafx.scene.control.Separator;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
-import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 
 import org.medipi.DashboardTile;
 import org.medipi.MediPi;
+import org.medipi.MediPiMessageBox;
+import org.medipi.MediPiProperties;
+import org.medipi.devices.drivers.domain.DeviceTimestampChecker;
 import org.medipi.utilities.Utilities;
 import org.medipi.model.DeviceDataDO;
 
@@ -50,21 +50,9 @@ import org.medipi.model.DeviceDataDO;
  * Class to display and handle the functionality for a generic BloodPressure
  * Medical Device.
  *
- * Dependent on the view mode the UI displays either a graphical representation
- * of the results or a visual guide to using the device. When data is taken from
- * the device metadata is added to identify it. The last reading taken from the
- * device is displayed
- *
- * This class expects each line of data coming in from the driver to start with
- * the following in order:
- *
- * START, LOOP: n (where n is the loop number), DATA:x (where x is a line of
- * char separated data), END.All individual data points within a line are
- * separated using the configurable separator
- *
- * TODO: This class expect measurements systolic blood pressure, diastolic blood
- * pressure, pulseRate, user, At rest indicator and heart arrhythmia detection
- * which for any specific device might not be appropriate
+ * Generic Blood pressure class which exposes basic generic information and the
+ * data to other classes and allows the classes which are specific to a
+ * particular device to set data
  *
  * @author rick@robinsonhq.com
  */
@@ -73,26 +61,36 @@ public abstract class BloodPressure extends Device {
 
     private final String DEVICE_TYPE = "Blood Pressure";
     private final static String PROFILEID = "urn:nhs-en:profile:BloodPressure";
-    protected ArrayList<String[]> deviceData = new ArrayList<>();
-    // property to indicate whether data has been recorded for this device
-    protected BooleanProperty hasData = new SimpleBooleanProperty(false);
     private VBox meterWindow;
-    private TableView<MeterReading> table = new TableView<>();
-    private ObservableList<MeterReading> data = FXCollections.observableArrayList();
-    private VBox deviceWindow;
-    protected ProgressBar downProg = new ProgressBar(0.0F);
+
     private Label lastSystolDB;
     private Label lastSystol;
     private Label lastDiastolDB;
     private Label lastDiastol;
     private Label lastPulseDB;
     private Label lastPulse;
-    private Node dataBox;
-    protected Button downloadButton;
-    // initially set to unix epoch time
-    private Instant lastDate = Instant.EPOCH;
+    private Label measurementTimeTF;
+    private Label measurementTimeLabel;
 
-    private ArrayList<String> metadata = new ArrayList<>();
+    protected Button downloadButton;
+    protected static String initialButtonText;
+    protected static ImageView initialGraphic = null;
+
+    private ArrayList<ArrayList<String>> deviceData = new ArrayList<>();
+    private final StringProperty resultsSummary = new SimpleStringProperty();
+    private DeviceTimestampChecker deviceTimestampChecker;
+    protected IntegerProperty systol = new SimpleIntegerProperty(0);
+    protected IntegerProperty diastol = new SimpleIntegerProperty(0);
+    protected IntegerProperty heartrate = new SimpleIntegerProperty(0);
+    private final StringProperty lastMeasurementTime = new SimpleStringProperty();
+
+    protected ProgressBar downProg = new ProgressBar(0.0F);
+
+    protected ArrayList<String> metadata = new ArrayList<>();
+
+    protected ArrayList<String> columns = new ArrayList<>();
+    protected ArrayList<String> format = new ArrayList<>();
+    protected ArrayList<String> units = new ArrayList<>();
 
     /**
      * This is the data separator from the MediPi.properties file
@@ -130,13 +128,13 @@ public abstract class BloodPressure extends Device {
         separator = medipi.getDataSeparator();
         ImageView iw = medipi.utils.getImageView("medipi.images.arrow", 20, 20);
         iw.setRotate(90);
-        downloadButton = new Button("Download", iw);
+        downloadButton = new Button(initialButtonText, initialGraphic);
         downloadButton.setId("button-download");
         meterWindow = new VBox();
         meterWindow.setPadding(new Insets(0, 5, 0, 5));
         meterWindow.setSpacing(5);
-        meterWindow.setMinSize(800, 350);
-        meterWindow.setMaxSize(800, 350);
+        meterWindow.setMinSize(800, 300);
+        meterWindow.setMaxSize(800, 300);
         downProg.setVisible(false);
         HBox buttonHbox = new HBox();
         buttonHbox.setSpacing(10);
@@ -144,92 +142,56 @@ public abstract class BloodPressure extends Device {
         if (progressBarResolution > 0D) {
             buttonHbox.getChildren().add(downProg);
         }
-        //Decide whether to show basic or advanced view
-        if (medipi.isBasicDataView()) {
-            Guide guide = new Guide(MediPi.ELEMENTNAMESPACESTEM + uniqueDeviceName);
-            dataBox = guide.getGuide();
+        Guide guide = new Guide(MediPi.ELEMENTNAMESPACESTEM + uniqueDeviceName + ".guide");
+        //ascertain if this element is to be displayed on the dashboard
+        String b = MediPiProperties.getInstance().getProperties().getProperty(MediPi.ELEMENTNAMESPACESTEM + uniqueDeviceName + ".showdashboardtile");
+        if (b == null || b.trim().length() == 0) {
+            showTile = new SimpleBooleanProperty(true);
         } else {
-            //Setup the results table
-            TableColumn dateCol = new TableColumn("Date/Time");
-            dateCol.setMinWidth(50);
-            dateCol.setCellValueFactory(
-                    new PropertyValueFactory<>("date"));
-
-            TableColumn systolCol = new TableColumn("Systolic Pressure");
-            systolCol.setMinWidth(50);
-            systolCol.setCellValueFactory(
-                    new PropertyValueFactory<>("systol"));
-
-            TableColumn diastolCol = new TableColumn("Diastolic Pressure");
-            diastolCol.setMinWidth(50);
-            diastolCol.setCellValueFactory(
-                    new PropertyValueFactory<>("diastol"));
-
-            TableColumn pulseRateCol = new TableColumn("Pulse Rate");
-            pulseRateCol.setMinWidth(50);
-            pulseRateCol.setCellValueFactory(
-                    new PropertyValueFactory<>("pulseRate"));
-
-            TableColumn restCol = new TableColumn("Rest");
-            restCol.setMinWidth(50);
-            restCol.setCellValueFactory(
-                    new PropertyValueFactory<>("rest"));
-
-            TableColumn arrhythmiaCol = new TableColumn("Arrhythmia");
-            arrhythmiaCol.setMinWidth(50);
-            arrhythmiaCol.setCellValueFactory(
-                    new PropertyValueFactory<>("arrhythmia"));
-
-            table.setItems(data);
-            table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-            table.getColumns().addAll(dateCol, systolCol, diastolCol, pulseRateCol, restCol, arrhythmiaCol);
-
-            deviceWindow = new VBox();
-            deviceWindow.setPadding(new Insets(0, 5, 0, 5));
-            deviceWindow.setSpacing(5);
-            deviceWindow.setAlignment(Pos.CENTER);
-            deviceWindow.setMinWidth(600);
-            deviceWindow.getChildren().addAll(
-                    table
-            );
-            dataBox = deviceWindow;
+            showTile = new SimpleBooleanProperty(!b.toLowerCase().startsWith("n"));
         }
         //Set the initial values of the simple results
         lastSystol = new Label("--");
+        lastSystol.setId("resultstext");
         lastSystolDB = new Label("");
         lastDiastol = new Label("--");
+        lastDiastol.setId("resultstext");
         lastDiastolDB = new Label("");
         lastPulse = new Label("--");
+        lastPulse.setId("resultstext");
         lastPulseDB = new Label("");
+        measurementTimeTF = new Label("");
+        measurementTimeTF.setId("resultstimetext");
+        measurementTimeLabel = new Label("");
 
         // create the large result box for the last measurement
         // downloaded from the device
         // Systolic reading
         HBox systolHbox = new HBox();
-        systolHbox.setAlignment(Pos.CENTER);
+        systolHbox.setAlignment(Pos.CENTER_LEFT);
+        systolHbox.setPadding(new Insets(0, 0, 0, 10));
         Label mmhg = new Label("mmHg");
-        mmhg.setId("resultstext");
-        mmhg.setStyle("-fx-font-size:10px;");
+        mmhg.setId("resultsunits");
         systolHbox.getChildren().addAll(
                 lastSystol,
                 mmhg
         );
         // Diastolic reading
         HBox diastolHbox = new HBox();
-        diastolHbox.setAlignment(Pos.CENTER);
+        diastolHbox.setAlignment(Pos.CENTER_LEFT);
+        diastolHbox.setPadding(new Insets(0, 0, 0, 10));
         Label mmhg2 = new Label("mmHg");
-        mmhg2.setId("resultstext");
-        mmhg2.setStyle("-fx-font-size:10px;");
+        mmhg2.setId("resultsunits");
         diastolHbox.getChildren().addAll(
                 lastDiastol,
                 mmhg2
         );
         // Heart Rate reading
         HBox pulseHbox = new HBox();
-        pulseHbox.setAlignment(Pos.CENTER);
+        pulseHbox.setAlignment(Pos.CENTER_LEFT);
+        pulseHbox.setPadding(new Insets(0, 0, 0, 10));
         Label bpm = new Label("BPM");
-        bpm.setId("resultstext");
-        bpm.setStyle("-fx-font-size:10px;");
+        bpm.setId("resultsunits");
         pulseHbox.getChildren().addAll(
                 lastPulse,
                 bpm
@@ -238,30 +200,75 @@ public abstract class BloodPressure extends Device {
         meterVBox.setAlignment(Pos.CENTER);
         meterVBox.setId("resultsbox");
         meterVBox.setPrefWidth(200);
+
         meterVBox.getChildren().addAll(
                 systolHbox,
                 diastolHbox,
-                pulseHbox
+                pulseHbox,
+                measurementTimeLabel,
+                measurementTimeTF
         );
 
         //create the main window HBox
         HBox dataHBox = new HBox();
         dataHBox.getChildren().addAll(
-                dataBox,
+                guide.getGuide(),
                 meterVBox
         );
 
         meterWindow.getChildren().addAll(
-                dataHBox,
-                new Separator(Orientation.HORIZONTAL)
+                dataHBox
         );
         // set main Element window
         window.setCenter(meterWindow);
 
-        setButton2(buttonHbox);
+        setButton2(downloadButton);
 
         downloadButton(meterVBox);
-
+        lastSystol.textProperty().bind(
+                Bindings.when(systol.isEqualTo(0))
+                .then("--")
+                .otherwise(systol.asString())
+        );
+        lastSystolDB.textProperty().bind(
+                Bindings.when(systol.isEqualTo(0))
+                .then("")
+                .otherwise(systol.asString())
+        );
+        lastDiastol.textProperty().bind(
+                Bindings.when(diastol.isEqualTo(0))
+                .then("--")
+                .otherwise(diastol.asString())
+        );
+        lastDiastolDB.textProperty().bind(
+                Bindings.when(diastol.isEqualTo(0))
+                .then("")
+                .otherwise(diastol.asString())
+        );
+        lastPulse.textProperty().bind(
+                Bindings.when(heartrate.isEqualTo(0))
+                .then("--")
+                .otherwise(heartrate.asString())
+        );
+        lastPulseDB.textProperty().bind(
+                Bindings.when(heartrate.isEqualTo(0))
+                .then("")
+                .otherwise(heartrate.asString())
+        );
+        measurementTimeTF.textProperty().bind(
+                Bindings.when(lastMeasurementTime.isEqualTo(""))
+                .then("")
+                .otherwise(lastMeasurementTime)
+        );
+        measurementTimeLabel.textProperty().bind(
+                Bindings.when(lastMeasurementTime.isEqualTo(""))
+                .then("")
+                .otherwise("measured at")
+        );
+        // bind the button disable to the time sync indicator
+        downloadButton.disableProperty().bind(medipi.timeSync.not());
+        // This class is used to deny access to recording data if time has not been synchronised
+        deviceTimestampChecker = new DeviceTimestampChecker(medipi, this);
         // successful initiation of the this class results in a null return
         return null;
     }
@@ -269,8 +276,10 @@ public abstract class BloodPressure extends Device {
     private void downloadButton(VBox meterVBox) {
         // Setup download button action to run in its own thread
         downloadButton.setOnAction((ActionEvent t) -> {
-            resetDevice();
-            downloadData(meterVBox);
+            if (confirmReset()) {
+                resetDevice();
+                downloadData(meterVBox);
+            }
         });
     }
 
@@ -289,33 +298,17 @@ public abstract class BloodPressure extends Device {
         return PROFILEID;
     }
 
-    // initialises the device window and the data behind it
+    // reset the device
     @Override
     public void resetDevice() {
         deviceData = new ArrayList<>();
         hasData.set(false);
         metadata.clear();
-        if (!medipi.isBasicDataView()) {
-            data.clear();
-        }
-        lastSystol.setText("--");
-        lastSystolDB.setText("");
-        lastDiastol.setText("--");
-        lastDiastolDB.setText("");
-        lastPulse.setText("--");
-        lastPulseDB.setText("");
-        lastDate = Instant.EPOCH;
-    }
-
-    /**
-     * Method which returns a booleanProperty which UI elements can be bound to,
-     * to discover whether there is data to be downloaded
-     *
-     * @return BooleanProperty signalling the presence of downloaded data
-     */
-    @Override
-    public BooleanProperty hasDataProperty() {
-        return hasData;
+        systol.set(0);
+        diastol.set(0);
+        heartrate.set(0);
+        lastMeasurementTime.set("");
+        resultsSummary.setValue("");
     }
 
     /**
@@ -332,48 +325,44 @@ public abstract class BloodPressure extends Device {
         for (String s : metadata) {
             sb.append("metadata->persist->").append(s).append("\n");
         }
-        sb.append("metadata->subtype->").append(getName()).append("\n");
+        sb.append("metadata->make->").append(getMake()).append("\n");
+        sb.append("metadata->model->").append(getModel()).append("\n");
+        sb.append("metadata->displayname->").append(getDisplayName()).append("\n");
         sb.append("metadata->datadelimiter->").append(medipi.getDataSeparator()).append("\n");
         if (scheduler != null) {
             sb.append("metadata->scheduleeffectivedate->").append(Utilities.ISO8601FORMATDATEMILLI_UTC.format(scheduler.getCurrentScheduledEventTime())).append("\n");
             sb.append("metadata->scheduleexpirydate->").append(Utilities.ISO8601FORMATDATEMILLI_UTC.format(scheduler.getNextScheduledEventTime())).append("\n");
         }
-        sb.append("metadata->columns->")
-                .append("iso8601time").append(medipi.getDataSeparator())
-                .append("systol").append(medipi.getDataSeparator())
-                .append("diastol").append(medipi.getDataSeparator())
-                .append("pulserate").append(medipi.getDataSeparator())
-                .append("rest").append(medipi.getDataSeparator())
-                .append("arrhythmia").append("\n");
-        sb.append("metadata->format->")
-                .append("DATE").append(medipi.getDataSeparator())
-                .append("INTEGER").append(medipi.getDataSeparator())
-                .append("INTEGER").append(medipi.getDataSeparator())
-                .append("INTEGER").append(medipi.getDataSeparator())
-                .append("BOOLEAN").append(medipi.getDataSeparator())
-                .append("BOOLEAN").append("\n");
-        sb.append("metadata->units->")
-                .append("NONE").append(medipi.getDataSeparator())
-                .append("mmHg").append(medipi.getDataSeparator())
-                .append("mmHg").append(medipi.getDataSeparator())
-                .append("BPM").append(medipi.getDataSeparator())
-                .append("NONE").append(medipi.getDataSeparator())
-                .append("NONE").append("\n");
-        // Add Downloaded data
-        for (String[] s : deviceData) {
-            sb.append(s[0]);
-            sb.append(separator);
-            sb.append(s[1]);
-            sb.append(separator);
-            sb.append(s[2]);
-            sb.append(separator);
-            sb.append(s[3]);
-            sb.append(separator);
-            sb.append(s[4]);
-            sb.append(separator);
-            sb.append(s[5]);
-            sb.append("\n");
+        sb.append("metadata->columns->");
+        for (String string : columns) {
+            sb.append(string).append(medipi.getDataSeparator());
         }
+        //replace the last separator with a new line
+        sb.replace(sb.length() - medipi.getDataSeparator().length(), sb.length(), "\n");
+
+        sb.append("metadata->format->");
+        for (String string : format) {
+            sb.append(string).append(medipi.getDataSeparator());
+        }
+        //replace the last separator with a new line
+        sb.replace(sb.length() - medipi.getDataSeparator().length(), sb.length(), "\n");
+
+        sb.append("metadata->units->");
+        for (String string : units) {
+            sb.append(string).append(medipi.getDataSeparator());
+        }
+        //replace the last separator with a new line
+        sb.replace(sb.length() - medipi.getDataSeparator().length(), sb.length(), "\n");
+
+        // Add Downloaded data
+        for (ArrayList<String> dataLine : deviceData) {
+            for (String data : dataLine) {
+                sb.append(data).append(separator);
+            }
+            //replace the last separator with a new line
+            sb.replace(sb.length() - separator.length(), sb.length(), "\n");
+        }
+
         payload.setProfileId(PROFILEID);
         payload.setPayload(sb.toString());
         return payload;
@@ -386,169 +375,71 @@ public abstract class BloodPressure extends Device {
      */
     @Override
     public BorderPane getDashboardTile() throws Exception {
-        DashboardTile dashComponent = new DashboardTile(this);
+        DashboardTile dashComponent = new DashboardTile(this, showTile);
         dashComponent.addTitle(getType());
         dashComponent.addOverlay(lastSystolDB, "mmHg");
         dashComponent.addOverlay(lastDiastolDB, "mmHg");
         dashComponent.addOverlay(lastPulseDB, "BPM");
+        dashComponent.addOverlay(Color.LIGHTGREEN, hasDataProperty());
         return dashComponent.getTile();
     }
 
+    @Override
+    public void setData(ArrayList<ArrayList<String>> data) {
+        data = deviceTimestampChecker.checkTimestamp(data);
+        if (data.isEmpty()) {
+            MediPiMessageBox.getInstance().makeMessage("No data is available from " + getDisplayName());
+        } else {
+            for (ArrayList<String> a : data) {
+                Instant i = Instant.parse(a.get(0));
+                final int systol = Integer.parseInt(a.get(1));
+                final int diastol = Integer.parseInt(a.get(2));
+                final int pulse = Integer.parseInt(a.get(3));
+                displayData(i, systol, diastol, pulse);
+                hasData.set(true);
+            }
+            deviceData = data;
+        }
+    }
+
     /**
-     * Add data to the graph
-     *
      * Private method to add data to the internal structure and propogate it to
      * the UI
      *
-     * @param d in UNIX epoch time format
-     * @param systolic Blood Pressure in mm/Hg
-     * @param diastolic Blood Pressure in mm/Hg
-     * @param user as defined in the physical meter
-     * @param At Rest indicator as measured in the meter
-     * @param Heart Arrhythmia detection indicator as measured in the meter
+     * @param time
+     * @param systol reading
+     * @param diastol reading
+     * @param heartrate reading
      */
-    protected void addDataPoint(Instant d, int systol, int diastol, int pulseRate, boolean rest, boolean arrhythmia) {
-        if (d.isAfter(lastDate)) {
-            lastSystol.setText(String.valueOf(systol));
-            lastSystolDB.setText(String.valueOf(systol));
-            lastDiastol.setText(String.valueOf(diastol));
-            lastDiastolDB.setText(String.valueOf(diastol));
-            lastPulse.setText(String.valueOf(pulseRate));
-            lastPulseDB.setText(String.valueOf(pulseRate));
-            lastDate = d;
-        }
-        if (!medipi.isBasicDataView()) {
-            MeterReading mr = new MeterReading(Utilities.DISPLAY_TABLE_FORMAT_LOCALTIME.format(d), String.valueOf(systol), String.valueOf(diastol), String.valueOf(pulseRate), String.valueOf(rest), String.valueOf(arrhythmia));
-            data.add(mr);
-        }
+    private void displayData(Instant time, int systol, int diastol, int heartrate) {
 
+        Platform.runLater(() -> {
+            this.systol.set(systol);
+            this.diastol.set(diastol);
+            this.heartrate.set(heartrate);
+            this.lastMeasurementTime.set(Utilities.DISPLAY_DEVICE_FORMAT_LOCALTIME.format(time));
+            resultsSummary.set(
+                    getType() + " - "
+                    + this.systol.getValue().toString()
+                    + "mmHg/"
+                    + this.diastol.getValue().toString()
+                    + "mmHg "
+                    + this.heartrate.getValue().toString()
+                    + "BPM"
+            );
+        });
     }
 
     /**
      * Abstract method to download data from the device driver
      *
-     * @return bufferedReader
+     * @param meterVBox
      */
     public abstract void downloadData(VBox meterVBox);
 
-    /**
-     * ----------------------INNER CLASS----------------------------------------
-     * Inner Class to handle and store the data for display in the table in the
-     * advanced view of BloodPressure
-     */
-    public static class MeterReading {
-
-        private final SimpleStringProperty date;
-        private final SimpleStringProperty systol;
-        private final SimpleStringProperty diastol;
-        private final SimpleStringProperty pulseRate;
-        private final SimpleStringProperty rest;
-        private final SimpleStringProperty arrhythmia;
-
-        private MeterReading(String date, String systol, String diastol, String pulseRate, String rest, String arrythmia) {
-            this.date = new SimpleStringProperty(date);
-            this.systol = new SimpleStringProperty(systol);
-            this.diastol = new SimpleStringProperty(diastol);
-            this.pulseRate = new SimpleStringProperty(pulseRate);
-            this.rest = new SimpleStringProperty(rest);
-            this.arrhythmia = new SimpleStringProperty(arrythmia);
-        }
-
-        /**
-         *
-         * @return
-         */
-        public String getDate() {
-            return date.get();
-        }
-
-        /**
-         *
-         * @param d
-         */
-        public void setDate(String d) {
-            date.set(d);
-        }
-
-        /**
-         *
-         * @return
-         */
-        public String getSystol() {
-            return systol.get();
-        }
-
-        /**
-         *
-         * @param s
-         */
-        public void setSystol(String s) {
-            systol.set(s);
-        }
-
-        /**
-         *
-         * @return
-         */
-        public String getDiastol() {
-            return diastol.get();
-        }
-
-        /**
-         *
-         * @param d
-         */
-        public void setDiastol(String d) {
-            diastol.set(d);
-        }
-
-        /**
-         *
-         * @return
-         */
-        public String getPulseRate() {
-            return pulseRate.get();
-        }
-
-        /**
-         *
-         * @param d
-         */
-        public void setPulseRate(String d) {
-            pulseRate.set(d);
-        }
-
-        /**
-         *
-         * @return
-         */
-        public String getRest() {
-            return rest.get();
-        }
-
-        /**
-         *
-         * @param d
-         */
-        public void setRest(String d) {
-            rest.set(d);
-        }
-
-        /**
-         *
-         * @return
-         */
-        public String getArrhythmia() {
-            return arrhythmia.get();
-        }
-
-        /**
-         *
-         * @param d
-         */
-        public void setArrhythmia(String d) {
-            arrhythmia.set(d);
-        }
-
+    @Override
+    public StringProperty getResultsSummary() {
+        return resultsSummary;
     }
+
 }

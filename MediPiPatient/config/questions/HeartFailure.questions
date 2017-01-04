@@ -1,16 +1,18 @@
 BEGIN VERSION
-version 1.0 20/12/2015
+version 1.1 21/11/2016
 END VERSION
 
+# Questions are parsed in 2 parts: name, text
 BEGIN QUESTIONS
 Question1 Are you feeling more breathless than usual today?
 Question2 Are you using more pillows to sleep?
 Question3 Are your ankles more swollen than usual?
 END QUESTIONS
 
+# Responses are parsed in 3 parts: name, Red flag status, text
 BEGIN RESPONSES
-Response1 Good, if you become concerned about your symptoms please contact your nurse or GP for advice
-Response2 Take your water tablets as advised. Please contact your nurse or GP for further advice 
+Response1 false Good, if you become concerned about your symptoms please contact your nurse or GP for advice
+Response2 true Take your water tablets as advised. Please contact your nurse or GP for further advice 
 END RESPONSES
 
 BEGIN QUESTIONNAIRE

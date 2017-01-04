@@ -1,5 +1,5 @@
 /*
- *  Copyright 2016  Richard Robinson @ HSCIC <rrobinson@hscic.gov.uk, rrobinson@nhs.net>
+ *  Copyright 2016  Richard Robinson @ NHS Digital <rrobinson@nhs.net>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import javafx.beans.value.ObservableValue;
 import javafx.scene.Node;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
+import org.medipi.MediPi;
 import org.medipi.MediPiProperties;
 
 /**
@@ -51,17 +52,16 @@ public class MediPiWindow extends Pane {
     private Thread thread;
     private List<UnlockConsumer> unlockConsumerList = new ArrayList<>();
     BooleanProperty lockedstatus = new SimpleBooleanProperty(true);
-
     /**
      * Constructor to establish basic parameters and start the timer. The mediPi
      * Node is passed in and the class defaults to authentication window. A
      * lifespan of 0 sets the authentication off
      *
      * @param child UI Node
+     * @param m main medipi window
      * @throws Exception
      */
     public MediPiWindow(Node child) throws Exception {
-
         medipiWindow = child;
         // instantiate the authentication class
         String authClass = MediPiProperties.getInstance().getProperties().getProperty(MEDIPIAUTHENTICATIONCLASS);

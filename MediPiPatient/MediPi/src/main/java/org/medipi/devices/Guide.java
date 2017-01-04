@@ -1,5 +1,5 @@
 /*
- Copyright 2016  Richard Robinson @ HSCIC <rrobinson@hscic.gov.uk, rrobinson@nhs.net>
+ Copyright 2016  Richard Robinson @ NHS Digital <rrobinson@nhs.net>
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -52,15 +53,15 @@ public class Guide {
     /**
      * Constructor to configure the guide ruleset
      *
-     * @param classToken element class token - defines which ruleset to be
+     * @param guideNamespace element class token - defines which ruleset to be
      * called
      * @throws Exception which is ultimately passed to the instantiation routine
      * and reported in MediPi class
      */
-    public Guide(String classToken) throws Exception {
-        guideSet = MediPiProperties.getInstance().getProperties().getProperty(classToken + ".guide");
-        if (guideSet == null || !guideSet.contains(".guide")) {
-            throw new Exception("Cannot find Guide Ruleset: " + classToken + ".guide");
+    public Guide(String guideNamespace) throws Exception {
+        guideSet = MediPiProperties.getInstance().getProperties().getProperty(guideNamespace);
+        if (guideSet == null) {
+            throw new Exception("Cannot find Guide Ruleset: " + guideNamespace);
         }
         loadRules(guideSet);
     }
@@ -86,7 +87,7 @@ public class Guide {
                 try {
                     image = new ImageView("file:///" + imageFile);
                     image.setFitHeight(250);
-                    image.setFitWidth(250);
+                    image.setFitWidth(230);
                     image.setId("guide-image");
                     n[0] = image;
                 } catch (Exception e) {
@@ -103,7 +104,16 @@ public class Guide {
                 l.setId("guide-text");
                 l.setWrapText(true);
                 l.setPrefWidth(250);
-                n[1] = l;
+                l.setMinHeight(248);
+                ScrollPane dashTileSc = new ScrollPane();
+                dashTileSc.setContent(l);
+                dashTileSc.setFitToWidth(true);
+                dashTileSc.setMinHeight(250);
+                dashTileSc.setMaxHeight(500);
+                dashTileSc.setId("guide-scrollpane");
+                dashTileSc.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+                dashTileSc.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+                n[1] = dashTileSc;
                 instructions.add(n);
 
             }
@@ -120,7 +130,7 @@ public class Guide {
         VBox guideVBox = new VBox();
         guideVBox.setPadding(new Insets(0, 5, 0, 5));
         guideVBox.setAlignment(Pos.CENTER_LEFT);
-        guideVBox.setMinHeight(320);
+        guideVBox.setMinHeight(300);
         HBox guideHBox = new HBox();
         guideHBox.setPadding(new Insets(0, 5, 0, 5));
         guideHBox.setAlignment(Pos.CENTER);
@@ -150,13 +160,14 @@ public class Guide {
                 instructionHBox,
                 forward
         );
-        Label title = new Label("Instructions for device operation:");
-        title.setId("guide-title");
         guideVBox.getChildren().addAll(
-                title,
                 guideHBox
         );
 
+        if (instructions.size() == 1) {
+            forward.setDisable(true);
+            back.setDisable(true);
+        }
         //Add functionality to forward button
         forward.setOnAction((ActionEvent t) -> {
             if (instructionNo == 0) {

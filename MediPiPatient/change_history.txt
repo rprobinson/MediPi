@@ -68,3 +68,33 @@ MediPi_v1.0.8-PILOT- 20160907-1
 - Implementation of Java 8 DateTime
 - removal of timezone parameter in favour of auto detection from system
 - detection of user password when MediPi is uinlocked through authorisation interface 
+
+Changes since MediPi_v1.0.8-PILOT-20160907-1
+- Changed the timstamp on incoming patient txt messages to be epoch time
+- added an Open VPN manager to connect and disconnect when data is transmitted and concentrator is to be polled for incoming messages
+- added a visual indicator of the VPN conncetion status
+- added Bluetooth services and managers to supportr new Marsden M430 BT scales driver
+- added driver for Marsden scales 
+- removed "advanced" graphical view of scales class - intention to remove all "advanced" views from other Elements
+- rewritten transmit button bindings for stability
+
+Changes since MediPi_v1.0.8a-PILOT-20160929-1
+- Inclusion of code to bring up and put down the VPN vonnection so that it's only connected when attempting to upload data or download messages/software/configuration
+- addition of close button to fatal error screen 
+- all exiting of MediPi is now handled through the MediPi class - both modes: close and close down linux os
+- addition of close button to Keypad class
+- refactoring Keypad class to speed up the time that it takes to authenticate one the code is entered and tighten up the wrong code process
+- Scale refactored to remove the "detailed view" mode. Abstraction of units, format and column names from Scale to device driver
+- Update of Contec driver to correct a bug whereby it would lock up
+- Creation of Marsden M430 device driver 
+- Addition of Bluetooth management service classes
+
+DashboardTile - The tile can be configured to be visible or not and the background can be coloured depending on state change of element
+- MediPi main screen - addition of lower banner containing a digital clock and an LED style indicator for connection to the VPN/concentrator. It also contains a rolling display of alert actions e.g. scheduler or notification message alerts or time server synchronisation failures
+-  MediPi main screen - refactoring of patient data which is now taken from a separate json file c.f. the properties file. This allows the addition of an interface on the settings element to update the patient details - this element is only accessible via the config mode
+-addition of time synchronisation service which ensures that MediPi Patient application cannot record any data without first synchronising with a time server
+- addition of new admin mode - this is a separate login mode desigend to be used for admin purposes: update/input of patient details, bluetooth pairing bluetooth MAC address. It closes MediPi Patient with a specific exit code which can then be acted upon by the calling script e.g. to call MediPi Patient with an Admin configuration
+- Scheduler updated with better/clearer screen - The view shows information about the most recent schedule in words and a list of activity over a configurable period (default period 7 days)
+- Transmitter - addition of a summary of the data recorded by the devices (if present otherwise the device name is displayed)
+- Questionnaire updated to display only the enumerated question currently being asked in order to save space and help understanding. Addition of red/green flag status to show outcome of questionnaire
+- Restructured the generic device and concrete device classes to properly delineate responsibility and allow for addition of bluetooth devices

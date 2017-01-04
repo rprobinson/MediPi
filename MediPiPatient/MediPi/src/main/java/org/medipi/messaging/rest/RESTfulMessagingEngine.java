@@ -1,5 +1,5 @@
 /*
- Copyright 2016  Richard Robinson @ HSCIC <rrobinson@hscic.gov.uk, rrobinson@nhs.net>
+ Copyright 2016  Richard Robinson @ NHS Digital <rrobinson@nhs.net>
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import java.security.SecureRandom;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.UUID;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
@@ -35,6 +36,7 @@ import javax.ws.rs.core.Response;
 import org.medipi.MediPiMessageBox;
 import org.medipi.MediPiProperties;
 import org.medipi.logging.MediPiLogger;
+import org.medipi.messaging.vpn.VPNServiceManager;
 
 /**
  * This Message engine class manages the SSL context for the mutual
@@ -126,14 +128,32 @@ public class RESTfulMessagingEngine {
         return store;
     }
 
+    private VPNServiceManager openVPNConnection(UUID uuid, VPNServiceManager vpnm) throws Exception {
+        vpnm = VPNServiceManager.getInstance();
+        if (vpnm.isEnabled()) {
+            vpnm.openConnection(uuid);
+        }
+        return vpnm;
+    }
+
+    private void closeVPNConnection(UUID uuid, VPNServiceManager vpnm) {
+        if (vpnm != null && vpnm.isEnabled()) {
+            vpnm.closeConnection(uuid);
+        }
+    }
+
     /**
      * Common interface for executing RESTful GET requests
      *
      * @param params hashmap of parameters to be added to the target URL
      * @return Response
      */
-    public Response executeGet(HashMap<String, Object> params) {
+    public Response executeGet(HashMap<String, Object> params) throws Exception {
+
+        UUID uuid = UUID.randomUUID();
+        VPNServiceManager vpnm = null;
         try {
+            vpnm = openVPNConnection(uuid, vpnm);
             WebTarget wt;
             if (params != null) {
                 wt = trackingTarget
@@ -149,16 +169,17 @@ public class RESTfulMessagingEngine {
 
             return listResponse;
         } catch (Exception ex) {
-            if (ex.getCause().getClass() == ConnectException.class) {
+            if (ex.getCause() != null && ex.getCause().getClass() == ConnectException.class) {
 
                 MediPiLogger.getInstance().log(RESTfulMessagingEngine.class.getName() + ".error", "Error - The Concentrator host is not reachable - detected when trying to GET: " + trackingTarget.getUri() + " message: " + ex.getMessage());
-                MediPiMessageBox.getInstance().makeErrorMessage("Error detected - The Concentrator host is not reachable - " + ex.getLocalizedMessage(), ex);
+                throw new Exception("Error detected - The Concentrator host is not reachable - " + ex.getLocalizedMessage(), ex);
             } else {
                 MediPiLogger.getInstance().log(RESTfulMessagingEngine.class.getName() + ".error", "Error detected when trying to GET: " + trackingTarget.getUri() + " message: " + ex.getMessage());
-                MediPiMessageBox.getInstance().makeErrorMessage("Error detected - " + ex.getLocalizedMessage(), ex);
+                throw new Exception("Error detected - " + ex.getLocalizedMessage(), ex);
             }
+        } finally {
+            closeVPNConnection(uuid, vpnm);
         }
-        return null;
     }
 
     /**
@@ -170,7 +191,10 @@ public class RESTfulMessagingEngine {
      * @return Response
      */
     public Response executePost(HashMap<String, Object> params, Entity<?> e) throws Exception {
+        UUID uuid = UUID.randomUUID();
+        VPNServiceManager vpnm = null;
         try {
+            vpnm = openVPNConnection(uuid, vpnm);
             WebTarget wt;
             if (params != null) {
                 wt = trackingTarget
@@ -184,16 +208,17 @@ public class RESTfulMessagingEngine {
                     .post(e);
             return listResponse;
         } catch (Exception ex) {
-            if (ex.getCause().getClass() == ConnectException.class) {
+            if (ex.getCause() != null && ex.getCause().getClass() == ConnectException.class) {
 
                 MediPiLogger.getInstance().log(RESTfulMessagingEngine.class.getName() + ".error", "Error - The Concentrator host is not reachable - detected when trying to POST: " + trackingTarget.getUri() + " message: " + ex.getMessage());
-                MediPiMessageBox.getInstance().makeErrorMessage("Error detected - The Concentrator host is not reachable - " + ex.getLocalizedMessage(), ex);
+                throw new Exception("Error detected - The Concentrator host is not reachable - " + ex.getLocalizedMessage(), ex);
             } else {
                 MediPiLogger.getInstance().log(RESTfulMessagingEngine.class.getName() + ".error", "Error detected when trying to POST: " + trackingTarget.getUri() + " message: " + ex.getMessage());
-                MediPiMessageBox.getInstance().makeErrorMessage("Error detected - " + ex.getLocalizedMessage(), ex);
+                throw new Exception("Error detected - " + ex.getLocalizedMessage(), ex);
             }
+        } finally {
+            closeVPNConnection(uuid, vpnm);
         }
-        return null;
     }
 
     /**
@@ -208,7 +233,10 @@ public class RESTfulMessagingEngine {
      * @throws Exception
      */
     public Response executePut(HashMap<String, Object> params, Entity<?> e, HashMap<String, String> header) throws Exception {
+        UUID uuid = UUID.randomUUID();
+        VPNServiceManager vpnm = null;
         try {
+            vpnm = openVPNConnection(uuid, vpnm);
             WebTarget wt;
             if (params != null) {
                 wt = trackingTarget
@@ -229,15 +257,17 @@ public class RESTfulMessagingEngine {
             Response listResponse = b.put(e);
             return listResponse;
         } catch (Exception ex) {
-            if (ex.getCause().getClass() == ConnectException.class) {
+            if (ex.getCause() != null && ex.getCause().getClass() == ConnectException.class) {
 
                 MediPiLogger.getInstance().log(RESTfulMessagingEngine.class.getName() + ".error", "Error - The Concentrator host is not reachable - detected when trying to PUT: " + trackingTarget.getUri() + " message: " + ex.getMessage());
-                MediPiMessageBox.getInstance().makeErrorMessage("Error detected - The Concentrator host is not reachable - " + ex.getLocalizedMessage(), ex);
+                throw new Exception("Error detected - The Concentrator host is not reachable - " + ex.getLocalizedMessage(), ex);
             } else {
                 MediPiLogger.getInstance().log(RESTfulMessagingEngine.class.getName() + ".error", "Error detected when trying to PUT: " + trackingTarget.getUri() + " message: " + ex.getMessage());
-                MediPiMessageBox.getInstance().makeErrorMessage("Error detected - " + ex.getLocalizedMessage(), ex);
+                throw new Exception("Error detected - " + ex.getLocalizedMessage(), ex);
             }
+        } finally {
+            closeVPNConnection(uuid, vpnm);
         }
-        return null;
     }
+
 }

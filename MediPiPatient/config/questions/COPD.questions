@@ -1,7 +1,8 @@
 BEGIN VERSION
-version 1.0 20/12/2015
+version 1.1 21/11/2016
 END VERSION
 
+# Questions are parsed in 2 parts: name, text
 BEGIN QUESTIONS
 Question1 Are you feeling more breathless or coughing more than usual today?
 Question2 Is your cough or breathlessness much worse than usual?
@@ -12,9 +13,10 @@ Question6 Has the amount of sputum increased or become more difficult to clear?
 Question7 Has your sputum changed colour or thickness since yesterday?
 END QUESTIONS
 
+# Responses are parsed in 3 parts: name, Red flag status, text
 BEGIN RESPONSES
-Response1 Good! Keep using your reliever as recommended and contact your key worker if you start to feel unwell.
-Response2 Keep following your management plan, or seek advice from  your key worker.
+Response1 false Good! Keep using your reliever as recommended and contact your key worker if you start to feel unwell.
+Response2 true Keep following your management plan, or seek advice from  your key worker.
 END RESPONSES
 
 BEGIN QUESTIONNAIRE

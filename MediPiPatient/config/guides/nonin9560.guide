@@ -1,0 +1,6 @@
+${config-directory-location}/images/nonin9560.jpg Instructions for the use of the Nonin 9560 Bluetooth Pulse Oximeter
+${config-directory-location}/guides/nonin9560_off.png 1. Make sure Nonin device is off (the device automatically switches off after a short period when your finger is removed).
+${config-directory-location}/guides/StartButton.png 2. Press ‘start’ button on MediPi to commence reading.
+${config-directory-location}/guides/nonin9560_insert_finger.png 3. Insert finger into Nonin device with nail side up until the fingertip touches the built in stop guide. This switches on the device. For best results, keep device at your heart or chest level.
+${config-directory-location}/guides/nonin9560_results.png 4. Wait until MediPi display indicates the measurement has been taken. The screen will show your pulse rate and oxygen saturation. During this step the start button will indicate progress and the LED display on the Nonin device will flash.
+${config-directory-location}/guides/next.png 5. Remove your finger and press ‘next’/’back’ on MediPi.

@@ -1,5 +1,5 @@
 /*
- Copyright 2016  Richard Robinson @ HSCIC <rrobinson@hscic.gov.uk, rrobinson@nhs.net>
+ Copyright 2016  Richard Robinson @ NHS Digital <rrobinson@nhs.net>
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -23,43 +23,67 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.NetworkInterface;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.time.Instant;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javafx.animation.Interpolator;
+import javafx.animation.Timeline;
+import javafx.animation.TranslateTransition;
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
+import javafx.collections.FXCollections;
+import javafx.collections.MapChangeListener;
+import javafx.collections.ObservableMap;
+import javafx.event.ActionEvent;
+import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Separator;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.ColumnConstraints;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.TilePane;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
+import javafx.util.Duration;
 import org.medipi.devices.Device;
 import org.medipi.downloadable.handlers.DownloadableHandlerManager;
 import org.medipi.downloadable.handlers.HardwareHandler;
 import org.medipi.logging.MediPiLogger;
+import org.medipi.messaging.vpn.VPNServiceManager;
 import org.medipi.utilities.ConfigurationStringTokeniser;
 import org.medipi.utilities.Utilities;
 
@@ -82,9 +106,6 @@ import org.medipi.utilities.Utilities;
  *
  * CONSIDERATIONS/TODO:
  *
- * The patient details are currently taken from the configuration properties
- * file but proper consideration of authentication must be included
- *
  * Screenwidth has been set at 800x400 as a result of development aimed at
  * raspberry Pi official 7" touchscreen. Dynamic adjustment has not been
  * developed. Implementation of CSS has done very much ad hoc - this needs
@@ -98,9 +119,9 @@ import org.medipi.utilities.Utilities;
 public class MediPi extends Application {
 
     // MediPi version Number
-    private static final String MEDIPINAME = "MediPi Telehealth System";
-    private static final String VERSION = "MediPi_v1.0.8";
-    private static final String VERSIONNAME = "PILOT-20160907-1";
+    private static final String MEDIPINAME = "MediPi Telehealth";
+    private static final String VERSION = "MediPi_v1.0.13";
+    private static final String VERSIONNAME = "PILOT-20161228-1";
 
     // Set the MediPi Log directory
     private static final String LOG = "medipi.log";
@@ -110,18 +131,6 @@ public class MediPi extends Application {
     // 	"errorsuppress" mode this will suppress all error messages to the UI, instead only outputting to standard out
     //	"none" mode will not report any standard output messages
     private static final String DEBUGMODE = "medipi.debugmode";
-    // Switch to put Patient MediPi into a basic view where no graphs or tables of data are shown
-    // to the patient eventhough they are still recorded and transmitted. Instead a guide is displayed
-    // which directs patients on how to use the device
-    private static final String DATAVIEWBASIC = "medipi.dataview.basic";
-    // Patient Microbanner info - patient firstname
-    private static final String PATIENTFIRSTNAME = "medipi.patient.firstname";
-    // Patient Microbanner info - patient surname
-    private static final String MEDIPIPATIENTLASTNAME = "medipi.patient.lastname";
-    // Patient Microbanner info - patient NHS Number
-    private static final String PATIENTNHSNUMBER = "medipi.patient.nhsnumber";
-    // Patient Microbanner info - patient DOB
-    private static final String PATIENTDOB = "medipi.patient.dob";
     // Screensize settings - default is 800x480 if not set
     private static final String SCREENWIDTH = "medipi.screen.width";
     private static final String SCREENHEIGHT = "medipi.screen.height";
@@ -132,24 +141,47 @@ public class MediPi extends Application {
     // not sure what the best setting for this thread pool is but 3 seems to work - this is for the downloadable timer
     private static final int TIMER_THREAD_POOL_SIZE = 3;
 
+    // The period of time in seconds to wait before retrying to access the MediPi Concentrator server
     private static final String MEDIPIDOWNLOADPOLLPERIOD = "medipi.downloadable.pollperiod";
-
+    // Specify action to take when MEdiPi Patient is closed
+    private static final String MEDIPISHUTDOWNLINUXOSONCLOSE = "medipi.shutdownlinuxosonclose";
+    // System property set in this class when device is authenticated 
+    private static final String MEDIPIDEVICECERTNAME = "medipi.device.cert.name";
+    // System property set in this class when device is authenticated 
+    private static final String MEDIPIDEVICEMACADDRESS = "medipi.device.macaddress";
+    // Device certificate JKS used to authenticate that the device and cert match and to encrypt the tramission
+    private static final String MEDIPIDEVICECERTLOCATION = "medipi.device.cert.location";
+    // ascii character used to separate data elements in transmission using medipi format
+    private static final String MEDIPIDATASEPARATOR = "medipi.dataseparator";
+    // time sync directory
+    private static final String MEDIPITIMESYNCSERVERDIRECTORY = "medipi.timesyncserver.directory";
+    
     private Stage primaryStage;
     private final ArrayList<Element> elements = new ArrayList<>();
-    private TilePane dashTile;
+    private final ScrollPane dashTileSc = new ScrollPane();
     private VBox subWindow;
     // Fatal error flag to stop use of MediPi - one way there is no set back to false
     private boolean fatalError = false;
     private final StringBuilder fatalErrorLog = new StringBuilder("There has been a fatal error: \n");
-    private boolean basicDataView = true;
-    private String patientNHSNumber;
-    private String formatDOB;
-    private String patientFirstName;
-    private String patientLastName;
     private String versionIdent;
     private String dataSeparator;
     private Properties properties;
     private MediPiWindow mediPiWindow;
+    private final IntegerProperty vpnConnectionIndicatorProperty = new SimpleIntegerProperty(0);
+    public static final Integer VPNFAILED = -1;
+    public static final Integer VPNNOTCONNECTED = 0;
+    public static final Integer VPNCONNECTING = 1;
+    public static final Integer VPNCONNECTED = 2;
+    private Integer screenwidth = 800;
+    private Integer screenheight = 480;
+    private boolean closeLinuxOS = false;
+    private ObservableMap<String, String> alertBannerMap;
+    private final Label alertBannerMessage = new Label("");
+    private final Label patientForename = new Label();
+    private final Label patientSurname = new Label();
+    private final Label nhsNumber = new Label();
+    private final Label dob = new Label();
+
     /**
      * Debug mode governing standard output and error reporting. Debug mode can
      * take one of 3 values: "debug" mode this will report to standard out debug
@@ -186,59 +218,26 @@ public class MediPi extends Application {
     public Utilities utils;
 
     /**
+     * Property encapsulating time server sync status used by all elements to
+     * determine whether data should be taken or not
+     */
+    public BooleanProperty timeSync = new SimpleBooleanProperty(false);
+
+    /**
      * Properties from the main properties file
+     *
+     * @return
      */
     public Properties getProperties() {
         return properties;
     }
 
     /**
-     * Boolean to toggle basic dataview where a guide is shown or a graph of
-     * recorded data
      *
-     * @return basic data view value
+     * @return an integerProperty relating to the status of the VPN Connection
      */
-    public boolean isBasicDataView() {
-        return basicDataView;
-    }
-
-    /**
-     * patient NHS Number string made accessible for messaging and adding to
-     * metadata
-     *
-     * @return the patient's NHS number
-     */
-    public String getPatientNHSNumber() {
-        return patientNHSNumber;
-    }
-
-    /**
-     * patient Last Name string made accessible for messaging and adding to
-     * metadata
-     *
-     * @return The patient's Last name
-     */
-    public String getPatientLastName() {
-        return patientLastName;
-    }
-
-    /**
-     * patient First Name string made accessible for messaging and adding to
-     * metadata
-     *
-     * @return The patient's first name
-     */
-    public String getPatientFirstName() {
-        return patientFirstName;
-    }
-
-    /**
-     * patient DOB string made accessible for messaging and adding to metadata
-     *
-     * @return the patient's formatted date of birth (dd-MMM-yyyy)
-     */
-    public String getPatientDOB() {
-        return formatDOB;
+    public IntegerProperty getVPNConnectionIndicator() {
+        return vpnConnectionIndicatorProperty;
     }
 
     /**
@@ -289,24 +288,53 @@ public class MediPi extends Application {
             MediPiProperties mpp = MediPiProperties.getInstance();
             if (!mpp.setProperties(getParameters().getNamed().get("propertiesFile"))) {
                 makeFatalErrorMessage("Properties file failed to load", null);
+                return;
             }
             properties = MediPiProperties.getInstance().getProperties();
             // initialise utilities which is accessible to all classes which have reference to MediPi.class
             utils = new Utilities(properties);
+            // configure the screensize - the default is 800x480 - see considerations/todo in main text above
+            try {
+                String sw = mpp.getProperties().getProperty(SCREENWIDTH);
+                screenwidth = Integer.parseInt(sw);
+                sw = mpp.getProperties().getProperty(SCREENHEIGHT);
+                screenheight = Integer.parseInt(sw);
+            } catch (Exception e) {
+                screenwidth = 800;
+                screenheight = 480;
+                makeFatalErrorMessage(SCREENWIDTH + " and " + SCREENHEIGHT + " - The configured screen sizes are incorrect", e);
+                return;
+            }
+            StackPane root = new StackPane();
+            scene = new Scene(root, screenwidth, screenheight);
+
+            //Create a map object to contain all the alert messages to be displayed on the lower banner
+            Map<String, String> map = new HashMap<>();
+            alertBannerMap = FXCollections.observableMap(map);
+            // what should MediPi do when exitting?
+            String shut = properties.getProperty(MEDIPISHUTDOWNLINUXOSONCLOSE);
+            if (shut == null || shut.trim().length() == 0 || shut.toLowerCase().startsWith("n")) {
+                closeLinuxOS = false;
+            } else {
+                closeLinuxOS = true;
+            }
+            //Instantiate Message Box Class
             MediPiMessageBox message = MediPiMessageBox.getInstance();
             message.setMediPi(this);
             //Set up logging
             String log = properties.getProperty(LOG);
             if (log == null || log.trim().equals("")) {
                 makeFatalErrorMessage("MediPi log directory is not set", null);
+                return;
             } else if (new File(log).isDirectory()) {
                 MediPiLogger.getInstance().setAppName("MEDIPI", log);
                 MediPiLogger.getInstance().log(MediPi.class.getName() + "startup", versionIdent);
             } else {
                 makeFatalErrorMessage(log + " - MediPi log directory is not a directory", null);
+                return;
             }
             //set the data separator - default = ^
-            dataSeparator = properties.getProperty("medipi.dataseparator");
+            dataSeparator = properties.getProperty(MEDIPIDATASEPARATOR);
             if (dataSeparator == null || dataSeparator.trim().equals("")) {
                 dataSeparator = "^";
             }
@@ -340,16 +368,17 @@ public class MediPi extends Application {
                     }
                 } catch (IOException e) {
                     makeFatalErrorMessage("Device certificate is not correct for this device", null);
+                    return;
                 }
-
-                String ksf = MediPiProperties.getInstance().getProperties().getProperty("medipi.device.cert.location");
+                
+                String ksf = MediPiProperties.getInstance().getProperties().getProperty(MEDIPIDEVICECERTLOCATION);
                 // read the hardware address for each device
                 for (String device : devices) {
                     try (FileReader reader = new FileReader("/sys/class/net/" + device + "/address")) {
                         BufferedReader in = new BufferedReader(reader);
                         String addr = in.readLine();
                         try {
-
+                            
                             KeyStore keyStore = KeyStore.getInstance("jks");
                             try (FileInputStream fis = new FileInputStream(ksf)) {
                                 //the MAC address used to unlock the JKS must be lowercase
@@ -362,16 +391,18 @@ public class MediPi extends Application {
                             }
                         } catch (KeyStoreException | IOException | NoSuchAlgorithmException | CertificateException e) {
                         }
-
+                        
                         System.out.println(String.format("%5s: %s", device, addr));
                     } catch (IOException e) {
                         makeFatalErrorMessage("Device certificate is not correct for this device", null);
+                        return;
                     }
                 }
-                if (System.getProperty("medipi.device.cert.name") == null || System.getProperty("medipi.device.macaddress") == null) {
+                if (System.getProperty(MEDIPIDEVICECERTNAME) == null || System.getProperty(MEDIPIDEVICEMACADDRESS) == null) {
                     makeFatalErrorMessage("Device certificate is not correct for this device", null);
+                    return;
                 }
-
+                
             } else {
                 // for all other non Linux OS systems 
                 String ip;
@@ -400,8 +431,8 @@ public class MediPi extends Application {
                     }
                     // Using the Mac address unlock the JKS keystore for the device
                     try {
-                        String ksf = MediPiProperties.getInstance().getProperties().getProperty("medipi.device.cert.location");
-
+                        String ksf = MediPiProperties.getInstance().getProperties().getProperty(MEDIPIDEVICECERTLOCATION);
+                        
                         KeyStore keyStore = KeyStore.getInstance("jks");
                         try (FileInputStream fis = new FileInputStream(ksf)) {
                             //the MAC address used to unlock the JKS must be lowercase
@@ -413,156 +444,252 @@ public class MediPi extends Application {
                         }
                     } catch (KeyStoreException | IOException | NoSuchAlgorithmException | CertificateException e) {
                         makeFatalErrorMessage("Device certificate is not correct for this device", null);
+                        return;
                     }
-
+                    
                 } catch (Exception e) {
                     makeFatalErrorMessage("Can't find Mac Address for the machine, therefore unable to check device certificate", null);
+                    return;
                 }
             }
 
-            // fundamental UI decisions made from the properties
-            String b = properties.getProperty(DATAVIEWBASIC);
-            if (b == null || b.trim().length() == 0) {
-                basicDataView = true;
-            } else {
-                // If not set then  start in basic view mode
-                basicDataView = !b.toLowerCase().startsWith("n");
-            }
             // Patient Demographics data is discovered for the patient Microbanner -
-            // currently taken directly from the properties but may need interaction with PDS in the future
-            Label patientName = null;
-            Label nhsNumber = null;
-            Label dob = null;
-            patientFirstName = properties.getProperty(PATIENTFIRSTNAME);
-            if (patientFirstName == null || patientFirstName.trim().equals("")) {
-                makeFatalErrorMessage(PATIENTFIRSTNAME + " - Patient First Name is not set", null);
-            }
-            patientLastName = properties.getProperty(MEDIPIPATIENTLASTNAME);
-            if (patientLastName == null || patientLastName.trim().equals("")) {
-                makeFatalErrorMessage(MEDIPIPATIENTLASTNAME + " - Patient Last Name is not set", null);
-            } else {
-                patientName = new Label(patientLastName.toUpperCase() + ", " + patientFirstName);
-                patientName.setId("mainwindow-title-microbannerupper");
-            }
-            patientNHSNumber = properties.getProperty(PATIENTNHSNUMBER);
-            if (patientNHSNumber == null || patientNHSNumber.trim().equals("")) {
-                makeFatalErrorMessage(PATIENTNHSNUMBER + " - Patient NHS Number is not set", null);
-            } else {
-                // Check the NHS Number is valid
-                //LENGTH CHECK
-                if (patientNHSNumber.length() != 10) {
-                    makeFatalErrorMessage(PATIENTNHSNUMBER + " - Patient NHS Number (" + patientNHSNumber + ") is not the correct length", null);
-                }
-
-                // NUMERIC CHECK
-                Long i;
-                try {
-                    i = Long.parseLong(patientNHSNumber);
-                } catch (NumberFormatException e) {
-                    makeFatalErrorMessage(PATIENTNHSNUMBER + " - Patient NHS Number (" + patientNHSNumber + ") contains non numeric content", e);
-                }
-                // MOD11 CHECK
-                int len = patientNHSNumber.length();
-                int sum = 0;
-                for (int k = 1; k <= len; k++) // compute weighted sum
-                {
-                    sum += (11 - k) * Character.getNumericValue(patientNHSNumber.charAt(k - 1));
-                }
-                if ((sum % 11) != 0) {
-                    makeFatalErrorMessage(PATIENTNHSNUMBER + " - Patient NHS Number (" + patientNHSNumber + ") checksum is not correct", null);
-                }
-                nhsNumber = new Label(patientNHSNumber);
+            try {
+                PatientDetailsDO patient = PatientDetailsService.getInstance().getPatientDetails();
+                patientSurname.setId("mainwindow-title-microbannerupper");
+                patientForename.setId("mainwindow-title-microbannerupper");
                 nhsNumber.setId("mainwindow-title-microbannerlower");
-            }
-            String patientDOB = properties.getProperty(PATIENTDOB);
-            formatDOB = null;
-            if (patientDOB == null || patientDOB.trim().equals("")) {
-                makeFatalErrorMessage(PATIENTDOB + " - Patient Date of Birth is not set", null);
-            } else {
-                try {
-                    LocalDate dobld = LocalDate.parse(patientDOB, DateTimeFormatter.BASIC_ISO_DATE);
-                    formatDOB = dobld.format(Utilities.DISPLAY_DOB_FORMAT);
-                } catch (DateTimeParseException e) {
-                    makeFatalErrorMessage(PATIENTDOB + " - Patient Date of Birth (" + patientDOB + ") in wrong format", null);
-                }
-                dob = new Label(formatDOB);
                 dob.setId("mainwindow-title-microbannerlower");
+                
+                setPatientMicroBanner(patient);
+                
+            } catch (Exception e) {
+                makeFatalErrorMessage("Patient Name issue: ", e);
+                return;
             }
+
+            // Create Patient Banner
             VBox microPatientBannerVBox = new VBox();
             microPatientBannerVBox.setAlignment(Pos.CENTER);
+            HBox patientNameHBox = new HBox(patientSurname, new Label(","), patientForename);
+            patientNameHBox.setAlignment(Pos.CENTER);
+            HBox patientOtherHBox = new HBox(new Label("Born "), dob, new Label("  NHS No."), nhsNumber);
+            patientOtherHBox.setAlignment(Pos.CENTER);
             microPatientBannerVBox.getChildren().addAll(
-                    patientName,
+                    patientNameHBox,
                     new Separator(Orientation.HORIZONTAL),
-                    new HBox(new Label("Born "), dob, new Label("  NHS No."), nhsNumber
-                    )
+                    patientOtherHBox
             );
 
             // Start to create the screen
             Label title = new Label(MEDIPINAME);
             title.setId("mainwindow-title");
             title.setAlignment(Pos.CENTER);
+            title.setOnMouseClicked((MouseEvent event) -> {
+                MediPiMessageBox.getInstance().makeMessage("MediPi Version: " + getVersion());
+            });
             // add the NHS logo
-            ImageView iw = new ImageView("/org/medipi/nhs.jpg");
+            ImageView iw = new ImageView("/org/medipi/logo.png");
+            ImageView off = new ImageView("/org/medipi/onoff.png");
+            off.setOnMouseClicked((MouseEvent event) -> {
+                exit();
+            });
             VBox mainWindow = new VBox();
             mainWindow.setId("mainwindow");
             mainWindow.setPadding(new Insets(0, 5, 0, 5));
             mainWindow.setAlignment(Pos.TOP_CENTER);
-            BorderPane titleBP = new BorderPane();
-            titleBP.setPadding(new Insets(0, 15, 0, 15));
-            titleBP.setMinSize(800, 80);
-            titleBP.setMaxSize(800, 80);
+            GridPane titleBP = new GridPane();
+            ColumnConstraints col1 = new ColumnConstraints();
+            col1.setPercentWidth(8);
+            ColumnConstraints col2 = new ColumnConstraints();
+            col2.setPercentWidth(40);
+            col2.setHalignment(HPos.CENTER);
+            ColumnConstraints col3 = new ColumnConstraints();
+            col3.setPercentWidth(45);
+            col3.setHalignment(HPos.CENTER);
+            ColumnConstraints col4 = new ColumnConstraints();
+            col4.setPercentWidth(7);
+            col4.setHalignment(HPos.RIGHT);
+            titleBP.getColumnConstraints().addAll(col1, col2, col3, col4);
+            titleBP.setPadding(new Insets(0, 5, 0, 5));
+            titleBP.setMinSize(800, 60);
+            titleBP.setMaxSize(800, 60);
             BorderPane.setAlignment(iw, Pos.CENTER);
-            titleBP.setLeft(iw);
-            titleBP.setCenter(title);
-            titleBP.setRight(microPatientBannerVBox);
+            titleBP.add(iw, 0, 0);
+            titleBP.add(title, 1, 0);
+            titleBP.add(microPatientBannerVBox, 2, 0);
+            titleBP.add(off, 3, 0);
+            HBox connLabel = new HBox();
+
+            //Create elements and  structure for the lower banner
+            LED led = new LED();
+            connLabel.setAlignment(Pos.CENTER_RIGHT);
+            connLabel.setSpacing(10);
+            connLabel.getChildren().addAll(
+                    new Label("Connection"),
+                    led
+            );
+            
+            BorderPane lowerBanner = new BorderPane();
+            lowerBanner.setPadding(new Insets(0, 5, 0, 5));
+            lowerBanner.setMinSize(800, 40);
+            lowerBanner.setMaxSize(800, 40);
+            DigitalClock dc = new DigitalClock();
+            dc.setMinHeight(40);
+            dc.setMaxHeight(40);
+            dc.setId("lowerbanner");
+            lowerBanner.setLeft(dc);
+            alertBannerMessage.setAlignment(Pos.TOP_LEFT);
+            alertBannerMessage.setWrapText(true);
+            alertBannerMessage.setPrefWidth(400);
+            alertBannerMessage.setId("lowerbanner-scroll");
+            alertBannerMessage.setMinHeight(40);
+            
+            ScrollPane alertSP = new ScrollPane();
+            alertSP.setMaxWidth(400);
+            alertSP.setMinWidth(400);
+            alertSP.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+            alertSP.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+            alertSP.setPannable(false);
+            alertSP.setContent(alertBannerMessage);
+            alertSP.setStyle("-fx-background-color: transparent;");
+            // Provides the animated scrolling behavior for the text
+            TranslateTransition transTransition = new TranslateTransition();
+            transTransition.setDuration(new Duration(7500));
+            transTransition.setNode(alertBannerMessage);
+            transTransition.setToY(-40);
+            transTransition.setFromY(0);
+            transTransition.setInterpolator(Interpolator.LINEAR);
+            transTransition.setCycleCount(Timeline.INDEFINITE);
+            
+            lowerBanner.setCenter(alertSP);
+            
+            alertBannerMap.addListener(new MapChangeListener() {
+                @Override
+                public void onChanged(MapChangeListener.Change change) {
+                    ObservableMap om = change.getMap();
+                    StringBuilder sb = new StringBuilder();
+                    om.forEach((k, v) -> {
+                        sb.append("- ")
+                                .append(v.toString())
+                                .append("\n");
+                    });
+                    Platform.runLater(() -> {
+                        alertBannerMessage.setText(sb.toString());
+                        alertBannerMessage.setTextFill(Color.RED);
+                        double alertMessageHeight = 0;
+                        switch (om.size()) {
+                            case 0:
+                            case 1:
+                            case 2:
+                                transTransition.jumpTo(Duration.ZERO);
+                                transTransition.stop();
+                                transTransition.setToY(-40);
+                                alertMessageHeight = 40;
+                                break;
+                            default:
+                                alertMessageHeight = (om.size() * 20);
+                                alertBannerMessage.setMinHeight(alertMessageHeight + 40);
+                                System.out.println("height" + alertBannerMessage.getHeight() + "," + alertBannerMessage.getMinHeight() + "," + alertBannerMessage.getMaxHeight() + "," + alertBannerMessage.getPrefHeight());
+                                System.out.println(alertMessageHeight);
+                                transTransition.setToY(-alertMessageHeight);
+                                transTransition.play();
+                                break;
+                        }
+                    });
+                }
+            });
+
+            // Check Synchronisation status of MediPi time server
+            String messageDir = properties.getProperty(MEDIPITIMESYNCSERVERDIRECTORY);
+            if (messageDir == null || messageDir.trim().length() == 0) {
+                makeFatalErrorMessage("Time server directory parameter not configured", null);
+                return;
+            }
+            Path dir = Paths.get(messageDir);
+            TimeServerWatcher tsw = new TimeServerWatcher(dir, this);
+            // a shell script which calls the MediPi Patient application also currently 
+            // calls the synchronisation of the time server. The output of which is saved
+            // to file and monitored by the TimeServerWatcher class
+
+            //instnatiate the VPN Manager            
+            VPNServiceManager vpnm = VPNServiceManager.getInstance();
+            if (vpnm.isEnabled()) {
+                vpnConnectionIndicatorProperty.addListener(new ChangeListener<Number>() {
+                    @Override
+                    public void changed(ObservableValue<? extends Number> observableValue, Number oldValue,
+                            Number newValue) {
+                        switch (newValue.intValue()) {
+                            case -1:
+                                led.blink(Color.RED, Color.GREY, 1000);
+                                break;
+                            case 0:
+                                led.ledOn(Color.GREY);
+                                break;
+                            case 1:
+//                                led.ledOn(Color.ORANGE);
+                                led.blink(Color.GREEN, Color.GREY, 250);
+                                break;
+                            case 2:
+                                led.ledOn(Color.LIGHTGREEN);
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                });
+                vpnm.setConnectionIndicator(vpnConnectionIndicatorProperty);
+                connLabel.setId("lowerbanner");
+                lowerBanner.setRight(connLabel);
+            }
 
             // Set up the Dashboard view
+            TilePane dashTile;
             dashTile = new TilePane();
-            dashTile.setMinSize(800, 420);
+            dashTile.setMinWidth(800);
             dashTile.setId("mainwindow-dashboard");
+            dashTileSc.setContent(dashTile);
+            dashTileSc.setFitToWidth(true);
+            dashTileSc.setFitToHeight(true);
+            dashTileSc.setMinHeight(380);
+            dashTileSc.setMaxHeight(380);
+            dashTileSc.setMinWidth(800);
+            dashTileSc.setId("mainwindow-dashboard-scroll");
+            dashTileSc.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+            dashTileSc.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
             //bind the visibility property so that when not visible the panel doesnt take any space
-            dashTile.managedProperty().bind(dashTile.visibleProperty());
+            dashTileSc.managedProperty().bind(dashTileSc.visibleProperty());
             subWindow = new VBox();
             subWindow.setId("subwindow");
             subWindow.setAlignment(Pos.TOP_CENTER);
             subWindow.getChildren().addAll(
-                    dashTile
+                    dashTileSc
             );
             try {
                 mediPiWindow = new MediPiWindow(subWindow);
-                mainWindow.getChildren().addAll(
-                        titleBP,
+                mainWindow.getChildren().addAll(titleBP,
                         new Separator(Orientation.HORIZONTAL),
-                        mediPiWindow
+                        mediPiWindow,
+                        new Separator(Orientation.HORIZONTAL),
+                        lowerBanner
                 );
             } catch (Exception e) {
                 makeFatalErrorMessage("Authentication cannot be loaded - " + e.getMessage(), null);
+                return;
             }
-
-            StackPane root = new StackPane();
+            
             root.getChildren().add(mainWindow);
 
-            // configure the screensize - the default is 800x480 - see considerations/todo in main text above
-            Integer screenwidth = 800;
-            Integer screenheight = 480;
-            try {
-                String sw = mpp.getProperties().getProperty(SCREENWIDTH);
-                screenwidth = Integer.parseInt(sw);
-                sw = mpp.getProperties().getProperty(SCREENHEIGHT);
-                screenheight = Integer.parseInt(sw);
-            } catch (Exception e) {
-                makeFatalErrorMessage(SCREENWIDTH + " and " + SCREENHEIGHT + " - The configured screen sizes are incorrect: width:" + screenwidth + " height:" + screenheight, e);
-            }
-            scene = new Scene(root, screenwidth, screenheight);
             // Load CSS properties - see considerations/todo in main text above
             String cssfile = properties.getProperty(CSS);
             if (cssfile == null || cssfile.trim().length() == 0) {
                 makeFatalErrorMessage("No CSS file defined in " + CSS, null);
+                return;
             } else {
                 scene.getStylesheets().add("file:///" + cssfile);
             }
-
-            primaryStage.setTitle(VERSION);
+            
+            primaryStage.setTitle(MEDIPINAME + " " + VERSION + "-" + VERSIONNAME);
             //show the screen
             if (fatalError) {
                 Label l = new Label(fatalErrorLog.toString());
@@ -589,6 +716,7 @@ public class MediPi extends Application {
                         elem.setMediPi(this);
                         elem.setClassToken(classToken);
                         String initError = elem.init();
+                        elem.setElementTitle();
                         if (initError == null) {
                             dashTile.getChildren().add(elem.getDashboardTile());
                             elements.add(elem);
@@ -602,13 +730,16 @@ public class MediPi extends Application {
                 }
             } else {
                 makeFatalErrorMessage("No Elements have been defined", null);
+                return;
             }
 
             //show the tiled dashboard view
             callDashboard();
             // functionality which closes the window when the x is pressed
             primaryStage.setOnHiding((WindowEvent event) -> {
-                exit();
+                Platform.runLater(() -> {
+                    System.exit(0);
+                });
             });
 
             // splash screen
@@ -621,7 +752,7 @@ public class MediPi extends Application {
                 }
                 splash.close();
             }
-
+            // add a ahndler for harware updates from MediPI Concentrator
             dhm.addHandler("HARDWAREUPDATE", new HardwareHandler(properties));
 
             // Start the downloadable timer. This wakes up every definable period (default set to 30s) 
@@ -637,20 +768,72 @@ public class MediPi extends Application {
                 timer.scheduleAtFixedRate(pim, (long) 1, (long) incomingMessageCheckPeriod, TimeUnit.SECONDS);
             } catch (Exception nfe) {
                 makeFatalErrorMessage("Unable to start the download service - make sure that " + MEDIPIDOWNLOADPOLLPERIOD + " property is set correctly", null);
+                return;
             }
 
+//            scene.removeEventHandler(KeyEvent.KEY_PRESSED, modeHandler);
         } catch (Exception e) {
             makeFatalErrorMessage("A fatal and fundamental error occurred at bootup", e);
+            return;
         }
+    }
+
+    /**
+     * Display Patient details in the Patient Banner
+     *
+     * @param patient details data object to be displayed in the patient banner
+     * @throws Exception
+     */
+    public void setPatientMicroBanner(PatientDetailsDO patient) throws Exception {
+        patientSurname.setText(patient.getSurname().toUpperCase());
+        patientForename.setText(patient.getForename());
+        nhsNumber.setText(patient.getNhsNumber());
+        dob.setText(patient.formatDOB(patient.getDob()));
     }
 
     /**
      * Method to close the JavaFX application
      */
     public void exit() {
-        Platform.runLater(() -> {
-            System.exit(0);
-        });
+        if (closeLinuxOS) {
+            executeCommand("sudo shutdown -h now");
+        } else {
+            Platform.runLater(() -> {
+                System.exit(0);
+            });
+        }
+        
+    }
+
+    /**
+     * This method executes strings on the command line and can shut the
+     * raspberry pi down
+     *
+     * @param command
+     * @return
+     */
+    public String executeCommand(String command) {
+        
+        StringBuffer output = new StringBuffer();
+        
+        Process p;
+        try {
+            p = Runtime.getRuntime().exec(command);
+            p.waitFor();
+            BufferedReader reader
+                    = new BufferedReader(new InputStreamReader(p.getInputStream()));
+            
+            String line = "";
+            while ((line = reader.readLine()) != null) {
+                output.append(line + "\n");
+            }
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        
+        return output.toString();
+        
     }
 
     /**
@@ -682,14 +865,14 @@ public class MediPi extends Application {
      */
     public void callDashboard() {
         hideAllWindows();
-        dashTile.setVisible(true);
+        dashTileSc.setVisible(true);
     }
 
     /**
      * Method to hide all the element windows from the MediPi mainwindow
      */
     public void hideAllWindows() {
-        dashTile.setVisible(false);
+        dashTileSc.setVisible(false);
         for (Element e : elements) {
             e.hideDeviceWindow();
         }
@@ -759,9 +942,18 @@ public class MediPi extends Application {
                 .getInstance().log(MediPi.class
                         .getName() + ".initialisation", "Fatal Error:" + errorMessage + exString);
         primaryStage.setTitle(VERSION);
+        HBox hbox = new HBox();
+        hbox.setStyle("-fx-background-color: lightblue;");
         Label l = new Label(fatalErrorLog.toString());
-        l.setStyle("-fx-background-color: lightblue;");
-        scene = new Scene(l);
+        Button exit = new Button("exit");
+        exit.setOnAction((ActionEvent t) -> {
+            exit();
+        });
+        hbox.getChildren().addAll(
+                exit,
+                l
+        );
+        scene = new Scene(hbox, screenwidth, screenheight);
         primaryStage.setScene(scene);
         primaryStage.show();
     }
@@ -778,5 +970,14 @@ public class MediPi extends Application {
                 d.resetDevice();
             }
         }
+    }
+
+    /**
+     * Method to allow access to the lower banner from other classes
+     *
+     * @return
+     */
+    public ObservableMap getLowerBannerAlert() {
+        return alertBannerMap;
     }
 }

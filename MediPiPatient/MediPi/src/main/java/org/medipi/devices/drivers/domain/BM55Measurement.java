@@ -15,6 +15,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 
 import org.medipi.utilities.BytesManipulator;
 
@@ -235,14 +236,14 @@ public class BM55Measurement {
      * @return all the values in string array format
      * @throws ParseException the parse exception
      */
-    public String[] getAllValues() throws ParseException {
-        final String[] values = new String[6];
-        values[0] = this.getMeasuredTime().toString();
-        values[1] = String.valueOf(this.getSystolicPressure());
-        values[2] = String.valueOf(this.getDiastolicPressure());
-        values[3] = String.valueOf(this.getPulseRate());
-        values[4] = String.valueOf(this.isRestingIndicator());
-        values[5] = String.valueOf(this.isArrhythmia());
+    public ArrayList<String> getAllValues() throws ParseException {
+        final ArrayList<String> values = new ArrayList<>();
+        values.add(this.getMeasuredTime().toString());
+        values.add(String.valueOf(this.getSystolicPressure()));
+        values.add(String.valueOf(this.getDiastolicPressure()));
+        values.add(String.valueOf(this.getPulseRate()));
+        values.add(String.valueOf(this.isRestingIndicator()));
+        values.add(String.valueOf(this.isArrhythmia()));
         return values;
     }
 

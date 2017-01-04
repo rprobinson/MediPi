@@ -18,17 +18,23 @@ package org.medipi.devices;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Optional;
+import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.event.ActionEvent;
-import javafx.geometry.HPos;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.Label;
+import javafx.scene.control.ProgressIndicator;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.ColumnConstraints;
-import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.text.Text;
 import org.medipi.MediPi;
 
 /**
@@ -48,7 +54,7 @@ import org.medipi.MediPi;
  * class in the chain is a concrete class (which for example in the case of the
  * medical devices interacts with the USB enabled device itself)
  *
- * @author riro
+ * @author rick@robinsonhq.com
  */
 public abstract class Element {
 
@@ -67,7 +73,7 @@ public abstract class Element {
     /**
      * The bottom banner containing buttons
      */
-    protected GridPane bottom = new GridPane();
+    protected BorderPane bottom = new BorderPane();
 
     /**
      * The left button (1) on the bottom banner
@@ -80,9 +86,9 @@ public abstract class Element {
     protected Button button3 = null;
 
     /**
-     * The centre node (2) on the bottom banner
+     * The centre button (2) on the bottom banner
      */
-    protected Node node2 = null;
+    protected Button button2 = null;
 
     /**
      * Reference to the Scheduler class if present
@@ -95,27 +101,29 @@ public abstract class Element {
      */
     protected BooleanProperty isSchedule = new SimpleBooleanProperty(false);
 
+    protected ProgressIndicator progressIndicator = new ProgressIndicator(ProgressIndicator.INDETERMINATE_PROGRESS);
+    protected boolean confirm = false;
+    protected BooleanProperty showTile;
+    private HBox b2hb = new HBox();
+
     /**
      * Constructor for the Class
      */
     public Element() {
 
         window.setBottom(bottom);
+        window.setId("background-colour");
+
         //bind the visibility property so that when not visible the panel doesnt take any space
         window.managedProperty().bind(window.visibleProperty());
         // set up the bottom button banner
-        ColumnConstraints col1 = new ColumnConstraints();
-        col1.setPercentWidth(35);
-        ColumnConstraints col2 = new ColumnConstraints();
-        col2.setPercentWidth(35);
-        col2.setHalignment(HPos.CENTER);
-        ColumnConstraints col3 = new ColumnConstraints();
-        col3.setPercentWidth(30);
-        col3.setHalignment(HPos.RIGHT);
-        bottom.getColumnConstraints().addAll(col1, col2, col3);
         bottom.setMinHeight(70);
         bottom.setMaxHeight(70);
         bottom.setPadding(new Insets(0, 10, 0, 10));
+        progressIndicator.setMinSize(40, 40);
+        progressIndicator.setMaxSize(40, 40);
+        progressIndicator.setVisible(false);
+        progressIndicator.managedProperty().bind(progressIndicator.visibleProperty());
     }
 
     /**
@@ -190,7 +198,9 @@ public abstract class Element {
             Button b3 = new Button("Back", iw);
             b3.setId("button-back");
             b3.setOnAction((ActionEvent t) -> {
-                medipi.callDashboard();
+                if (confirmation()) {
+                    medipi.callDashboard();
+                }
             });
             isSchedule.set(false);
             setButton3(b3);
@@ -200,7 +210,7 @@ public abstract class Element {
             // The Cancel Schedule button doesn't get disabled when any of the 
             // Element tasks are in operation - should these be stopped if cancel
             // is activated? 
-            Button b1 = new Button("Cancel Schedule", medipi.utils.getImageView("medipi.images.cancel", 20, 20));
+            Button b1 = new Button("Cancel", medipi.utils.getImageView("medipi.images.cancel", 20, 20));
             b1.setId("button-cancel");
             b1.setOnAction((ActionEvent t) -> {
                 medipi.callDashboard();
@@ -210,6 +220,7 @@ public abstract class Element {
                 // Last token
                 isSchedule.set(true);
                 setButton1(b1);
+                setButton3(null);
             } else {
                 //where there are >1 scheduled elements left to call
                 String nextDevice = ClassTokenChain.get(0);
@@ -218,15 +229,18 @@ public abstract class Element {
                 Button b3 = new Button("Next", medipi.utils.getImageView("medipi.images.arrow", 20, 20));
                 b3.setId("button-next");
                 b3.setOnAction((ActionEvent t) -> {
-                    Element e = medipi.getElement(nextDevice);
-                    e.callDeviceWindow(remainingDevices);
-                    if (Device.class.isAssignableFrom(Element.this.getClass())) {
-                        Device d = (Device) Element.this;
-                        if (d.hasDataProperty().get()) {
-                            scheduler.addScheduleData(Scheduler.MEASURED, Instant.now(), new ArrayList<>(Arrays.asList(getClassTokenName())));
+                    if (confirmation()) {
+                        Element e = medipi.getElement(nextDevice);
+                        e.callDeviceWindow(remainingDevices);
+                        if (Device.class.isAssignableFrom(Element.this.getClass())) {
+                            Device d = (Device) Element.this;
+                            if (d.hasDataProperty().get()) {
+                                scheduler.addScheduleData(Scheduler.MEASURED, Instant.now(), new ArrayList<>(Arrays.asList(getClassTokenName())));
+                            }
                         }
                     }
                 });
+
                 isSchedule.set(true);
                 setButton3(b3);
                 setButton1(b1);
@@ -238,6 +252,26 @@ public abstract class Element {
         window.setVisible(true);
     }
 
+    private boolean confirmation() {
+        if (confirm) {
+            Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "", ButtonType.YES, ButtonType.NO);
+            alert.setTitle(getDisplayName());
+            alert.setHeaderText(getDisplayName());
+            Text text = new Text("Confirm that the input value from " + getDisplayName() + " is correct?");
+            text.setWrappingWidth(400);
+            alert.getDialogPane().setContent(text);
+
+            Optional<ButtonType> result = alert.showAndWait();
+            if (result.get() == ButtonType.YES) {
+                return true;
+            }
+            return false;
+
+        } else {
+            return true;
+        }
+    }
+
     /**
      * Set the centre button (2) on the bottom panel.
      *
@@ -246,11 +280,31 @@ public abstract class Element {
      * @param b node which could contain a button or a HBox containing >1 node.
      * To be added to the left hand node of the bottom panel
      */
-    protected void setButton2(Node b) {
-        bottom.getChildren().remove(node2);
+    protected void setButton2(Button b) {
+        bottom.getChildren().remove(b2hb);
         if (b != null) {
-            node2 = b;
-            bottom.add(node2, 1, 0);
+            button2 = b;
+            b2hb = new HBox();
+            b2hb.setSpacing(10);
+            b2hb.getChildren().addAll(button2, progressIndicator);
+            b2hb.setAlignment(Pos.TOP_CENTER);
+            bottom.setCenter(b2hb);
+        }
+    }
+
+    public void setButton2Name(String name) {
+        setButton2Name(name, null);
+    }
+
+    public void setButton2Name(String name, Node graphic) {
+        if (Platform.isFxApplicationThread()) {
+            button2.setText(name);
+            button2.setGraphic(graphic);
+        } else {
+            Platform.runLater(() -> {
+                button2.setText(name);
+                button2.setGraphic(graphic);
+            });
         }
     }
 
@@ -265,7 +319,7 @@ public abstract class Element {
         bottom.getChildren().remove(button1);
         if (b != null) {
             button1 = b;
-            bottom.add(button1, 0, 0);
+            bottom.setLeft(button1);
         }
     }
 
@@ -280,7 +334,7 @@ public abstract class Element {
         bottom.getChildren().remove(button3);
         if (b != null) {
             button3 = b;
-            bottom.add(button3, 2, 0);
+            bottom.setRight(button3);
         }
     }
 
@@ -291,6 +345,17 @@ public abstract class Element {
      */
     public ImageView getImage() {
         return medipi.utils.getImageView(MediPi.ELEMENTNAMESPACESTEM + classToken + ".image", null, null);
+    }
+
+    /**
+     * setter for this Element's title
+     *
+     *
+     */
+    public void setElementTitle() {
+        Label title = new Label(this.getDisplayName());
+        title.setId("element-title");
+        window.setTop(title);
     }
 
     /**
@@ -307,7 +372,7 @@ public abstract class Element {
      *
      * @return String representation of the Element's Name
      */
-    public abstract String getName();
+    public abstract String getDisplayName();
 
     /**
      * Abstract method to get the dashboard tile

@@ -1,5 +1,5 @@
 /*
- Copyright 2016  Richard Robinson @ HSCIC <rrobinson@hscic.gov.uk, rrobinson@nhs.net>
+ Copyright 2016  Richard Robinson @ NHS Digital <rrobinson@nhs.net>
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -15,7 +15,13 @@
  */
 package org.medipi.devices;
 
+import java.util.ArrayList;
+import java.util.Optional;
 import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.StringProperty;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
 import org.medipi.model.DeviceDataDO;
 
 /**
@@ -37,6 +43,19 @@ import org.medipi.model.DeviceDataDO;
  */
 public abstract class Device extends Element {
 
+    // property to indicate whether data has bee recorded for this device
+    protected final BooleanProperty hasData = new SimpleBooleanProperty(false);
+
+    /**
+     * Method which returns a booleanProperty which UI elements can be bound to,
+     * to discover whether there is data to be downloaded
+     *
+     * @return BooleanProperty signalling the presence of downloaded data
+     */
+    public BooleanProperty hasDataProperty() {
+        return hasData;
+    }
+
     /**
      * Abstract initiation method called for this Element.
      *
@@ -47,7 +66,6 @@ public abstract class Device extends Element {
      * @return populated or null for whether the initiation was successful
      * @throws java.lang.Exception
      */
-
     @Override
     public abstract String init() throws Exception;
 
@@ -66,12 +84,11 @@ public abstract class Device extends Element {
     public abstract DeviceDataDO getData();
 
     /**
-     * Method which returns a booleanProperty which UI elements can be bound to,
-     * to discover whether there is data to be downloaded
+     * Method to set the data payload
      *
-     * @return BooleanProperty signalling the presence of downloaded data
+     * @param deviceData
      */
-    public abstract BooleanProperty hasDataProperty();
+    public abstract void setData(ArrayList<ArrayList<String>> deviceData);
 
     /**
      * Method to reset a device and initialise it
@@ -80,11 +97,54 @@ public abstract class Device extends Element {
     public abstract void resetDevice();
 
     /**
-     * abstract Getter for Profile ID to be used to identify the data as part of
-     * the message structure of the DistributionEnvelope
+     * abstract Getter for Profile ID to be used to identify the data
      *
      * @return profile ID
      */
     public abstract String getProfileId();
+
+    /**
+     * abstract Getter for Make of device
+     *
+     * @return make
+     */
+    public abstract String getMake();
+
+    /**
+     * abstract Getter for Model of device
+     *
+     * @return model
+     */
+    public abstract String getModel();
+
+    /**
+     * abstract Getter for Summary Overview of the results of device
+     *
+     * @return model
+     */
+    public abstract StringProperty getResultsSummary();
+
+    /**
+     * Method to confirm that the user is happy to reset previously recorded
+     * untransmitted data.
+     *
+     * @return boolean indicator of assent or dissent
+     */
+    protected boolean confirmReset() {
+        if (!hasData.get()) {
+            return true;
+        }
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle(getDisplayName());
+        alert.setHeaderText("MediPi Reset Dialog");
+        alert.setContentText(getDisplayName() + "\n" + getResultsSummary().getValue() + "\nThis reading has not been transmitted.\nAre you sure you want to reset?");
+
+        Optional<ButtonType> result = alert.showAndWait();
+        if (result.get() == ButtonType.OK) {
+            return true;
+        } else {
+            return false;
+        }
+    }
 
 }

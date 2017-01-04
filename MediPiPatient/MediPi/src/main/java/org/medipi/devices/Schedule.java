@@ -1,5 +1,5 @@
 /*
- Copyright 2016  Richard Robinson @ HSCIC <rrobinson@hscic.gov.uk, rrobinson@nhs.net>
+ Copyright 2016  Richard Robinson @ NHS Digital <rrobinson@nhs.net>
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -41,7 +41,6 @@ public class Schedule {
     private SimpleLongProperty time;
     private SimpleStringProperty deviceSched;
     private SimpleIntegerProperty repeat;
-    private StringBuilder devices = new StringBuilder();
 
     /**
      * Constructor which takes the untokenised line of the schedule table and
@@ -63,6 +62,7 @@ public class Schedule {
             //repeat rate in mins
             this.repeat = new SimpleIntegerProperty(r);
             //devices to be called
+            StringBuilder devices = new StringBuilder();
             for (String s : dl) {
                 devices.append(s);
                 devices.append(" ");
@@ -90,7 +90,7 @@ public class Schedule {
         Instant instant = Instant.ofEpochMilli(time.get());
         return Utilities.DISPLAY_SCHEDULE_FORMAT_LOCALTIME.format(instant);
     }
-    
+
     public Long getTime() {
         return time.get();
     }

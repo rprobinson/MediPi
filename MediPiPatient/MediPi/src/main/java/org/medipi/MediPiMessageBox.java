@@ -1,5 +1,5 @@
 /*
- Copyright 2016  Richard Robinson @ HSCIC <rrobinson@hscic.gov.uk, rrobinson@nhs.net>
+ Copyright 2016  Richard Robinson @ NHS Digital <rrobinson@nhs.net>
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -147,7 +147,7 @@ class AlertBox {
     public void showAlertBox(String uniqueString, String message, String debugString, HashMap<String, Alert> liveMessages) {
         Alert a = liveMessages.get(uniqueString);
         if (a == null) {
-            a = new Alert(AlertType.WARNING);
+            a = new Alert(AlertType.ERROR);
             a.setTitle("Error dialog");
             a.setContentText("Error - " + message + debugString);
             a.getDialogPane().getChildren().stream().filter(node -> node instanceof Label)
@@ -174,7 +174,7 @@ class AlertBox {
             a = new Alert(AlertType.INFORMATION);
             a.getDialogPane().getChildren().stream().filter(node -> node instanceof Label).forEach(node -> ((Label) node).setPrefHeight(200));
             a.setTitle("Message dialog");
-            a.setContentText("Message - " + message);
+            a.setContentText(message);
             liveMessages.put(uniqueString, a);
             a.setResultConverter(new Callback<ButtonType, ButtonType>() {
                 @Override

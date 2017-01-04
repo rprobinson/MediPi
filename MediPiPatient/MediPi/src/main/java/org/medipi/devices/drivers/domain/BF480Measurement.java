@@ -22,6 +22,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 
 /**
  * The Class BF480Measurement converts the integer data array received from
@@ -186,13 +187,13 @@ public class BF480Measurement implements Comparable<BF480Measurement> {
      * @return all the values in string array format
      * @throws ParseException the parse exception
      */
-    public String[] getAllValues() throws ParseException {
-        final String[] values = new String[5];
-        values[0] = this.getMeasuredTime().toString();
-        values[1] = String.valueOf(this.getWeight());
-        values[2] = String.valueOf(this.getBodyFat());
-        values[3] = String.valueOf(this.getWater());
-        values[4] = String.valueOf(this.getMuscles());
+    public ArrayList<String> getAllValues() throws ParseException {
+        final ArrayList<String> values = new ArrayList<>();
+        values.add(this.getMeasuredTime().toString());
+        values.add(String.valueOf(this.getWeight()));
+        values.add(String.valueOf(this.getBodyFat()));
+        values.add(String.valueOf(this.getWater()));
+        values.add(String.valueOf(this.getMuscles()));
         return values;
     }
 

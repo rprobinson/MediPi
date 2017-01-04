@@ -1,5 +1,5 @@
 /*
- Copyright 2016  Richard Robinson @ HSCIC <rrobinson@hscic.gov.uk, rrobinson@nhs.net>
+ Copyright 2016  Richard Robinson @ NHS Digital <rrobinson@nhs.net>
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -32,13 +32,16 @@ import java.util.Map;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.ObservableMap;
+import org.medipi.MediPi;
 import org.medipi.MediPiMessageBox;
 
 /**
  * Class to watch a the incoming messages directory for changes to files.
  *
  * When a new file is detected, the message List is updated in Messenger and an
- * alert badge is superimposed onto the Dashboard Tile
+ * alert badge is superimposed onto the Dashboard Tile. The tile is also
+ * coloured Red and a message is inserted into the lower alert banner
  */
 public class MessageWatcher extends Thread {
 
@@ -46,7 +49,9 @@ public class MessageWatcher extends Thread {
     private final Map<WatchKey, Path> keys;
     private boolean trace = false;
     private final Messenger messenger;
+    private final MediPi medipi;
     private final Path dir;
+    ObservableMap<String, String> alertBanner;
 
     @SuppressWarnings("unchecked")
     static <T> WatchEvent<T> cast(WatchEvent<?> event) {
@@ -56,15 +61,18 @@ public class MessageWatcher extends Thread {
     /**
      * Creates a WatchService and registers the given directory
      */
-    MessageWatcher(Path d, Messenger m) throws IOException {
+    MessageWatcher(Path d, Messenger m, MediPi medipi) throws IOException {
         dir = d;
         messenger = m;
+        this.medipi = medipi;
         this.watcher = FileSystems.getDefault().newWatchService();
         this.keys = new HashMap<>();
+        alertBanner = medipi.getLowerBannerAlert();
         register();
 
         // enable trace after initial registration
         this.trace = true;
+
         start();
     }
 
@@ -127,10 +135,10 @@ public class MessageWatcher extends Thread {
                     }
                     Platform.runLater(() -> {
                         messenger.setItems(items);
-//                        messenger.getMessageList().setItems(items);
-//                        messenger.getMessageList().getSelectionModel().select(0);
                         if (event.kind().name().equals("ENTRY_CREATE")) {
                             messenger.getAlertBooleanProperty().set(true);
+                            medipi.timeSync.set(false);
+                            alertBanner.put("messagewatcher", "A new Clinician's notification has arrived");
                             MediPiMessageBox.getInstance().makeMessage("A new clinician's message has arrived");
                         }
                     });

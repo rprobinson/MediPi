@@ -1,5 +1,5 @@
 /*
- Copyright 2016  Richard Robinson @ HSCIC <rrobinson@hscic.gov.uk, rrobinson@nhs.net>
+ Copyright 2016  Richard Robinson @ NHS Digital <rrobinson@nhs.net>
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -45,6 +45,8 @@ import org.medipi.downloadable.handlers.DownloadableHandlerManager;
 import org.medipi.downloadable.handlers.MessageHandler;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Instant;
+import javafx.scene.paint.Color;
+import org.medipi.MediPiProperties;
 import org.medipi.authentication.UnlockConsumer;
 import org.medipi.logging.MediPiLogger;
 import org.medipi.model.AlertListDO;
@@ -63,25 +65,24 @@ import org.medipi.utilities.Utilities;
  * the selected message. As MediPi does not expose any inbound ports, incoming
  * messaging is achieved through periodic polling of a secure location. Any new
  * messages received are digested and the UI is updated. A new unread message
- * alerts the dashboard Tile class to superimpose an alert image. All messages
+ * alerts the dashboard Tile class to superimpose an notification image. All messages
  * are persisted locally to a configurable file location.
  *
- * There is no view mode for this UI.
+ * The messages are encrypted using each patient's certificate and must be decrypted
  *
  * @author rick@robinsonhq.com
  */
 public class Messenger extends Element implements UnlockConsumer {
 
-    private static final String NAME = "Clinician's Messages";
+    private static final String NAME = "Notifications";
+    private static final String DISPLAYNAME = "MediPi Notification Messages";
     private static final String MEDIPIIMAGESEXCLAIM = "medipi.images.exclaim";
     private TextArea messageView;
     private VBox messengerWindow;
-    // not sure what the best setting for this thread pool is but 3 seems to work
-    private static final int TIMER_THREAD_POOL_SIZE = 3;
     private String messageDir;
-    private ImageView alertImageView;
+    private ImageView notificationImageView;
 
-    private final BooleanProperty alertBooleanProperty = new SimpleBooleanProperty(false);
+    private final BooleanProperty notificationBooleanProperty = new SimpleBooleanProperty(false);
 
     private TableView<Message> messageList;
     private ObservableList<Message> items = FXCollections.observableArrayList();
@@ -110,13 +111,13 @@ public class Messenger extends Element implements UnlockConsumer {
 
         String uniqueDeviceName = getClassTokenName();
         messengerWindow = new VBox();
-        messengerWindow.setPadding(new Insets(0, 5, 0, 5));
+        messengerWindow.setPadding(new Insets(5, 5, 0, 5));
         messengerWindow.setSpacing(5);
-        messengerWindow.setMinSize(800, 350);
-        messengerWindow.setMaxSize(800, 350);
-        // get the image file for the alert image to be superimposed on the dashboard tile when a new message is received
-        String alertImageFile = medipi.getProperties().getProperty(MEDIPIIMAGESEXCLAIM);
-        alertImageView = new ImageView("file:///" + alertImageFile);
+        messengerWindow.setMinSize(800, 300);
+        messengerWindow.setMaxSize(800, 300);
+        // get the image file for the notification image to be superimposed on the dashboard tile when a new message is received
+        String notificationImageFile = medipi.getProperties().getProperty(MEDIPIIMAGESEXCLAIM);
+        notificationImageView = new ImageView("file:///" + notificationImageFile);
 
         // Create the view of the message content - scrollable
         messageView = new TextArea();
@@ -124,14 +125,21 @@ public class Messenger extends Element implements UnlockConsumer {
         messageView.isResizable();
         messageView.setEditable(false);
         messageView.setId("messenger-messagecontent");
-        messageView.setMaxHeight(100);
-        messageView.setMinHeight(100);
+        messageView.setMaxHeight(140);
+        messageView.setMinHeight(140);
         ScrollPane viewSP = new ScrollPane();
         viewSP.setContent(messageView);
         viewSP.setFitToWidth(true);
         viewSP.setFitToHeight(true);
         viewSP.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         viewSP.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        //ascertain if this element is to be displayed on the dashboard
+        String b = MediPiProperties.getInstance().getProperties().getProperty(MediPi.ELEMENTNAMESPACESTEM + uniqueDeviceName +".showdashboardtile");
+        if (b == null || b.trim().length() == 0) {
+            showTile = new SimpleBooleanProperty(true);
+        } else {
+            showTile = new SimpleBooleanProperty(!b.toLowerCase().startsWith("n"));
+        }
         // location of the persistent message store
         messageDir = medipi.getProperties().getProperty(MediPi.ELEMENTNAMESPACESTEM + uniqueDeviceName + ".incomingmessagedirectory");
         if (messageDir == null || messageDir.trim().length() == 0) {
@@ -144,11 +152,11 @@ public class Messenger extends Element implements UnlockConsumer {
         //Create the table of message
         // Message title list - scrollable and selectable 
         TableColumn messageTitleTC = new TableColumn("Message Title");
-        messageTitleTC.setMinWidth(400);
+        messageTitleTC.setMinWidth(300);
         messageTitleTC.setCellValueFactory(
                 new PropertyValueFactory<>("messageTitle"));
         TableColumn timeTC = new TableColumn("Time");
-        timeTC.setMinWidth(100);
+        timeTC.setMinWidth(200);
         timeTC.setCellValueFactory(
                 new PropertyValueFactory<>("time"));
 
@@ -167,15 +175,15 @@ public class Messenger extends Element implements UnlockConsumer {
 
             items.add(m);
         }
-        messageList.setMinHeight(140);
-        messageList.setMaxHeight(140);
+        messageList.setMinHeight(100);
+        messageList.setMaxHeight(100);
         messageList.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
         // Update the message text area when a new message is selected
         messageList.getSelectionModel().selectedItemProperty().addListener((ObservableValue<? extends Message> ov, Message old_val, Message new_val) -> {
             try {
                 File file2 = new File(dir.toString(), new_val.getFileName());
                 // alter to allow different read formats
-                messageView.setText(readJSONAlert(file2));
+                messageView.setText(readJSONNotificationMessage(file2));
             } catch (Exception ex) {
                 if (ex.getLocalizedMessage() == null) {
                     messageView.setText("");
@@ -190,38 +198,37 @@ public class Messenger extends Element implements UnlockConsumer {
         ScrollPane listSP = new ScrollPane();
         listSP.setContent(messageList);
         listSP.setFitToWidth(true);
-        listSP.setPrefHeight(140);
+        listSP.setPrefHeight(100);
         listSP.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         listSP.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
         messageList.getSelectionModel().select(0);
         // Call the MessageWatcher class which will update the message list if 
         // a new txt file appears in the configured incoming message directory
         try {
-            MessageWatcher mw = new MessageWatcher(dir, this);
+            MessageWatcher mw = new MessageWatcher(dir, this, medipi);
         } catch (IOException ioe) {
             return "Message Watcher failed to initialise" + ioe.getMessage();
         }
-        Label listLabel = new Label("Message List");
-        listLabel.setId("messenger-list");
         Label textLabel = new Label("Message Text");
         textLabel.setId("messenger-text");
 
         messengerWindow.getChildren().addAll(
-                listLabel,
                 messageList,
                 new Separator(Orientation.HORIZONTAL),
                 textLabel,
-                messageView,
-                new Separator(Orientation.HORIZONTAL)
+                messageView
         );
 
         // set main Element window
         window.setCenter(messengerWindow);
 
-        // if the dashboard tile has an alert superimposed remove it upon showing this element
+        // if the dashboard tile has an notification superimposed remove it upon showing this element
         window.visibleProperty().addListener((ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) -> {
             if (newValue) {
-                alertBooleanProperty.setValue(false);
+                notificationBooleanProperty.setValue(false);
+                medipi.timeSync.set(true);
+                medipi.getLowerBannerAlert().remove("messagewatcher");
+
             }
         });
 
@@ -231,6 +238,16 @@ public class Messenger extends Element implements UnlockConsumer {
         medipi.getMediPiWindow().registerForAuthenticationCallback(this);
         // successful initiation of the this class results in a null return
         return null;
+    }
+
+    /**
+     * method to get the Display Name of the device
+     *
+     * @return displayName of device
+     */
+    @Override
+    public String getDisplayName() {
+        return DISPLAYNAME;
     }
 
     public void setItems(ObservableList<Message> items) {
@@ -248,7 +265,7 @@ public class Messenger extends Element implements UnlockConsumer {
      * @return BooleanProperty signalling the presence of a new message
      */
     protected BooleanProperty getAlertBooleanProperty() {
-        return alertBooleanProperty;
+        return notificationBooleanProperty;
     }
 
     /**
@@ -261,7 +278,7 @@ public class Messenger extends Element implements UnlockConsumer {
         return messageList;
     }
 
-    private String readJSONAlert(File file) throws Exception {
+    private String readJSONNotificationMessage(File file) throws Exception {
         ObjectMapper mapper = new ObjectMapper();
         EncryptedAndSignedUploadDO encryptedAndSignedUploadDO = mapper.readValue(file, EncryptedAndSignedUploadDO.class);
         // instantiate the clinician encryption adapter
@@ -284,8 +301,8 @@ public class Messenger extends Element implements UnlockConsumer {
             }
             alertListDO = (AlertListDO) clinicianEncryptionAdapter.decryptAndVerify(encryptedAndSignedUploadDO);
         } catch (Exception e) {
-            MediPiLogger.getInstance().log(Messenger.class.getName() + ".error", "Alert Decryption exception: " + e.getLocalizedMessage());
-            throw new Exception("Alert Decryption exception: " + e.getLocalizedMessage());
+            MediPiLogger.getInstance().log(Messenger.class.getName() + ".error", "Notification Decryption exception: " + e.getLocalizedMessage());
+            throw new Exception("Notification Decryption exception: " + e.getLocalizedMessage());
         }
         try {
 
@@ -294,32 +311,23 @@ public class Messenger extends Element implements UnlockConsumer {
             Instant time = Instant.EPOCH;
             for (AlertDO alertDO : alertListDO.getAlert()) {
                 if (!type.equals(alertDO.getType())) {
-                    sb.append(alertDO.getType()).append(" Alert").append("\n");
+                    sb.append(alertDO.getType()).append(" Notification").append("\n");
                 }
                 if (!time.equals(alertDO.getAlertTime())) {
                     sb.append("Created on ").append(Utilities.DISPLAY_FORMAT_LOCALTIME.format(alertDO.getAlertTime().toInstant())).append("\n");
                 }
-                sb.append("\n").append(alertDO.getAlertText()).append("\n");
+                sb.append(alertDO.getAlertText()).append("\n").append("\n");
                 type = alertDO.getType();
                 time = alertDO.getAlertTime().toInstant();
             }
             return sb.toString();
         } catch (Exception e) {
-            MediPiLogger.getInstance().log(Messenger.class.getName() + ".error", "Unable to save Alert exception: " + e.getLocalizedMessage());
-            throw new Exception("Unable to save Alert exception: " + e.getLocalizedMessage());
+            MediPiLogger.getInstance().log(Messenger.class.getName() + ".error", "Unable to save Notification exception: " + e.getLocalizedMessage());
+            throw new Exception("Unable to save Notification exception: " + e.getLocalizedMessage());
         }
 
     }
 
-    /**
-     * getter for the Element Name
-     *
-     * @return String representation of the Element's Name
-     */
-    @Override
-    public String getName() {
-        return NAME;
-    }
 
     /**
      * method to return the component to the dashboard
@@ -328,9 +336,10 @@ public class Messenger extends Element implements UnlockConsumer {
      */
     @Override
     public BorderPane getDashboardTile() throws Exception {
-        DashboardTile dashComponent = new DashboardTile(this);
-        dashComponent.addTitle(getName());
-        dashComponent.addOverlay(alertImageView, alertBooleanProperty);
+        DashboardTile dashComponent = new DashboardTile(this, showTile);
+        dashComponent.addTitle(NAME);
+        dashComponent.addOverlay(notificationImageView, notificationBooleanProperty);
+        dashComponent.addOverlay(Color.LIGHTPINK, notificationBooleanProperty);
         return dashComponent.getTile();
     }
 

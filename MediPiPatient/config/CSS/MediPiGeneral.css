@@ -1,4 +1,3 @@
-﻿}
 #mainwindow-title {
     -fx-font: 25px Tahoma;
 	-fx-font-weight: bold;
@@ -18,9 +17,12 @@
 	-fx-hgap:5;
 	-fx-vgap:5;
 	-fx-background-color: lightblue;
-	-fx-padding: 10 10 10 10;
 	-fx-pref-rows: 2;
 	-fx-pref-columns: 4;
+}
+#mainwindow-dashboard-scroll{
+	-fx-background-color: lightblue;
+	-fx-padding: 10 5 10 5;
 }
 #mainwindow-dashboard-component{
 	-fx-background-color: white;
@@ -47,12 +49,34 @@
 	-fx-font-weight: bold;
 	-fx-alignment: center;
 }
+#lowerbanner{
+	-fx-font-size:16;
+	-fx-alignment: center;
+}
+#lowerbanner-bold{
+	-fx-font-size:16;
+	-fx-font-weight: bold;
+	-fx-alignment: center;
+	-fx-background-color: lightblue;
+}
+#lowerbanner-scroll{
+	-fx-font-size:16;
+	-fx-font-weight: bold;
+	-fx-background-color: lightblue;
+}
+#background-colour{
+	-fx-background-color: lightblue;
+}
+#element-title{
+	-fx-font-size:18;
+	-fx-padding: 10 0 0 10;
+	-fx-font-weight: bold;
+	-fx-alignment: center;
+}
 /*-------------------------------------
 Keypad 
 -------------------------------------*/
-#keypad-mainwindow{
-	-fx-background-color: lightblue;
-}
+
 #keypad-button{
 	-fx-hgap:5;
 	-fx-vgap:5;
@@ -87,13 +111,31 @@ Device Screens
 -------------------------------------*/
 /* controls the simple results box at the bottom of each device*/
 #resultsbox{
-	-fx-font-size:70px;
+	-fx-padding: 10 0 0 10;
 	-fx-alignment:center;
-	-fx-padding: 10 0 0 0;
 }
 #resultstext{
+    -fx-font: 40px Tahoma;
+	-fx-font-weight: bold;
+	-fx-alignment:center;
+}
+#resultsunits{
 	-fx-text-fill:black;
-/*	-fx-effect: dropshadow( three-pass-box , rgba(0,0,0,0.4) , 5, 0.0 , 5 , 5 ); */
+    -fx-font-weight: bold;
+	-fx-font: 20px Tahoma;
+	-fx-alignment:center;
+}
+#resultstimetext{
+	-fx-text-fill:black;
+	-fx-font-size:15px;
+}
+#thermometerresultstimetext{
+	-fx-text-fill:black;
+	-fx-font-size:25px;
+	-fx-background-color: lightblue;
+}
+#scrollpane{
+	-fx-background-color: lightblue;
 }
 /* Messenger element main boxes*/
 #messenger-messageList{
@@ -103,18 +145,22 @@ Device Screens
 #questionnaire-questionpanel{
 	-fx-background-color: lightblue;
 	-fx-font-size:20px;
-}#questionnaire-responsepanel{
+}
+#questionnaire-responsepanel{
 	-fx-font-size:20px;
 }
 #questionnaire-button-start{
 	-fx-font-size:20px;
 -fx-background-radius:10;
-}#questionnaire-title-label{
-	-fx-font-size:15px;
-}#questionnaire-button-yes{
+}
+#questionnaire-title-label{
+	-fx-font-size:17px;
+}
+#questionnaire-button-yes{
 	-fx-font-size:20px;
 -fx-background-radius:10;
-}#questionnaire-button-no{
+}
+#questionnaire-button-no{
 	-fx-font-size:20px;
 -fx-background-radius:10;
 }
@@ -124,13 +170,14 @@ Device Screens
 	-fx-background-radius:10;
 	-fx-alignment:center;
 }	
-#transmitter-text {
+#transmitter-text{
     -fx-font: 20px Tahoma;
+	-fx-background-color: lightblue;
 }
 #settings-creditscontent{
     -fx-font: 15px Tahoma;
 }
-#settings-text {
+#settings-text{
     -fx-font: 20px Tahoma;
 }
 /*-------------------------------------
@@ -180,6 +227,10 @@ Miscellaneous
 -fx-font-size:20px;
 -fx-background-radius:10;
 }
+#button-plusminus{
+-fx-font-size:15px;
+-fx-background-radius:10;
+}
 /*-------------------------------------
 Guide
 -------------------------------------*/	
@@ -192,6 +243,13 @@ Guide
 }
 #guide-text {
     -fx-font: 20px Tahoma;
+	-fx-background-color: lightblue;
+}
+#guide-colour {
+	-fx-background-color: lightblue;
+}
+#guide-scrollpane {
+	-fx-background-color: lightblue;
 }
 #guide-button-forward {
 -fx-font-size:20px;
@@ -217,7 +275,9 @@ Schedule
 	-fx-background-radius:10;
 	-fx-alignment:center;
 }	
-
+#scheduler-grid-border{
+-fx-grid-lines-visible: true;
+}
 /*-------------------------------------	
 Messenger
 -------------------------------------*/	
