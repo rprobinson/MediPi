@@ -46,7 +46,6 @@
 					<span class="sr-only">Toggle navigation</span> <span class="icon-bar"></span> <span class="icon-bar"></span> <span class="icon-bar"></span>
 				</button>
 				<a class="navbar-brand" style="padding-top: 0px;" href="/clinician/"> <img src="/images/headers/medipi_logo.png" height="70"></a>
-
 			</div>
 			<div id="navbar" class="navbar-collapse collapse">
 				<ul class="nav navbar-nav">
@@ -59,6 +58,7 @@
 					</li>
 					<li id="menu_about"><a href="/clinician/about">About</a></li>
 				</ul>
+				<a class="navbar-brand pull-right" style="padding-top: 0px;" href="http://www.mastek.com/"><img src="/images/logos/mastek-logo.png" height="68"></a>
 			</div>
 			<!--/.nav-collapse -->
 		</div>
