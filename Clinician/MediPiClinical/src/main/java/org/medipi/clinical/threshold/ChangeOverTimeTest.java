@@ -134,6 +134,16 @@ public class ChangeOverTimeTest implements AttributeThresholdTest {
         }
     }
 
+    private double getDataValue(String data) throws Exception {
+        try {
+            return Double.valueOf(data);
+        } catch (NumberFormatException nfe) {
+            MediPiLogger.getInstance().log(SimpleInclusiveHighLowTest.class.getName() + "error", "Error in converting the data values to a double " + nfe.getLocalizedMessage());
+            System.out.println("Error in converting the data values to a double" + nfe.getLocalizedMessage());
+            throw new Exception("Error in converting the data values to a double");
+        }
+    }
+
     /**
      * Method to test if a new measurement is in or out of threshold
      *
@@ -177,7 +187,7 @@ public class ChangeOverTimeTest implements AttributeThresholdTest {
             start.add(Calendar.HOUR, -period);
             Date periodStartTime = start.getTime();
             // Access the database and collect all records within this period
-            List<RecordingDeviceData> historicList = recordingDeviceDataDAOImpl.findByPatientAndAttributeAndPeriod(patientUuid, attributeId, periodStartTime);
+            List<RecordingDeviceData> historicList = recordingDeviceDataDAOImpl.findByPatientAndAttributeAndPeriod(patientUuid, attributeId, periodStartTime, dataValueTime);
 
             if (historicList == null || historicList.isEmpty()) {
                 // DONT KNOW WHAT TO DO HERE WHERE THERE IS NOT PRECEDING DATAPOINT?
@@ -288,11 +298,11 @@ public class ChangeOverTimeTest implements AttributeThresholdTest {
      */
     @Override
     public List<Double> getThreshold(RecordingDeviceData rdd) throws Exception {
-        return getThreshold(rdd.getAttributeId().getAttributeId(), rdd.getPatientUuid().getPatientUuid(), rdd.getDataValueTime());
+        return getThreshold(rdd.getAttributeId().getAttributeId(), rdd.getPatientUuid().getPatientUuid(), rdd.getDataValueTime(), rdd.getDataValue());
     }
 
     @Override
-    public List<Double> getThreshold(int attributeId, String patientUuid, Date dataValueTime) throws Exception {
+    public List<Double> getThreshold(int attributeId, String patientUuid, Date dataValueTime, String dataValue) throws Exception {
         AttributeThreshold at = attributeThresholdDAOImpl.findLatestByAttributeAndPatientAndDate(attributeId, patientUuid, dataValueTime);
         if (at == null) {
             return null;
@@ -302,12 +312,13 @@ public class ChangeOverTimeTest implements AttributeThresholdTest {
             List<Double> thresholdList = new ArrayList<>();
             Double historicValue = getHistoricValue(attributeId, patientUuid, dataValueTime, period);
             if (historicValue == null) {
-                return null;
+                thresholdList.add(getDataValue(dataValue));
+                thresholdList.add(getDataValue(dataValue));
             } else {
                 thresholdList.add(historicValue - threshold);
                 thresholdList.add(historicValue + threshold);
-                return thresholdList;
             }
+            return thresholdList;
         }
     }
 

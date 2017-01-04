@@ -177,7 +177,7 @@ public class PatientService {
 
 			if(attributeThresholdMaster != null) {
 				AttributeThresholdTest thresholdTest = thresholdTestFactory.getInstance(attributeThresholdMaster.getThresholdType());
-				List<Double> thresholds = thresholdTest.getThreshold(data.getRecordingDeviceAttribute().getAttributeId(), patientUUID, data.getDataValueTime());
+				List<Double> thresholds = thresholdTest.getThreshold(data.getRecordingDeviceAttribute().getAttributeId(), patientUUID, data.getDataValueTime(), data.getDataValue());
 				if(thresholds != null && (thresholds.get(0) == null || thresholds.get(1) == null)) {
 					LOGGER.debug("AttributeThresholdMaster:<thresholdLowValue=" + attributeThresholdMaster.getThresholdLowValue() + " thresholdHighValue: " + attributeThresholdMaster.getThresholdHighValue() + "> thresholds:<" + thresholds + ">");
 				}

@@ -57,7 +57,7 @@ public interface AttributeThresholdTest {
      */
     public List<Double> getThreshold(RecordingDeviceData rdd)throws Exception;
 
-    public List<Double> getThreshold(int attributeId, String patientUuid, Date dataValueTime)throws Exception;
+    public List<Double> getThreshold(int attributeId, String patientUuid, Date dataValueTime, String dataValue)throws Exception;
 
     /**
      * Method to return a descriptive string taken from the properties file and

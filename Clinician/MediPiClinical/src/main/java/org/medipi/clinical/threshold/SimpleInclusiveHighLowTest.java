@@ -97,6 +97,15 @@ public class SimpleInclusiveHighLowTest implements AttributeThresholdTest {
             System.out.println("Error in converting the high threshold values to a double" + nfe.getLocalizedMessage());
             throw new Exception("Error in converting the high threshold values to a double");
         }
+    }    
+    private double getDataValue(String data) throws Exception {
+        try {
+            return Double.valueOf(data);
+        } catch (NumberFormatException nfe) {
+            MediPiLogger.getInstance().log(SimpleInclusiveHighLowTest.class.getName() + "error", "Error in converting the data values to a double " + nfe.getLocalizedMessage());
+            System.out.println("Error in converting the data values to a double" + nfe.getLocalizedMessage());
+            throw new Exception("Error in converting the data values to a double");
+        }
     }
 
     /**
@@ -134,11 +143,11 @@ public class SimpleInclusiveHighLowTest implements AttributeThresholdTest {
      */
     @Override
     public List<Double> getThreshold(RecordingDeviceData rdd) throws Exception {
-        return getThreshold(rdd.getAttributeId().getAttributeId(), rdd.getPatientUuid().getPatientUuid(), rdd.getDataValueTime());
+        return getThreshold(rdd.getAttributeId().getAttributeId(), rdd.getPatientUuid().getPatientUuid(), rdd.getDataValueTime(), rdd.getDataValue());
     }
 
     @Override
-    public List<Double> getThreshold(int attributeId, String patientUuid, Date dataValueTime) throws Exception {
+    public List<Double> getThreshold(int attributeId, String patientUuid, Date dataValueTime, String dataValue) throws Exception {
         AttributeThreshold at = attributeThresholdDAOImpl.findLatestByAttributeAndPatientAndDate(attributeId, patientUuid, dataValueTime);
         if (at == null) {
             return null;

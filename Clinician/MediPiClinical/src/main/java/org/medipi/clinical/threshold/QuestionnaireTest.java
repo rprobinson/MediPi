@@ -90,11 +90,11 @@ public class QuestionnaireTest implements AttributeThresholdTest {
      */
     @Override
     public List<Double> getThreshold(RecordingDeviceData rdd) throws Exception {
-        return getThreshold(rdd.getAttributeId().getAttributeId(), rdd.getPatientUuid().getPatientUuid(), rdd.getDataValueTime());
+        return getThreshold(rdd.getAttributeId().getAttributeId(), rdd.getPatientUuid().getPatientUuid(), rdd.getDataValueTime(), rdd.getDataValue());
     }
     
     @Override
-    public List<Double> getThreshold(int attributeId, String patientUuid, Date dataValueTime)throws Exception
+    public List<Double> getThreshold(int attributeId, String patientUuid, Date dataValueTime, String dataValue)throws Exception
     {    
         return null;
     }
