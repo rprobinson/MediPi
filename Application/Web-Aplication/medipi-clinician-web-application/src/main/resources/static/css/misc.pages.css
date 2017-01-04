@@ -1,0 +1,61 @@
+/****************************************************************
+*******************Logout page related styling*******************
+****************************************************************/
+body {
+	margin: 0;
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 13px;
+	line-height: 20px;
+	color: #333
+}
+
+a {
+	color: #0066CC;
+	text-decoration: underline
+}
+
+a:hover, a:focus {
+	color: #005580;
+	text-decoration: none
+}
+
+.shadowDiv {
+	background-color: #EFEFEF;
+	border-radius: 5px;
+	box-shadow: 0 0 50px #999999;
+	margin: 80px auto;
+	width: 800px;
+	border: 1px solid #CCCCCC
+}
+
+.shadowDivTitle {
+	background: #000000;
+	border-radius: 5px 5px 0 0
+}
+
+.shadowDivContent {
+	padding: 20px
+}
+
+h1 {
+	color: #F5F2F2;
+	display: block;
+	font-size: 30px;
+	font-weight: 200;
+	text-shadow: 0 1px 0 #000;
+	padding: 20px;
+	margin: 0
+}
+
+h2 {
+	color: #97241F;
+	font-size: 25px;
+	margin-top: 10px;
+	font-weight: normal
+}
+
+.shadowDivReason {
+	font-size: 16px;
+	margin-top: 20px;
+	padding-bottom: 5px
+}
