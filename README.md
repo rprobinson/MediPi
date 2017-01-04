@@ -21,4 +21,4 @@ The host concentrator stores all the patient data per Trust and exposes APIs for
 ### Security
 MediPi Patient and Concentrator exchange data using secure 2-way SSL/ Mutually Authenticated messaging and the concentrator exposes APIs to Clinical systems using the same. Additionally, data is exchanged using data objects which have been encrypted and signed using JSON Web encryption objects and JSON Web Signing objects.
 
-![Element image](https://cloud.githubusercontent.com/assets/13271321/18472733/fe3ba2e8-79b0-11e6-8097-8ebc0ed732dc.jpg)
+![Element image](https://cloud.githubusercontent.com/assets/13271321/21643558/db154e44-d280-11e6-926a-a02b39d35cca.JPG)
