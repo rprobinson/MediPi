@@ -29,13 +29,15 @@ import org.springframework.stereotype.Component;
 @Component
 public class QuestionnaireTest implements AttributeThresholdTest {
 
-    private static final String POSITIVE_RESPONSE = "POSITIVE_RESPONSE";
-    private static final String NEGATIVE_RESPONSE = "NEGATIVE_RESPONSE";
+    private static final String GREEN_FLAG = "GREEN_FLAG";
+    private static final String RED_FLAG = "RED_FLAG";
+    private static final String QUESTIONNAIRE_TYPE = "__QUESTIONNAIRE_TYPE__";
     private static final String MEDIPICLINICALALERTPASSEDTESTTEXT = "medipi.clinical.alert.questionnairetest.passedtesttext";
     private static final String MEDIPICLINICALALERTFAILEDTESTTEXT = "medipi.clinical.alert.questionnairetest.failedtesttext";
 
     private String failedTestText = null;
     private String passedTestText = null;
+    private String questionnaireType = null;
 
     /**
      * Initialises the threshold test setting the parameters for its use
@@ -65,10 +67,11 @@ public class QuestionnaireTest implements AttributeThresholdTest {
      */
     @Override
     public Boolean test(RecordingDeviceData rdd) {
+        questionnaireType = rdd.getAttributeId().getTypeId().getDisplayName();
         switch (rdd.getDataValue()) {
-            case POSITIVE_RESPONSE:
+            case GREEN_FLAG:
                 return true;
-            case NEGATIVE_RESPONSE:
+            case RED_FLAG:
                 return false;
             default:
                 // QUESTION: the structure of the questionnaire is to have multiple 
@@ -92,10 +95,9 @@ public class QuestionnaireTest implements AttributeThresholdTest {
     public List<Double> getThreshold(RecordingDeviceData rdd) throws Exception {
         return getThreshold(rdd.getAttributeId().getAttributeId(), rdd.getPatientUuid().getPatientUuid(), rdd.getDataValueTime(), rdd.getDataValue());
     }
-    
+
     @Override
-    public List<Double> getThreshold(int attributeId, String patientUuid, Date dataValueTime, String dataValue)throws Exception
-    {    
+    public List<Double> getThreshold(int attributeId, String patientUuid, Date dataValueTime, String dataValue) throws Exception {
         return null;
     }
 
@@ -108,13 +110,15 @@ public class QuestionnaireTest implements AttributeThresholdTest {
      */
     @Override
     public String getFailedTestText() {
-        String response = failedTestText;
+        String response = failedTestText
+                .replace(QUESTIONNAIRE_TYPE, String.valueOf(questionnaireType));
         return response;
     }
 
     @Override
     public String getPassedTestText() {
-        String response = passedTestText;
+        String response = passedTestText
+                .replace(QUESTIONNAIRE_TYPE, String.valueOf(questionnaireType));
         return response;
     }
 
