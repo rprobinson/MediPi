@@ -363,7 +363,9 @@ ALTER TABLE recording_device_type_type_id_seq OWNER TO postgres;
 CREATE TABLE recording_device_type (
     type_id integer DEFAULT nextval('recording_device_type_type_id_seq'::regclass) NOT NULL,
     type character varying(100) NOT NULL,
-    subtype character varying(100) NOT NULL
+    make character varying(100) NOT NULL,
+    model character varying(100) NOT NULL,
+    display_name character varying(1000) NOT NULL
 );
 
 
