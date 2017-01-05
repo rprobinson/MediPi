@@ -16,6 +16,7 @@ Functionality:
   * Finger Oximeter
   * Diagnostic Scales
   * Blood Pressure Meter (upper arm cuff)
+  * Manual entry Thermometer
   * Patient Yes/No Daily Questionnaire
 * Flexible Scheduler
 * Direct per patient text based messages from clinician
@@ -80,6 +81,9 @@ MediPi Patient software includes configuration to connect to the MediPi Concentr
 
 ###Time Server Synchronisation
 MediPi Patient software relies on the internal clock being correct. Some physiological devices take their data value timestamps directly from the internal clock and other devices use the internal clock as a reference for granular based checking to see if the physiological device's clock has drifted outside of an allowablw threshold. Correct timestamp is vital for the scheduler and scheduling functionality. To this end synchronisation is vital before any data can be recorded. As part of the calling script which MediPi Patient uses when executed, it calls the timesync.sh script which attempts to contact pool.ntp.org. It will repeatedly continue to do this until a sucessful synchronisation has occurred. When this happens MediPi patient software will enable all data downloading functions with the devices.
+
+###Authentication
+MediPi Patient software includes an authentication interface with an implementation of an n-digit PIN keypad authentication class. Other methods of authentication could be devleoped and plugged into this interface. The Keypad allows access to MediPi Patient functionality when a 4 digit PIN is entered - within the code this unlocks the patient certificate Java Keystore. The keypad will automatically reappear after a configurable period of inactivity. The Keypad also has an "Admin" logon facility which takes a 10 digit PIN known to the Administrtaive user for access to configure certain parameters: bluetooth connections and displayable patient demographics. 
 
 ###CSS Implementation
 MediPi uses JavaFX which can be controlled using CSS. The implementation of this is sub-optimal and has been done on a node by node basis. Whilst individual elements can be controlled, a refactoring exercise is required to properly implement it and take full advantage of the technology.
