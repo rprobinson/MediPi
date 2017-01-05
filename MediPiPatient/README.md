@@ -1,6 +1,6 @@
 # MediPi Patient Telehealth System
 
-![Element image](https://cloud.githubusercontent.com/assets/13271321/18472733/fe3ba2e8-79b0-11e6-8097-8ebc0ed732dc.jpg)
+![Element image](https://cloud.githubusercontent.com/assets/13271321/21643558/db154e44-d280-11e6-926a-a02b39d35cca.JPG)
 
 ##Software
 This is an implementation of a Telehealth patient/client system (It is intended to be used in with the MediPi Concentrator server implementation which is published alongside this GitHub account). It has been developed to be flexible and extensible.
@@ -12,7 +12,7 @@ It is intended to be used in with the MediPi Concentrator server implementation 
 
 Functionality:
 
-* Records data from:
+* Included drivers record data from USB and Bluetooth devices:
   * Finger Oximeter
   * Diagnostic Scales
   * Blood Pressure Meter (upper arm cuff)
@@ -75,6 +75,12 @@ Class to display and handle the functionality for transmitting the data collecte
 
 	The transmitter element shows a list of all the elements loaded into MediPi with checkboxes which are enabled if data is present/ready to be transmitted. Transmitter will take all available and selected data and will place it in a json structure. This payload is encrypted and then signed using the patient certificate. The resulting json JWT/JWE is passed in a json message - this uses Nimbus JOSE + JWT libraries. The message is sent to a restful interface on the MediPi Concentrator encrypted in transit using 2-way SSL/TLS mutual authenticated messaging.
 
+###VPN Connection
+MediPi Patient software includes configuration to connect to the MediPi Concentrator via a Virtual Private Network (VPN) when it is necessary and drops the connection after the communication has been sent. The provided example uses OpenVPN but the configuration should allow for any VPN connection provided that it can be brought up and down via a command line script.
+
+###Time Server Synchronisation
+MediPi Patient software relies on the internal clock being correct. Some physiological devices take their data value timestamps directly from the internal clock and other devices use the internal clock as a reference for granular based checking to see if the physiological device's clock has drifted outside of an allowablw threshold. Correct timestamp is vital for the scheduler and scheduling functionality. To this end synchronisation is vital before any data can be recorded. As part of the calling script which MediPi Patient uses when executed, it calls the timesync.sh script which attempts to contact pool.ntp.org. It will repeatedly continue to do this until a sucessful synchronisation has occurred. When this happens MediPi patient software will enable all data downloading functions with the devices.
+
 ###CSS Implementation
 MediPi uses JavaFX which can be controlled using CSS. The implementation of this is sub-optimal and has been done on a node by node basis. Whilst individual elements can be controlled, a refactoring exercise is required to properly implement it and take full advantage of the technology.
 
@@ -83,7 +89,10 @@ MediPi.properties file defines the properties for the configuration of MediPi.
 
 Medipi has been designed to be flexible and extensible and uses dynamically initialised Element classes from the properties file. Elements are defined in the properties file and only those Elements which appear in the medipi.elementclasstokens list will be initialised or displayed.
 
-The patient details are defined in the properties file, however these are only used for display on the patient device and are not used in any communication or attached to the device data in transit. All MediPi communication uses a generated UUID to identify the patient. This UUID is used to cross reference against the patient details in the clinical system, but this is outside the scope of this project
+MediPi.admin.properties file defines the properties for the MediPi when it is booted in admin mode. This mode is designed for the configuration of the MediPi patient unit: updating the patient name, NHS Number, DOB and managing the bluetooth pairing and access.
+The admin mode is accessed by clicking on the "admin" button on the authentication screen and inputting a 10 digit admin code. Sucessful input of this code reboots MediPi Patient into the admin mode controlled by the MediPi.admin.properties file.
+
+The patient details are defined in a separate json file, however these are only used for display on the patient device and are not used in any communication or attached to the device data in transit. All MediPi communication uses a generated UUID to identify the patient. This UUID is used to cross reference against the patient details in the clinical system, but this is outside the scope of this project
 
 ####Instructions to update configuration files
 1. Copy config directory to an external location e.g. C:\MediPi\ (for windows machine) or /home/{user}/MediPi (Linux based)
@@ -95,11 +104,17 @@ The patient details are defined in the properties file, however these are only u
 MediPi depends on the following libraries:
 
 * **nimbus-jose-jwt** - [http://connect2id.com/products/nimbus-jose-jwt](http://connect2id.com/products/nimbus-jose-jwt) for json encryption and signing - Apache 2.0
-* **json-smart** Apache 2.0 licence
 * **Jackson core/annotations/bind** - Apache 2.0
 * **libUSB4Java** for USB control [https://github.com/usb4java/libusb4java](https://github.com/usb4java/libusb4java)
 * **Java RXTX libraries for serial devices:** [https://github.com/rxtx/rxtx](https://github.com/rxtx/rxtx)
-* **extFX** - JavaFX has no implementation for a Date axis in its graphs so the extFX library has been used (Published under the MIT OSS licence. ([https://bitbucket.org/sco0ter/extfx](https://bitbucket.org/sco0ter/extfx))
+* **Bluecove** for communication over bluetooth - Apache 2.0 [http://www.bluecove.org/](http://www.bluecove.org/)
+
+###Bluetooth Medical Device Interfaces:
+3 particular devices have been created but others can be developed.
+
+* Nonin 9560 Finger Pulse Oximeter - There are 2 implementations of this device - one which uses the Serial Port Protocol and one which uses the Continua Health Device Protocol (HDP). This uses code from the signove open source library [https://github.com/signove/hdpy](https://github.com/signove/hdpy) - HDPy is a pure Python implementation of HDP profile and MCAP protocol [http://oss.signove.com/](http://oss.signove.com/) and the device driver uses python scripts to retreive the data.
+* Marsden M430 Scales - The device driver uses Marsden's freely available Serial Post Protocol
+* Omron708BT Upper Arm Blood Pressure Monitor: The device driver uses the Continua Health Device Protocol (HDP). This uses code from the signove open source library [https://github.com/signove/hdpy](https://github.com/signove/hdpy) - HDPy is a pure Python implementation of HDP profile and MCAP protocol [http://oss.signove.com/](http://oss.signove.com/) and the device driver uses python scripts to retreive the data.
 
 ###USB Medical Device Interfaces:
 3 particular devices have been used but others can be developed.
@@ -120,6 +135,9 @@ The MediPi project is a software project but is dependent on hardware for use in
 * 8Gb microSD card class 10
 
 ####Physiological Measurement Devices:
+* Nonin Pulse Oximeter Onyx II Model 9560 with Bluetooth [http://www.nonin.com/Onyx9560](http://www.nonin.com/Onyx9560)
+* Marsden M-430 Bluetooth Floor Scale [http://www.marsden-weighing.co.uk/index.php/marsden-m-430.html](http://www.marsden-weighing.co.uk/index.php/marsden-m-430.html)
+* Omron 708BT Bluetooth Upper Arm Blood Pressure Device [http://www.healthcare.omron.co.jp/bt/english/](http://www.healthcare.omron.co.jp/bt/english/)
 * Contec CMS50D+ Finger Pulse Oximeter: [http://www.contecmed.com/index.php?page=shop.product_details&flypage=flypage.tpl&product_id=126&category_id=10&option=com_virtuemart&Itemid=595](http://www.contecmed.com/index.php?page=shop.product_details&flypage=flypage.tpl&product_id=126&category_id=10&option=com_virtuemart&Itemid=595)
 * Beurer BF480 Diagnostic Scales: [https://www.beurer.com/web/uk/products/Beurer-Connect/HealthManager-Products/BF-480-USB](https://www.beurer.com/web/uk/products/Beurer-Connect/HealthManager-Products/BF-480-USB)
 * Beurer BG55 Upper Arm Blood Pressure Monitor: [https://www.beurer.com/web/en/products/bloodpressure/upper_arm/BM-55](https://www.beurer.com/web/en/products/bloodpressure/upper_arm/BM-55)
