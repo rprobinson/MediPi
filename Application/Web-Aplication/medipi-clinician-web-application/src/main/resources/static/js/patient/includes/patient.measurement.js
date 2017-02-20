@@ -100,7 +100,7 @@ var measurement = {
     },
 
     updateRecentMeasuremnts: function (recentMeasurement, includeObject) {
-        $("#" + includeObject.recentMeasurementDateId).html(recentMeasurement != null ? recentMeasurement.dataTime.getStringDate_DDMMYYYY_From_Timestamp() : "- - -");
+        $("#" + includeObject.recentMeasurementDateId).html(recentMeasurement != null ? recentMeasurement.dataTime.getStringDate_DDMMYYYY_HHmm_From_Timestamp() : "- - -");
         $("#" + includeObject.recentMeasurementValueId).html(recentMeasurement != null ? recentMeasurement.value : "- - -");
 
         //If within min and max limits

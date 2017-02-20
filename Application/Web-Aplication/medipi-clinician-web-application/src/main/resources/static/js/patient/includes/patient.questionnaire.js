@@ -11,15 +11,14 @@ var measurement = {
             success: function (measurements) {
                 data = measurements;
             },
-            error: function(request, status, error) {
-            	showDefaultErrorDiv();
+            error: function (request, status, error) {
+                showDefaultErrorDiv();
             }
         });
         return data;
     },
-
     createChartData: function (jsonData, includeObject) {
-    	var colors = jsonData.mapQuestionnaireColor('value');
+        var colors = jsonData.mapQuestionnaireColor('value');
         return {
             labels: jsonData.timeMapProperty('dataTime'),
             datasets: [
@@ -42,34 +41,43 @@ var measurement = {
             data: chartData,
             options: {
                 responsive: true,
-            	elements: {
-                    point:{
+                elements: {
+                    point: {
                         radius: 0
                     }
                 },
                 scales: {
-                	xAxes: [{
-                		type: "time",
-                		barPercentage: 0.1,
-                		time: {
-                			format: timeFormat,
-                			tooltipFormat: 'll HH:mm'
-                		},
-                		scaleLabel: {
-                			display: true,
-                		}
-                	},
-                ],
-                yAxes: [{
-                        display: true,
-                        scaleLabel: {
-                            show: false,
-                        },
-                        ticks: {
-                            suggestedMin: -1,
-                            suggestedMax: 1,
+                    xAxes: [{
+//                            categoryPercentage: .5,
+                            barPercentage: 1,
+//                            type: 'time',
+                            scaleLabel: {
+                                display: true,
+//                                labelString: 'Year-Month'
+                            }
+//                            time: {
+//                                min: '2014-12-01',
+//                                max: '2020-12-01',
+//                                unit: 'month',
+//                                displayFormats: {
+//                                    month: "MMM YY"
+//                                }
+//                            }
+//                            scaleLabel: {
+//                                display: true,
+//                            }
                         }
-                    }]
+                    ],
+                    yAxes: [{
+                            display: true,
+                            scaleLabel: {
+                                show: false,
+                            },
+                            ticks: {
+                                suggestedMin: -1,
+                                suggestedMax: 1,
+                            }
+                        }]
                 },
                 legend: {
                     display: false,
@@ -78,7 +86,6 @@ var measurement = {
         });
         return myChart;
     },
-
     initChart: function (includeObject) {
         var measurements = measurement.getData(includeObject);
         chartData = measurement.createChartData(measurements, includeObject);
