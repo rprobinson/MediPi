@@ -48,24 +48,10 @@ var measurement = {
                 },
                 scales: {
                     xAxes: [{
-//                            categoryPercentage: .5,
                             barPercentage: 1,
-//                            type: 'time',
                             scaleLabel: {
                                 display: true,
-//                                labelString: 'Year-Month'
                             }
-//                            time: {
-//                                min: '2014-12-01',
-//                                max: '2020-12-01',
-//                                unit: 'month',
-//                                displayFormats: {
-//                                    month: "MMM YY"
-//                                }
-//                            }
-//                            scaleLabel: {
-//                                display: true,
-//                            }
                         }
                     ],
                     yAxes: [{
