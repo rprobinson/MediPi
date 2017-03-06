@@ -28,7 +28,7 @@ insert into recording_device_attribute (attribute_id, type_id, attribute_name, a
 insert into recording_device_attribute (attribute_id, type_id, attribute_name, attribute_units, attribute_type) values (nextval('recording_device_attribute_attribute_id_seq'),'4','temperature','CELCIUS','DOUBLE');
 insert into recording_device_attribute (attribute_id, type_id, attribute_name, attribute_units, attribute_type) values (nextval('recording_device_attribute_attribute_id_seq'),'5','conversation','NONE','VARCHAR');
 insert into recording_device_attribute (attribute_id, type_id, attribute_name, attribute_units, attribute_type) values (nextval('recording_device_attribute_attribute_id_seq'),'5','outcome','NONE','VARCHAR');
-insert into recording_device_attribute (attribute_id, type_id, attribute_name, attribute_units, attribute_type) values (nextval('recording_device_attribute_attribute_id_seq'),'5','Id','','VARCHAR');
+insert into recording_device_attribute (attribute_id, type_id, attribute_name, attribute_units, attribute_type) values (nextval('recording_device_attribute_attribute_id_seq'),'6','Id','','VARCHAR');
 insert into recording_device_attribute (attribute_id, type_id, attribute_name, attribute_units, attribute_type) values (nextval('recording_device_attribute_attribute_id_seq'),'6','Type','','VARCHAR');
 insert into recording_device_attribute (attribute_id, type_id, attribute_name, attribute_units, attribute_type) values (nextval('recording_device_attribute_attribute_id_seq'),'6','Repeat','','VARCHAR');
 insert into recording_device_attribute (attribute_id, type_id, attribute_name, attribute_units, attribute_type) values (nextval('recording_device_attribute_attribute_id_seq'),'6','Devices','','VARCHAR');

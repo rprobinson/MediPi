@@ -10,9 +10,10 @@ Array.prototype.mapValue = function (property) {
 
 Array.prototype.mapQuestionnaire = function (property) {
     return this.map(function (obj) {
-    	if(obj[property] == 'GREEN_FLAG') {
+    	var questionnaireResponseStatus = $.parseJSON(obj[property]).status;
+    	if(questionnaireResponseStatus == 'GREEN_FLAG') {
     		return 1;
-    	} else if (obj[property] == 'RED_FLAG') {
+    	} else if (questionnaireResponseStatus == 'RED_FLAG') {
     		return -1;
     	} else {
     		return 0;
@@ -22,9 +23,10 @@ Array.prototype.mapQuestionnaire = function (property) {
 
 Array.prototype.mapQuestionnaireColor = function (property) {
     return this.map(function (obj) {
-    	if(obj[property] == 'GREEN_FLAG') {
+    	var questionnaireResponseStatus = $.parseJSON(obj[property]).status;
+    	if(questionnaireResponseStatus == 'GREEN_FLAG') {
     		return 'rgba(54,130,21, 1)';
-    	} else if (obj[property] == 'RED_FLAG') {
+    	} else if (questionnaireResponseStatus == 'RED_FLAG') {
     		return 'rgba(196,0,0, 1)';
     	} else {
     		return 'rgba(54, 162, 235, 1)';

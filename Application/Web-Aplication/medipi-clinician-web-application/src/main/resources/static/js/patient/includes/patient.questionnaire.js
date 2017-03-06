@@ -33,7 +33,7 @@ var measurement = {
             ]
         };
     },
-    renderChart: function (chartData, includeObject) {
+    renderChart: function (chartData, measurements, includeObject) {
         var context2D = document.getElementById(includeObject.canvasId).getContext("2d");
         var timeFormat = 'DD/MM/YYYY HH:mm';
         var myChart = new Chart(context2D, {
@@ -41,6 +41,25 @@ var measurement = {
             data: chartData,
             options: {
                 responsive: true,
+                tooltips: {
+                	bodyFontColor: "#000000", //#000000
+                    bodyFontSize: 10,
+                    bodyFontStyle: "bold",
+                    bodyFontColor: '#FFFFFF',
+                    bodyFontFamily: "'Helvetica', 'Arial', sans-serif",
+                    footerFontSize: 10,
+                    callbacks: {
+                      label: function(tooltipItem, chartData) {
+                    	  var valueItem = $.parseJSON(measurements[tooltipItem.index].value);
+                    	  var tooltip = ["Conversation:"];
+                    	  tooltip = $.merge($.merge([], tooltip), valueItem.conversation)
+                    	  tooltip.push("");
+                    	  tooltip.push("Advice:");
+                    	  tooltip.push(valueItem.advice);
+                    	  return tooltip;
+                      }
+                    }
+                  },
                 elements: {
                     point: {
                         radius: 0
@@ -60,8 +79,19 @@ var measurement = {
                                 show: false,
                             },
                             ticks: {
-                                suggestedMin: -1,
-                                suggestedMax: 1,
+                                callback: function(label, index, labels) {
+                                	if(label == 1) {
+                                		return "WELL";
+                                	} else if(label == -1) {
+                                		return "UNWELL";
+                                	} else if(label == 0){
+                                		return "NEUTRAL";
+                                	} else {
+                                		return "";
+                                	}
+                                },
+	                            suggestedMin: -1,
+	                            suggestedMax: 1,
                             }
                         }]
                 },
@@ -75,6 +105,6 @@ var measurement = {
     initChart: function (includeObject) {
         var measurements = measurement.getData(includeObject);
         chartData = measurement.createChartData(measurements, includeObject);
-        measurement.renderChart(chartData, includeObject);
+        measurement.renderChart(chartData, measurements, includeObject);
     }
 };
