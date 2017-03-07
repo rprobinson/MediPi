@@ -81,12 +81,10 @@ var measurement = {
                             ticks: {
                                 callback: function(label, index, labels) {
                                 	if(label == 1) {
-                                		return "WELL";
+                                		return "Green flag";
                                 	} else if(label == -1) {
-                                		return "UNWELL";
-                                	} else if(label == 0){
-                                		return "NEUTRAL";
-                                	} else {
+                                		return "Red flag";
+                                	}else {
                                 		return "";
                                 	}
                                 },
