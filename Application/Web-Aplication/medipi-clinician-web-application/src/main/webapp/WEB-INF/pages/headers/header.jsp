@@ -70,7 +70,7 @@
 			</div>
 			<div class="col-sm-3 pull-right">
 				<div class="container">
-					<div id="navbar" class="navbar-collapse collapse">
+					<div>
 						<ul class="nav navbar-nav">
 							<c:if test="${clinician ne null}">
 								<li><a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><c:out value="${clinician.firstName}"></c:out>&nbsp;<c:out value="${clinician.lastName}"></c:out><span class="caret"></span></a>
@@ -85,13 +85,13 @@
 							<li><a style="padding-top: 0px;" href="http://www.mastek.com/"><img src="/images/logos/mastek-logo.png" height="45"></a></li>
 						</ul>
 					</div>
+				</div>
 			</div>
-		</div>
-	</nav>
-	<div class="container" role="main">
-		<div class="alert alert-danger hidden" role="alert" id="errorMessageDiv">
-			<strong>Error!&nbsp;</strong><span id="errorMessage"></span>
-		</div>
-		<div class="alert alert-success hidden" role="alert" id="successMessageDiv">
-			<strong>Success!&nbsp;</strong><span id="successMessage">Your employee has been saved with id: and number: .</span>
-		</div>
+		</nav>
+		<div class="container" role="main">
+			<div class="alert alert-danger hidden" role="alert" id="errorMessageDiv">
+				<strong>Error!&nbsp;</strong><span id="errorMessage"></span>
+			</div>
+			<div class="alert alert-success hidden" role="alert" id="successMessageDiv">
+				<strong>Success!&nbsp;</strong><span id="successMessage">Your employee has been saved with id: and number: .</span>
+			</div>
