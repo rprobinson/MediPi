@@ -40,6 +40,7 @@ import uk.gov.nhs.digital.telehealth.clinician.service.domain.Patient;
 import uk.gov.nhs.digital.telehealth.clinician.service.domain.RecordingDeviceAttribute;
 import uk.gov.nhs.digital.telehealth.clinician.service.url.mappings.ServiceURLMappings;
 import uk.gov.nhs.digital.telehealth.clinician.web.constants.WebConstants;
+import uk.gov.nhs.digital.telehealth.clinician.web.db.Clinician;
 import uk.gov.nhs.digital.telehealth.clinician.web.domain.BloodPressureDeviceAttributes;
 
 import com.dev.ops.common.utils.HttpUtil;
@@ -88,7 +89,8 @@ public class PatientController extends BaseController {
 	@ResponseBody
 	public List<Patient> getPatients(final HttpServletRequest request) throws DefaultWrappedException {
 		final HttpEntity<?> entity = HttpUtil.getEntityWithHeaders(WebConstants.Operations.Patient.READ_ALL, null);
-		return this.restTemplate.exchange(this.clinicianServiceURL + ServiceURLMappings.PatientServiceController.CONTROLLER_MAPPING + ServiceURLMappings.PatientServiceController.GET_ALL_PATIENTS, HttpMethod.GET, entity, List.class).getBody();
+		Clinician clinician = getClinicianFromSecurityContext();
+		return this.restTemplate.exchange(this.clinicianServiceURL + ServiceURLMappings.PatientServiceController.CONTROLLER_MAPPING + ServiceURLMappings.PatientServiceController.GET_PATIENTS_BY_GROUP + clinician.getPatientGroupId(), HttpMethod.GET, entity, List.class).getBody();
 	}
 
 	@SuppressWarnings("unchecked")

@@ -90,8 +90,20 @@ public class PatientService {
 
 	@Transactional(rollbackFor = {Exception.class})
 	public List<Patient> getAllPatients() throws DefaultWrappedException {
-		final List<Patient> patients = new ArrayList<Patient>();
 		final List<PatientMaster> patientMasters = this.patientDAO.fetchAllPatients();
+		final List<Patient> patients = setPatientStatus(patientMasters);
+		return patients;
+	}
+
+	@Transactional(rollbackFor = {Exception.class})
+	public List<Patient> getPatientsByGroup(final String patientGroupId) throws DefaultWrappedException {
+		final List<PatientMaster> patientMasters = this.patientDAO.fetchPatientsByPatientGroupId(patientGroupId);
+		final List<Patient> patients = setPatientStatus(patientMasters);
+		return patients;
+	}
+
+	private List<Patient> setPatientStatus(final List<PatientMaster> patientMasters) {
+		final List<Patient> patients = new ArrayList<Patient>();
 		for(final PatientMaster patientMaster : patientMasters) {
 			final Patient patient = this.mapperFacade.map(patientMaster, Patient.class);
 			List<DataValueEntity> patientMeasurements = recordingDeviceDataDAO.fetchRecentMeasurementsSQL(patient.getPatientUUID());

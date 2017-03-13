@@ -69,6 +69,26 @@ CREATE TABLE recording_device_type (
     display_name character varying(100) NOT NULL
 );
 CREATE SEQUENCE recording_device_type_type_id_seq START WITH 1 INCREMENT BY 1 NO MINVALUE NO MAXVALUE CACHE 1;
+
+CREATE TABLE clinician_details (
+    clinician_uuid VARCHAR(100) NOT NULL,
+    clinician_username VARCHAR(100) NOT NULL,
+    password VARCHAR(100) NOT NULL,
+    first_name VARCHAR(100) NOT NULL,
+    last_name VARCHAR(100) NOT NULL,
+    patient_group_uuid VARCHAR(100) NOT NULL,
+    CONSTRAINT "clinician_details_pk" PRIMARY KEY ("clinician_uuid")
+);
+
+CREATE TABLE clinician_role (
+  clinician_role_id SERIAL,
+  clinician_uuid varchar(100) NOT NULL,
+  role varchar(45) NOT NULL,
+  PRIMARY KEY (clinician_role_id),
+  CONSTRAINT unique_clinician_uuid_role UNIQUE (role,clinician_uuid),
+  CONSTRAINT fk_clinician_id FOREIGN KEY (clinician_uuid) REFERENCES clinician_details (clinician_uuid));
+
+CREATE INDEX fk_clinician_details_idx ON clinician_role(clinician_uuid);
 ------------------------------------------------------------------------TABLE DEFINITION:END------------------------------------------------------------------------
 
 ------------------------------------------------------------------------SEQUNCES LINK:START------------------------------------------------------------------------
@@ -103,4 +123,5 @@ ALTER TABLE ONLY attribute_threshold ADD CONSTRAINT recording_device_attribute_a
 ALTER TABLE ONLY recording_device_data ADD CONSTRAINT recording_device_attribute_recording_device_data_fk FOREIGN KEY (attribute_id) REFERENCES recording_device_attribute(attribute_id);
 ALTER TABLE ONLY alert ADD CONSTRAINT recording_device_data_alert_fk FOREIGN KEY (data_id) REFERENCES recording_device_data(data_id);
 ALTER TABLE ONLY recording_device_attribute ADD CONSTRAINT recording_device_type_recording_device_attribute_fk FOREIGN KEY (type_id) REFERENCES recording_device_type(type_id);
+ALTER TABLE ONLY clinician_details ADD CONSTRAINT "patient_group_clinician_details_fk" FOREIGN KEY ("patient_group_uuid") REFERENCES patient_group ("patient_group_uuid");
 ------------------------------------------------------------------------CONSTRAINT:END------------------------------------------------------------------------

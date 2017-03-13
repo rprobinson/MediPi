@@ -233,6 +233,13 @@ overflow-y: auto;
 .measurement-attribute td {font-size: 40px;}
 .number {font-size: 25px;}
 
+.container-table {
+    display: table;
+}
+.vertical-center-row {
+    display: table-cell;
+    vertical-align: middle;
+}
 
 .patient-detail { min-width:120px; width:100%;border:1px solid #000;margin-bottom: 10px}
 .patient-detail .red{background-color: #FF0000;font-size: 32px}

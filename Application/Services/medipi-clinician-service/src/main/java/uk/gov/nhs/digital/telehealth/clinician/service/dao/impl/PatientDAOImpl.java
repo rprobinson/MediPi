@@ -19,6 +19,8 @@ package uk.gov.nhs.digital.telehealth.clinician.service.dao.impl;
 
 import java.util.List;
 
+import javax.persistence.Query;
+
 import org.springframework.stereotype.Service;
 
 import uk.gov.nhs.digital.telehealth.clinician.service.entities.PatientMaster;
@@ -31,6 +33,14 @@ public class PatientDAOImpl extends GenericDAOImpl<PatientMaster> implements Pat
 	@Override
 	public List<PatientMaster> fetchAllPatients() {
 		return this.getEntityManager().createNamedQuery("PatientMaster.fetchAllPatients", PatientMaster.class).getResultList();
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public List<PatientMaster> fetchPatientsByPatientGroupId(final String patientGroupId) {
+		Query query = getEntityManager().createNamedQuery("PatientMaster.fetchPatientsByPatientGroupId", PatientMaster.class);
+		query.setParameter("patientGroupId", patientGroupId);
+		return query.getResultList();
 	}
 
 }

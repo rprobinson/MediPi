@@ -67,6 +67,14 @@ public class PatientServiceController {
 		return patients;
 	}
 
+	@RequestMapping(value = ServiceURLMappings.PatientServiceController.GET_PATIENTS_BY_GROUP + "{patientGroupId}", method = RequestMethod.GET)
+	@ResponseBody
+	public List<Patient> getPatientsByGroup(@PathVariable final String patientGroupId, @RequestHeader(CommonConstants.CONTEXT_INFORMATION_REQUEST_PARAMETER) final String context) throws DefaultWrappedException {
+		ContextThreadLocal.set(ContextInfo.toContextInfo(context));
+		final List<Patient> patients = this.patientService.getPatientsByGroup(patientGroupId);
+		return patients;
+	}
+
 	/*@RequestMapping(value = ServiceURLMappings.PatientServiceController.GET_PATIENT_RECENT_MEASURMENTS + "{patientUUID}", method = RequestMethod.GET)
 	@ResponseBody
 	public List<DataValue> getPatientRecentReadings(@PathVariable final String patientUUID, @RequestHeader(CommonConstants.CONTEXT_INFORMATION_REQUEST_PARAMETER) final String context) throws DefaultWrappedException {
