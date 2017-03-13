@@ -103,6 +103,7 @@ public class PatientController extends BaseController {
 		final HttpEntity<?> entity = HttpUtil.getEntityWithHeaders(WebConstants.Operations.Patient.READ, null);
 		final Patient patient = this.restTemplate.exchange(this.clinicianServiceURL + ServiceURLMappings.PatientServiceController.CONTROLLER_MAPPING + ServiceURLMappings.PatientServiceController.GET_PATIENT + patientUUID, HttpMethod.GET, entity, Patient.class).getBody();
 		if(!StringUtils.equals(clinician.getPatientGroupId(), patient.getPatientGroupId())) {
+			LOGGER.warn("The " + clinician + " tried to access " + patient + " details from other group.");
 			throw new DefaultWrappedException("You are not authorized to access the patient details.");
 		}
 		modelAndView.addObject("patient", patient);

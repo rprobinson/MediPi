@@ -137,6 +137,6 @@ public class Patient {
 
 	@Override
 	public String toString() {
-		return "Patient [patientUUID=" + patientUUID + ", firstName=" + firstName + ", lastName=" + lastName + ", patientStatus=" + patientStatus + "]";
+		return "Patient [patientUUID=" + patientUUID + ", firstName=" + firstName + ", lastName=" + lastName + ", patientStatus=" + patientStatus + ", patientGroupId=" + patientGroupId + "]";
 	}
 }
