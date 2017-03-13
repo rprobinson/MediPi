@@ -45,8 +45,8 @@ public class PatientGroupMaster {
 	@Column(name = "patient_group_uuid")
 	private String patientGroupId;
 
-	@Column(name = "patient_group")
-	private String patientGroup;
+	@Column(name = "patient_group_name")
+	private String patientGroupName;
 
 	@ManyToMany(fetch = FetchType.LAZY, mappedBy = "patientGroups")
 	private List<PatientMaster> patientDetails;
@@ -63,12 +63,12 @@ public class PatientGroupMaster {
 		this.patientGroupId = patientGroupId;
 	}
 
-	public String getPatientGroup() {
-		return patientGroup;
+	public String getPatientGroupName() {
+		return patientGroupName;
 	}
 
-	public void setPatientGroup(final String patientGroup) {
-		this.patientGroup = patientGroup;
+	public void setPatientGroupName(final String patientGroupName) {
+		this.patientGroupName = patientGroupName;
 	}
 
 	public List<PatientMaster> getPatientDetails() {

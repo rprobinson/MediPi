@@ -22,6 +22,7 @@ import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -98,8 +99,12 @@ public class PatientController extends BaseController {
 	@ResponseBody
 	public ModelAndView getPatient(@PathVariable final String patientUUID, final ModelAndView modelAndView, final HttpServletRequest request) throws DefaultWrappedException, IOException {
 		LOGGER.debug("Get patient details for patient id:<" + patientUUID + ">.");
+		Clinician clinician = getClinicianFromSecurityContext();
 		final HttpEntity<?> entity = HttpUtil.getEntityWithHeaders(WebConstants.Operations.Patient.READ, null);
 		final Patient patient = this.restTemplate.exchange(this.clinicianServiceURL + ServiceURLMappings.PatientServiceController.CONTROLLER_MAPPING + ServiceURLMappings.PatientServiceController.GET_PATIENT + patientUUID, HttpMethod.GET, entity, Patient.class).getBody();
+		if(!StringUtils.equals(clinician.getPatientGroupId(), patient.getPatientGroupId())) {
+			throw new DefaultWrappedException("You are not authorized to access the patient details.");
+		}
 		modelAndView.addObject("patient", patient);
 
 		final List<RecordingDeviceAttribute> similarDeviceAttributes = this.restTemplate.exchange(this.clinicianServiceURL + ServiceURLMappings.PatientServiceController.CONTROLLER_MAPPING + ServiceURLMappings.PatientServiceController.GET_PATIENT_ATTRIBUTES + patientUUID + "/" + similarPlotAttributes, HttpMethod.GET, entity, List.class).getBody();

@@ -47,7 +47,7 @@ public class WebApplicationConfig extends WebMvcAutoConfigurationAdapter {
 
 	@Override
 	public void addViewControllers(final ViewControllerRegistry registry) {
-		registry.addRedirectViewController("/", "/clinician/");
+		registry.addRedirectViewController("/", "/clinician/patient/patients");
 		registry.addViewController("/login").setViewName("misc/login");
 		registry.addViewController("/403").setViewName("misc/403");
 	}

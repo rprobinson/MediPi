@@ -29,6 +29,7 @@ public class Patient {
 	private String lastName;
 	private Timestamp dateOfBirth;
 	private PatientStatus patientStatus;
+	private String patientGroupId;
 
 	public Patient() {
 		setPatientStatus(PatientStatus.INCOMPLETE_SCHEDULE);
@@ -94,6 +95,14 @@ public class Patient {
 		} else {
 			this.patientStatus = PatientStatus.INCOMPLETE_SCHEDULE;
 		}
+	}
+
+	public String getPatientGroupId() {
+		return patientGroupId;
+	}
+
+	public void setPatientGroupId(final String patientGroupId) {
+		this.patientGroupId = patientGroupId;
 	}
 
 	@Override
