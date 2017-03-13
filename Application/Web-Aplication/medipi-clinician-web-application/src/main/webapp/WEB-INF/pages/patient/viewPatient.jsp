@@ -4,7 +4,7 @@
 <script type="text/javascript" charset="utf8" src="/js/patient/view.patient.js"></script>
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <%@taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt"%>
-<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
+<%@taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 	<div class="accordion-body form-horizontal" style="display: block">
 		<ul class="summary-three-col">
 			<li><label class="label-display" for="name">Name:</label> <label class="label-text" for="name" id="name">${patient.firstName}&nbsp;${patient.lastName}</label></li>
