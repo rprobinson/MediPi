@@ -25,7 +25,7 @@ import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.util.StringUtils;
 
-import uk.gov.nhs.digital.telehealth.clinician.web.db.Clinician;
+import uk.gov.nhs.digital.telehealth.clinician.service.entities.Clinician;
 
 public class CustomClinicianDetails extends Clinician implements UserDetails {
 

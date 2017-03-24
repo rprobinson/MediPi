@@ -19,9 +19,11 @@ package uk.gov.nhs.digital.telehealth.clinician.web;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.orm.jpa.EntityScan;
 import org.springframework.context.annotation.ComponentScan;
 
 @SpringBootApplication
+@EntityScan(basePackages = {"uk.gov.nhs.digital.telehealth.clinician.service.entities"})
 @ComponentScan(basePackages = {"uk.gov.nhs.digital.telehealth.clinician.web.*", "com.dev.ops.common.logging.interceptors."})
 //"com.dev.ops.common.orika",
 public class ClinicianWebApplicationInitializer {

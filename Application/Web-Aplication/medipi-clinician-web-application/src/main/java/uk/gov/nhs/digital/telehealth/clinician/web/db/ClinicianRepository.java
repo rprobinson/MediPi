@@ -20,7 +20,9 @@ package uk.gov.nhs.digital.telehealth.clinician.web.db;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 
+import uk.gov.nhs.digital.telehealth.clinician.service.entities.Clinician;
+
 @Repository
-public interface ClinicianRepository extends CrudRepository<Clinician, Long> {
+public interface ClinicianRepository extends CrudRepository<Clinician, String> {
 	public Clinician findByUserName(String username);
 }

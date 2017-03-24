@@ -23,7 +23,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.client.RestTemplate;
 
-import uk.gov.nhs.digital.telehealth.clinician.web.db.Clinician;
+import uk.gov.nhs.digital.telehealth.clinician.service.entities.Clinician;
 
 public class BaseController {
 
@@ -36,8 +36,11 @@ public class BaseController {
 	}
 
 	protected Clinician getClinicianFromSecurityContext() {
+		Clinician clinician = null;
 		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-		Clinician clinician = (Clinician) auth.getPrincipal();
+		if(auth != null) {
+			clinician = (Clinician) auth.getPrincipal();
+		}
 		return clinician;
 	}
 }

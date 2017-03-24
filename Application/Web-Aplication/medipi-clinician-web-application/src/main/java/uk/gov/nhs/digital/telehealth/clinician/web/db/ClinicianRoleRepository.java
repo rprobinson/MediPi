@@ -23,6 +23,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 
+import uk.gov.nhs.digital.telehealth.clinician.service.entities.ClinicianRole;
+
 @Repository
 public interface ClinicianRoleRepository extends CrudRepository<ClinicianRole, Long> {
 

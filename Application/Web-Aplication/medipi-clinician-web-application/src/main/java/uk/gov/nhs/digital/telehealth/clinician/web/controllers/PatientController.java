@@ -39,9 +39,9 @@ import org.springframework.web.servlet.ModelAndView;
 import uk.gov.nhs.digital.telehealth.clinician.service.domain.Measurement;
 import uk.gov.nhs.digital.telehealth.clinician.service.domain.Patient;
 import uk.gov.nhs.digital.telehealth.clinician.service.domain.RecordingDeviceAttribute;
+import uk.gov.nhs.digital.telehealth.clinician.service.entities.Clinician;
 import uk.gov.nhs.digital.telehealth.clinician.service.url.mappings.ServiceURLMappings;
 import uk.gov.nhs.digital.telehealth.clinician.web.constants.WebConstants;
-import uk.gov.nhs.digital.telehealth.clinician.web.db.Clinician;
 import uk.gov.nhs.digital.telehealth.clinician.web.domain.BloodPressureDeviceAttributes;
 
 import com.dev.ops.common.utils.HttpUtil;
@@ -91,7 +91,7 @@ public class PatientController extends BaseController {
 	public List<Patient> getPatients(final HttpServletRequest request) throws DefaultWrappedException {
 		final HttpEntity<?> entity = HttpUtil.getEntityWithHeaders(WebConstants.Operations.Patient.READ_ALL, null);
 		Clinician clinician = getClinicianFromSecurityContext();
-		return this.restTemplate.exchange(this.clinicianServiceURL + ServiceURLMappings.PatientServiceController.CONTROLLER_MAPPING + ServiceURLMappings.PatientServiceController.GET_PATIENTS_BY_GROUP + clinician.getPatientGroupId(), HttpMethod.GET, entity, List.class).getBody();
+		return this.restTemplate.exchange(this.clinicianServiceURL + ServiceURLMappings.PatientServiceController.CONTROLLER_MAPPING + ServiceURLMappings.PatientServiceController.GET_PATIENTS_BY_GROUP + clinician.getPatientGroup().getPatientGroupId(), HttpMethod.GET, entity, List.class).getBody();
 	}
 
 	@SuppressWarnings("unchecked")
@@ -102,7 +102,7 @@ public class PatientController extends BaseController {
 		Clinician clinician = getClinicianFromSecurityContext();
 		final HttpEntity<?> entity = HttpUtil.getEntityWithHeaders(WebConstants.Operations.Patient.READ, null);
 		final Patient patient = this.restTemplate.exchange(this.clinicianServiceURL + ServiceURLMappings.PatientServiceController.CONTROLLER_MAPPING + ServiceURLMappings.PatientServiceController.GET_PATIENT + patientUUID, HttpMethod.GET, entity, Patient.class).getBody();
-		if(!StringUtils.equals(clinician.getPatientGroupId(), patient.getPatientGroupId())) {
+		if(!StringUtils.equals(clinician.getPatientGroup().getPatientGroupId(), patient.getPatientGroupId())) {
 			LOGGER.warn("The " + clinician + " tried to access " + patient + " details from other group.");
 			throw new DefaultWrappedException("You are not authorized to access the patient details.");
 		}

@@ -1,4 +1,4 @@
-<title>MediPi : Patients</title>
+<title>MediPi : Error</title>
 <jsp:include page="/WEB-INF/pages/headers/header.jsp" />
 <script type="text/javascript" charset="utf8" src="/js/common/common.ui.util.js"></script>
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>

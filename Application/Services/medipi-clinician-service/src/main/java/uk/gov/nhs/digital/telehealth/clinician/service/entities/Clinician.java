@@ -15,13 +15,15 @@
  * limitations under the License.
  *
  */
-package uk.gov.nhs.digital.telehealth.clinician.web.db;
+package uk.gov.nhs.digital.telehealth.clinician.service.entities;
 
 import java.io.Serializable;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 import org.hibernate.annotations.GenericGenerator;
@@ -48,8 +50,9 @@ public class Clinician implements Serializable {
 	@Column(name = "last_name")
 	private String lastName;
 
-	@Column(name = "patient_group_uuid")
-	private String patientGroupId;
+	@ManyToOne
+	@JoinColumn(name = "patient_group_uuid")
+	private PatientGroupMaster patientGroup;
 
 	public Clinician() {
 
@@ -60,7 +63,7 @@ public class Clinician implements Serializable {
 		this.firstName = clinician.getFirstName();
 		this.lastName = clinician.getLastName();
 		this.password = clinician.getPassword();
-		this.patientGroupId = clinician.getPatientGroupId();
+		this.patientGroup = clinician.getPatientGroup();
 		this.userName = clinician.getUserName();
 	}
 
@@ -104,16 +107,16 @@ public class Clinician implements Serializable {
 		this.lastName = lastName;
 	}
 
-	public String getPatientGroupId() {
-		return patientGroupId;
+	public PatientGroupMaster getPatientGroup() {
+		return patientGroup;
 	}
 
-	public void setPatientGroupId(final String patientGroupId) {
-		this.patientGroupId = patientGroupId;
+	public void setPatientGroup(final PatientGroupMaster patientGroup) {
+		this.patientGroup = patientGroup;
 	}
 
 	@Override
 	public String toString() {
-		return "Clinician [clinicianId=" + clinicianId + ", firstName=" + firstName + ", lastName=" + lastName + ", patientGroupId=" + patientGroupId + "]";
+		return "Clinician [clinicianId=" + clinicianId + ", firstName=" + firstName + ", lastName=" + lastName + ", patientGroup=" + patientGroup + "]";
 	}
 }

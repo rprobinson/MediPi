@@ -15,7 +15,7 @@
  * limitations under the License.
  *
  */
-package uk.gov.nhs.digital.telehealth.clinician.web.db;
+package uk.gov.nhs.digital.telehealth.clinician.service.entities;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;

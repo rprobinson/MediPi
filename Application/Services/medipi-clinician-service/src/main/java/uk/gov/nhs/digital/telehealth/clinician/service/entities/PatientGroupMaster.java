@@ -20,6 +20,7 @@ package uk.gov.nhs.digital.telehealth.clinician.service.entities;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -27,6 +28,7 @@ import javax.persistence.Id;
 import javax.persistence.ManyToMany;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
 import org.hibernate.annotations.GenericGenerator;
@@ -50,6 +52,9 @@ public class PatientGroupMaster {
 
 	@ManyToMany(fetch = FetchType.LAZY, mappedBy = "patientGroups")
 	private List<PatientMaster> patientDetails;
+
+	@OneToMany(mappedBy = "patientGroup", cascade = {CascadeType.ALL})
+	private List<Clinician> clinicians;
 
 	public PatientGroupMaster() {
 		patientDetails = new ArrayList<PatientMaster>();
@@ -77,5 +82,13 @@ public class PatientGroupMaster {
 
 	public void addPatientDetails(final PatientMaster patientDetail) {
 		this.patientDetails.add(patientDetail);
+	}
+
+	public List<Clinician> getClinicians() {
+		return clinicians;
+	}
+
+	public void addClinician(final Clinician clinician) {
+		this.clinicians.add(clinician);
 	}
 }

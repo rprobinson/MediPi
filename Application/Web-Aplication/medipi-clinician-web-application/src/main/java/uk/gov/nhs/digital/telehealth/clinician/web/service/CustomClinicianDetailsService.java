@@ -25,7 +25,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import uk.gov.nhs.digital.telehealth.clinician.web.db.Clinician;
+import uk.gov.nhs.digital.telehealth.clinician.service.entities.Clinician;
 import uk.gov.nhs.digital.telehealth.clinician.web.db.ClinicianRepository;
 import uk.gov.nhs.digital.telehealth.clinician.web.db.ClinicianRoleRepository;
 
