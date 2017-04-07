@@ -28,8 +28,8 @@
 						<c:choose>
 						    <c:when test="${param.attributeName == 'weight'}">
 							    <tr>
-									<th scope="col">Duration (Hrs)</th>
-									<th scope="col">Change (kg)</th>
+									<th scope="col">Dry Weight (kg)</th>
+									<th scope="col">Additional Weight (kg)</th>
 								</tr>
 						    </c:when>
 						    <c:otherwise>

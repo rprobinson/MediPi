@@ -136,14 +136,26 @@ var measurement = {
     	if(systolicData != null && diastolicData != null) {
     		var bloodPressureMeasurements = "<u>" + systolicData.value + "</u><br/>" + diastolicData.value;
     		$("#" + includeObject.recentMeasurementValueId).html(bloodPressureMeasurements);
-    		//If within min and max limits
+
+    		/*//If within min and max limits
     		if(systolicData.minValue == null || systolicData.maxValue == null || diastolicData.minValue == null || diastolicData.maxValue == null) {
     			measurementIndicatorClass = "amber";
 	        } else if(parseFloat(systolicData.minValue) <= parseFloat(systolicData.value) && parseFloat(systolicData.value) <= parseFloat(systolicData.maxValue) && parseFloat(diastolicData.minValue) <= parseFloat(diastolicData.value) && parseFloat(diastolicData.value) <= parseFloat(diastolicData.maxValue)) {
 	        	measurementIndicatorClass = "green";
 	        } else {
 	        	measurementIndicatorClass = "red";
+	        }*/
+
+    		if(systolicData.alertStatus.isEmpty() || diastolicData.alertStatus.isEmpty() || systolicData.alertStatus == "CANNOT_CALCULATE" || diastolicData.alertStatus == "CANNOT_CALCULATE") {
+	        	$("#" + includeObject.recentMeasurementValueId).attr("class", "amber");
+	        } else if(systolicData.alertStatus == "IN_THRESHOLD" && diastolicData.alertStatus == "IN_THRESHOLD") {
+	        	$("#" + includeObject.recentMeasurementValueId).attr("class", "green");
+	        } else if(systolicData.alertStatus == "OUT_OF_THRESHOLD" && diastolicData.alertStatus == "OUT_OF_THRESHOLD"){
+	        	$("#" + includeObject.recentMeasurementValueId).attr("class", "red");
+	        } else {
+	        	$("#" + includeObject.recentMeasurementValueId).attr("class", "amber");
 	        }
+
         } else {
         	$("#" + includeObject.recentMeasurementValueId).html("- - -");
         	measurementIndicatorClass = "amber";
