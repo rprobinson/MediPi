@@ -24,10 +24,25 @@
 						<tr>
 							<td colspan="2" id="${param.recentMeasurementValueId}"></td>
 						</tr>
-						<tr>
-							<th scope="col">Min</th>
-							<th scope="col">Max</th>
-						</tr>
+
+						<c:choose>
+						    <c:when test="${param.attributeName == 'weight'}">
+							    <tr>
+									<th scope="col">Duration (Hrs)</th>
+									<th scope="col">Change (kg)</th>
+								</tr>
+						    </c:when>
+						    <c:otherwise>
+						        <tr>
+									<th scope="col">Min</th>
+									<th scope="col">Max</th>
+								</tr>
+						    </c:otherwise>
+						</c:choose>
+
+						<c:if test="">
+
+						</c:if>
 						<tr id="${param.canvasId}-threshold">
 							<td id="${param.measurementMinValueId}" name="existingThresholdLowValue"></td>
 							<td id="${param.measurementMaxValueId}" name="existingThresholdHighValue"></td>

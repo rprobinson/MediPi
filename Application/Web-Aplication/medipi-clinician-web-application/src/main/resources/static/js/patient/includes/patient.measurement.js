@@ -105,12 +105,22 @@ var measurement = {
 
         //If within min and max limits
         if(recentMeasurement != null) {
-	        if(recentMeasurement.minValue == null || recentMeasurement.maxValue == null) {
+	        /*if(recentMeasurement.minValue == null || recentMeasurement.maxValue == null) {
 	        	$("#" + includeObject.recentMeasurementValueId).attr("class", "amber");
 	        } else if(parseFloat(recentMeasurement.minValue) <= parseFloat(recentMeasurement.value) && parseFloat(recentMeasurement.value) <= parseFloat(recentMeasurement.maxValue)) {
 	        	$("#" + includeObject.recentMeasurementValueId).attr("class", "green");
 	        } else {
 	        	$("#" + includeObject.recentMeasurementValueId).attr("class", "red");
+	        }*/
+
+        	if(recentMeasurement.alertStatus.isEmpty() || recentMeasurement.alertStatus == "CANNOT_CALCULATE") {
+	        	$("#" + includeObject.recentMeasurementValueId).attr("class", "amber");
+	        } else if(recentMeasurement.alertStatus == "IN_THRESHOLD") {
+	        	$("#" + includeObject.recentMeasurementValueId).attr("class", "green");
+	        } else if(recentMeasurement.alertStatus == "OUT_OF_THRESHOLD"){
+	        	$("#" + includeObject.recentMeasurementValueId).attr("class", "red");
+	        } else {
+	        	$("#" + includeObject.recentMeasurementValueId).attr("class", "amber");
 	        }
         }
     },

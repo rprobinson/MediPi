@@ -29,6 +29,7 @@ public class Measurement implements Comparable<Measurement> {
 	private String value;
 	private String minValue;
 	private String maxValue;
+	private String alertStatus;
 
 	public Measurement() {
 	}
@@ -77,6 +78,14 @@ public class Measurement implements Comparable<Measurement> {
 
 	public void setMaxValue(final String maxValue) {
 		this.maxValue = maxValue;
+	}
+
+	public String getAlertStatus() {
+		return alertStatus;
+	}
+
+	public void setAlertStatus(final String alertStatus) {
+		this.alertStatus = alertStatus;
 	}
 
 	/*public void setMinMaxValues(final List<AttributeThreshold> attributeThresholds) {
