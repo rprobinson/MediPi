@@ -19,7 +19,6 @@ import java.io.File;
 import java.util.Date;
 import java.util.Properties;
 import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
 import org.medipi.security.CertificateDefinitions;
 import org.medipi.concentrator.dataformat.DataFormatFactory;
 import org.medipi.concentrator.dataformat.PatientUploadDataFormat;
@@ -55,8 +54,8 @@ public class MediPiConcentratorSbApplication implements CommandLineRunner {
 
     // MediPi version Number
     private static final String MEDIPINAME = "MediPi Concentrator";
-    private static final String VERSION = "MediPiConcentrator_v1.0.3";
-    private static final String VERSIONNAME = "PILOT-20170103-1";
+    private static final String VERSION = "MediPiConcentrator_v1.0.4";
+    private static final String VERSIONNAME = "PILOT-20170412-1";
     private final MediPiLogger logger = MediPiLogger.getInstance();
     private ServletContext scxt;
     private final UploadEncryptionAdapter patientEncryptionAdapter = new UploadEncryptionAdapter();

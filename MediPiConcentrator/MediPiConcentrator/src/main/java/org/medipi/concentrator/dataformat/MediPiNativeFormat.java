@@ -84,6 +84,10 @@ public class MediPiNativeFormat extends PatientUploadDataFormat {
         List<DeviceDataDO> p = content.getPayload();
 
         if (p != null) {
+            if (p.isEmpty()) {
+                //if there is an issue with the Payload
+                throwBadRequest400("The request has no payload: " + content);
+            }
             // Added data to the database - the design of the DB is that these are individual data points NOT rows of data
             int totalRowsWrittenToDB = 0;
             // Loop through each of the data Payloads
@@ -139,7 +143,7 @@ public class MediPiNativeFormat extends PatientUploadDataFormat {
                                 }
                             } else {
                                 //Other metadata
-                                System.out.println(metaSplit[1]);
+//                                System.out.println(metaSplit[1]);
                                 switch (metaSplit[1]) {
                                     case "datadelimiter":
                                         datadelimeter = metaSplit[2];
@@ -237,9 +241,11 @@ public class MediPiNativeFormat extends PatientUploadDataFormat {
                                         if (dd.isEmpty()) {
                                             writeData = true;
                                         } else {
+                                            System.out.println("Duplicate data: "+ data + " @ "+dataPointTime.getTime());
                                             break;
                                         }
                                     } catch (Exception e) {
+                                        System.out.println("exception thrown when finding if data is already stored");
                                         break;
                                     }
 
@@ -253,7 +259,7 @@ public class MediPiNativeFormat extends PatientUploadDataFormat {
                                         // Set the timedownloaded value in order to mark 
                                         //(using a trusted, recently synchronised timestamp 
                                         // for clinical systems to guage if data has been downloaded)
-                                        d.setDownloadedTime(new Date());
+//                                        d.setDownloadedTime(new Date());
                                         d.setScheduleEffectiveTime(scheduleeffectivedate);
                                         d.setScheduleExpiryTime(scheduleexpirydate);
 
@@ -287,6 +293,7 @@ public class MediPiNativeFormat extends PatientUploadDataFormat {
             if (totalRowsWrittenToDB == 0) {
                 // should any particular response be made for no data added to db for any payload?
             }
+
         } else {
             //if there is an issue with the Payload
             throwBadRequest400("Failed to parse DistributionEnvelope Payload" + content);
@@ -305,7 +312,7 @@ public class MediPiNativeFormat extends PatientUploadDataFormat {
             rdt.setDisplayName(displayName);
             recordingDeviceTypeDAO.save(rdt);
         } catch (EntityExistsException e) {
-            throwBadRequest400("Device: " + type + " " + make+ " " + model+ " " + displayName + " already exists in RECORDING_DEVICE_TYPE table in the DB");
+            throwBadRequest400("Device: " + type + " " + make + " " + model + " " + displayName + " already exists in RECORDING_DEVICE_TYPE table in the DB");
         }
         return rdt;
 
@@ -335,7 +342,7 @@ public class MediPiNativeFormat extends PatientUploadDataFormat {
         throw new BadRequest400Exception(message);
     }
 
-    private boolean checkMetadata(String make,String model,String displayName, String datadelimiter, String[] columns, String[] format, String[] units) {
+    private boolean checkMetadata(String make, String model, String displayName, String datadelimiter, String[] columns, String[] format, String[] units) {
         //what is the minimum metadata required?
         StringBuilder nullContent = new StringBuilder();
         if (make == null) {
