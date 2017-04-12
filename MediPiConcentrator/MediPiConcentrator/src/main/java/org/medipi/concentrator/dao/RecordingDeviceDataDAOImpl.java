@@ -61,10 +61,11 @@ public class RecordingDeviceDataDAOImpl extends GenericDAOImpl<RecordingDeviceDa
 
     }   
     @Override
-    public List<RecordingDeviceData> findByPatientAndDownloadedTime(String patientUuid, Date downloadedTime){
+    public List<RecordingDeviceData> findByPatientAndDownloadedTime(String patientUuid, Date downloadedTime, Date endTime){
             return this.getEntityManager().createNamedQuery("RecordingDeviceData.findByPatientAndDownloadedTime", RecordingDeviceData.class)
                 .setParameter("patientUuid", patientUuid)
                 .setParameter("downloadedTime", downloadedTime)
+                .setParameter("endTime", endTime)
                 .getResultList();
 
     }

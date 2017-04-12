@@ -21,12 +21,12 @@ import javax.microedition.io.Connector;
 import javax.microedition.io.StreamConnection;
 import org.medipi.devices.Element;
 
-    /**
-     * Class to communicate with a bluetooth serial port device and take data of
-     * fixed length and pass it to a Measurement class for parsing
-     *
-     * @author rick@robinsonhq.com
-     */
+/**
+ * Class to communicate with a bluetooth serial port device and take data of
+ * fixed length and pass it to a Measurement class for parsing
+ *
+ * @author rick@robinsonhq.com
+ */
 public class BTStreamFixedLength extends BluetoothService {
 
     private final Element element;
@@ -46,21 +46,22 @@ public class BTStreamFixedLength extends BluetoothService {
     public byte[] getFixedLengthStream(String url, int messageLength) {
         byte[] output = new byte[messageLength];
         Instant timer = Instant.now();
+        keepLookingForBTConnection = true;
         try {
             while (keepLookingForBTConnection) {
-                element.setButton2Name(searchingMessage);
+                element.setB2Label(searchingMessage);
                 if (timer.plusSeconds(btConnectionAttemptPeriod).isBefore(Instant.now())) {
-                    break;
+                    return new byte[-1];
                 }
                 try {
                     c = (StreamConnection) Connector.open(url);
                     is = c.openInputStream();
                     keepLookingForBTConnection = false;
-                    element.setButton2Name(connectionMessage);
+                    element.setB2Label(connectionMessage);
                     byte b;
                     int counter = 0;
                     while ((b = (byte) is.read()) != -1) {
-                        element.setButton2Name(downloadingMessage);
+                        element.setB2Label(downloadingMessage);
                         output[counter] = b;
                         if (counter >= messageLength - 1) {
                             return output;
@@ -71,11 +72,12 @@ public class BTStreamFixedLength extends BluetoothService {
                     }
                     System.out.println(String.valueOf(output));
                 } catch (IOException e) {
+                    System.out.println("attempt connection: " + Instant.now() + e.getMessage());
                     // do nothing as this is thrown when there is an attempted connection and the BT device is switched off
                 }
             }
-            // reset keepLookingForBTConnection
-            keepLookingForBTConnection = true;
+//            // reset keepLookingForBTConnection
+//            keepLookingForBTConnection = true;
         } finally {
             if (is != null) {
                 try {

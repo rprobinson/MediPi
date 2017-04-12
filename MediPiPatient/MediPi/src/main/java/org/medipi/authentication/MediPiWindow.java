@@ -144,6 +144,10 @@ public class MediPiWindow extends Pane {
     private void resetTimer() {
         expireTime = System.currentTimeMillis() + expirePeriod;
     }
+    // public lock method
+    public void lock() {
+        expireTime = 0;
+    }
 
     public void registerForAuthenticationCallback(UnlockConsumer unlockConsumer) {
         unlockConsumerList.add(unlockConsumer);

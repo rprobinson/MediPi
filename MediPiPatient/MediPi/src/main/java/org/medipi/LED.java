@@ -82,7 +82,9 @@ public class LED extends Circle implements Runnable {
                 Thread.sleep(BlinkRateMillis);
             } catch (InterruptedException ex) {
             }
-
+            if(stopBlinking){
+                break;
+            }
             this.setFill(offGradient);
             try {
                 Thread.sleep(BlinkRateMillis);

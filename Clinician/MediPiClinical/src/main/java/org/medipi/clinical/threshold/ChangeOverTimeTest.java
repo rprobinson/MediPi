@@ -56,6 +56,7 @@ public class ChangeOverTimeTest implements AttributeThresholdTest {
     private static final String ATTRIBUTE_UNITS = "__ATTRIBUTE_UNITS__";
     private static final String MEDIPICLINICALALERTPASSEDTESTTEXT = "medipi.clinical.alert.changeovertimetest.passedtesttext";
     private static final String MEDIPICLINICALALERTFAILEDTESTTEXT = "medipi.clinical.alert.changeovertimetest.failedtesttext";
+    private static final String MEDIPICLINICALALERTCANTCALCULATETESTTEXT = "medipi.clinical.alert.changeovertimetest.cantcalculatetesttext";
     private static final String MEDIPICLINICALFEWESTNUMBEROFDATAPOINTSTOCALCULATEFROM = "medipi.clinical.alert.changeovertimetest.fewestnumberofdatapointstocalculatefrom";
 
     @Autowired
@@ -75,6 +76,7 @@ public class ChangeOverTimeTest implements AttributeThresholdTest {
     private String attributeUnits = null;
 
     private String failedTestText = null;
+    private String cantCalculateTestText = null;
     private String passedTestText = null;
     private int fewestCalculatingPoints = 3;
 
@@ -90,6 +92,10 @@ public class ChangeOverTimeTest implements AttributeThresholdTest {
         failedTestText = properties.getProperty(MEDIPICLINICALALERTFAILEDTESTTEXT);
         if (failedTestText == null || failedTestText.trim().length() == 0) {
             throw new Exception("Cannot find failed test text");
+        }
+        cantCalculateTestText = properties.getProperty(MEDIPICLINICALALERTCANTCALCULATETESTTEXT);
+        if (cantCalculateTestText == null || cantCalculateTestText.trim().length() == 0) {
+            throw new Exception("Cannot find cant calculate test text");
         }
         passedTestText = properties.getProperty(MEDIPICLINICALALERTPASSEDTESTTEXT);
         if (passedTestText == null || passedTestText.trim().length() == 0) {
@@ -186,8 +192,13 @@ public class ChangeOverTimeTest implements AttributeThresholdTest {
             start.setTime(dataValueTime);
             start.add(Calendar.HOUR, -period);
             Date periodStartTime = start.getTime();
+            // Access the database and find the first  entry before the started period so that the least square method will have at least the epriod stated
+            Date firstBeforePeriod = recordingDeviceDataDAOImpl.findFirstEntryBeforePeriod(patientUuid, attributeId, periodStartTime);
+            if (firstBeforePeriod == null) {
+                return null;
+            }
             // Access the database and collect all records within this period
-            List<RecordingDeviceData> historicList = recordingDeviceDataDAOImpl.findByPatientAndAttributeAndPeriod(patientUuid, attributeId, periodStartTime, dataValueTime);
+            List<RecordingDeviceData> historicList = recordingDeviceDataDAOImpl.findByPatientAndAttributeAndPeriod(patientUuid, attributeId, firstBeforePeriod, dataValueTime);
 
             if (historicList == null || historicList.isEmpty()) {
                 // DONT KNOW WHAT TO DO HERE WHERE THERE IS NOT PRECEDING DATAPOINT?
@@ -206,7 +217,7 @@ public class ChangeOverTimeTest implements AttributeThresholdTest {
                 // first pass: read in data, compute xbar and ybar
                 double sumx = 0.0, sumy = 0.0, sumx2 = 0.0;
                 for (RecordingDeviceData historic : historicList) {
-                    Long startMillis = periodStartTime.getTime();
+                    Long startMillis = firstBeforePeriod.getTime();
                     Long pointMillis = historic.getDataValueTime().getTime();
                     Long millisAfterStart = pointMillis - startMillis;
                     x[n] = Double.valueOf(millisAfterStart);
@@ -235,8 +246,13 @@ public class ChangeOverTimeTest implements AttributeThresholdTest {
 
                 // print results
                 System.out.println("y   = " + beta1 + " * x + " + beta0);
+                long millisAtPeriodStartTime = dataValueTime.getTime() - periodStartTime.getTime();
                 // As we are wanting the value at millisecondsAfter Start=0 need to return beta1*0+ beta0
-                return beta0;
+                // y=ax * b
+                Double h = (beta1 * millisAtPeriodStartTime) + beta0;
+                System.out.println("millisAtPeriodStartTime=" + millisAtPeriodStartTime);
+                System.out.println("weight at lastPoint==" + h);
+                return h;
             }
         } catch (NumberFormatException nfe) {
             MediPiLogger.getInstance().log(ChangeOverTimeTest.class.getName() + "error", "Error in converting the incoming data value to be tested to a double " + nfe.getLocalizedMessage());
@@ -349,6 +365,23 @@ public class ChangeOverTimeTest implements AttributeThresholdTest {
     @Override
     public String getPassedTestText() {
         String response = passedTestText
+                .replace(DATA_VALUE, String.valueOf(currentValue))
+                .replace(ATTRIBUTE_UNITS, attributeUnits)
+                .replace(MEASUREMENT_PERIOD, String.valueOf(measurementPeriod))
+                .replace(MEASUREMENT_CHANGE_THRESHOLD, String.valueOf(measurementChangeThreshold));
+        return response;
+    }
+
+    /**
+     * Method to return a descriptive string taken from the properties file and
+     * substituted with values from the measurement data describing a cant
+     * calculate condition
+     *
+     * @return descriptive string of the alert
+     */
+    @Override
+    public String getCantCalculateTestText() {
+        String response = cantCalculateTestText
                 .replace(DATA_VALUE, String.valueOf(currentValue))
                 .replace(ATTRIBUTE_UNITS, attributeUnits)
                 .replace(MEASUREMENT_PERIOD, String.valueOf(measurementPeriod))

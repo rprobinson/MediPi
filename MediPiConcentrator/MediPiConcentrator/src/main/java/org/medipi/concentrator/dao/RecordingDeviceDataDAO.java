@@ -43,5 +43,5 @@ public interface RecordingDeviceDataDAO extends GenericDAO<RecordingDeviceData> 
 
     public RecordingDeviceData findByTypeAttributeAndData(String patientUuid, String type, String AttributeName, Date dataValueTime, String dataValue);
 
-    public List<RecordingDeviceData> findByPatientAndDownloadedTime(String patientUuid, Date downloadedTime);
+    public List<RecordingDeviceData> findByPatientAndDownloadedTime(String patientUuid, Date downloadedTime, Date endTime);
 }

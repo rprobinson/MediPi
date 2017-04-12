@@ -26,6 +26,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Optional;
 import java.util.UUID;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
@@ -40,7 +41,9 @@ import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
@@ -48,6 +51,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.text.Text;
 import org.medipi.DashboardTile;
 import org.medipi.MediPi;
 import org.medipi.MediPiMessageBox;
@@ -89,19 +93,19 @@ public abstract class Transmitter extends Element {
 
     private VBox transmitterWindow;
 
-    private static final String[] TRANSMITLABELSTATUS = {"Select data to transmit and press Transmit", "Transmitting data...", "Completed"};
     private static final String INTERACTION = "urn:nhs-itk:interaction:MediPi";
     private static final String OUTBOUNDPAYLOAD = "medipi.outboundpayload";
     private static final String NAME = "Transmitter";
     private static final String DISPLAYNAME = "MediPi Transmitter";
 
-    private Label transmitStatus;
     private final ScrollPane transmitDataBoxSc = new ScrollPane();
     private final BooleanProperty isTransmitting = new SimpleBooleanProperty(false);
     private final HashMap<String, CheckBox> deviceCheckBox = new HashMap<>();
     protected String senderAddress;
     protected String recipientAddress;
     protected String auditIdentity;
+    private ArrayList<Element> transmitterElementList = new ArrayList<>();
+    private final BooleanProperty taskRunningProperty = new SimpleBooleanProperty(false);
 
     /**
      * Transmit button
@@ -144,8 +148,6 @@ public abstract class Transmitter extends Element {
         transmitterWindow.setMinSize(800, 300);
         transmitterWindow.setMaxSize(800, 300);
 
-        transmitStatus = new Label(TRANSMITLABELSTATUS[0]);
-        transmitStatus.setMinWidth(400);
         ImageView iw = medipi.utils.getImageView("medipi.images.arrow", 20, 20);
         iw.setRotate(-90);
         transmitButton = new Button("Transmit", iw);
@@ -160,8 +162,16 @@ public abstract class Transmitter extends Element {
 
         // fundamental UI decisions made from the properties
         // loop through all loaded elements and add checkboxes and images to the window
+        // CHOICE OF WHICH ELEMENTS APPEAR IN THE LIST IS CURRENTLY NOT WORKING CORRECTLY AS TRANSMITTER IS CALLED BEFORE SCHEDULER - HAVE A THINK
         ArrayList<BooleanProperty> al = new ArrayList<>();
-        for (Element e : medipi.getElements()) {
+        if (medipi.getScheduler() == null) {
+            transmitterElementList = medipi.getElements();
+        } else if (medipi.getScheduler().getScheduledElements() == null) {
+            transmitterElementList = medipi.getElements();
+        } else {
+            transmitterElementList = medipi.getScheduler().getScheduledElements();
+        }
+        for (Element e : transmitterElementList) {
             if (Device.class.isAssignableFrom(e.getClass())) {
                 Device d = (Device) e;
                 String classTokenName = e.getClassTokenName();
@@ -177,7 +187,7 @@ public abstract class Transmitter extends Element {
                 // Get device data summary if present
                 tcb.textProperty().bind(
                         Bindings.when(d.getResultsSummary().isEmpty())
-                        .then(d.getDisplayName())
+                        .then(d.getGenericDeviceDisplayName())
                         .otherwise(d.getResultsSummary())
                 );
                 al.add(tcb.selectedProperty());
@@ -195,13 +205,14 @@ public abstract class Transmitter extends Element {
                         imagePane
                 );
                 hb.setPadding(new Insets(0, 0, 0, 50));
+// This functionality to display the scheduler metadata for transmission not currently in use
                 // when Scheduler is loaded and transmitter is accessed as part of a schedule, show the scheduler checkbox
                 // This relies on the fact that the transmitter is called AFTER the scheduler AND all the measurement devices
-                if (Scheduler.class.isAssignableFrom(d.getClass())) {
-                    Scheduler sched = (Scheduler) d;
-                    scheduler = sched;
-                    hb.visibleProperty().bind(sched.runningProperty());
-                }
+//                if (Scheduler.class.isAssignableFrom(d.getClass())) {
+//                    Scheduler sched = (Scheduler) d;
+//                    scheduler = sched;
+//                    hb.visibleProperty().bind(sched.runningProperty());
+//                }
 
                 deviceCheckBox.put(classTokenName, tcb);
                 transmitDataBox.getChildren().add(hb);
@@ -221,7 +232,7 @@ public abstract class Transmitter extends Element {
         ObservableList<BooleanProperty> chkList;
         chkList = FXCollections.observableList(al);
         BooleanBinding bb = conjunction(chkList);
-        transmitButton.disableProperty().bind(bb.not());
+        transmitButton.disableProperty().bind(bb.not().or(medipi.wifiSync.not()).or(taskRunningProperty));
 
         transmitterWindow.getChildren()
                 .addAll(
@@ -247,12 +258,43 @@ public abstract class Transmitter extends Element {
     }
 
     private void transmitButton() {
+
         // Setup transmit button action to run in its own thread
         transmitButton.setOnAction((ActionEvent t) -> {
+            try {
+                // When part of a schedule, check for data present for all the devices which are part of the schedule
+                if (medipi.getScheduler().runningProperty().get()) {
+                    ArrayList<Element> missing = medipi.getScheduler().getMissingDataElements();
+                    StringBuilder sb = new StringBuilder();
+                    if (!missing.isEmpty()) {
+                        for (Element e : missing) {
+                            sb.append(e.getSpecificDeviceDisplayName()).append(",\n");
+                        }
+                        if (sb.length() > 2) {
+                            //replace the last separator with a new line
+                            sb.substring(0, sb.length() - 2);
+                        }
+                        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+                        alert.setTitle("Scheduler Transmitter");
+                        alert.setHeaderText(null);
+                        alert.getDialogPane().setMaxSize(600, 300);
+                        alert.getDialogPane().getStylesheets().add("file:///" + medipi.getCssfile());
+                        alert.getDialogPane().setId("message-box");
+                        Text text = new Text("Data is missing for the following devices: \n" + sb.toString() + "\nWould you still like to transmit?");
+                        text.setWrappingWidth(600);
+                        alert.getDialogPane().setContent(text);
+                        Optional<ButtonType> result = alert.showAndWait();
+                        if (result.get() == ButtonType.CANCEL) {
+                            return;
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                MediPiMessageBox.getInstance().makeErrorMessage("", e);
+            }
             Task task = new Task<Void>() {
                 @Override
                 protected Void call() throws Exception {
-                    updateMessage(TRANSMITLABELSTATUS[1]);
                     try {
 
                         // create the device payload structure for all the individual device data
@@ -261,7 +303,7 @@ public abstract class Transmitter extends Element {
 
                         boolean doneSomething = false;
                         //Loop round the Elements adding them to the DevicesPayloadDO as separate data payloads
-                        for (Element e : medipi.getElements()) {
+                        for (Element e : transmitterElementList) {
                             CheckBox cb = deviceCheckBox.get(e.getClassTokenName());
                             if (cb != null && cb.isSelected() && cb.isVisible()) {
                                 if (Device.class.isAssignableFrom(e.getClass())) {
@@ -347,10 +389,10 @@ public abstract class Transmitter extends Element {
                                     if (transmit(encryptedMessage)) {
                                         // if it is being run as part of a schedule then write TRANSMITTED line back to Schedule
                                         ArrayList<String> transmitList = new ArrayList<>();
-                                        for (Element e : medipi.getElements()) {
+                                        for (Element e : transmitterElementList) {
                                             CheckBox cb = deviceCheckBox.get(e.getClassTokenName());
                                             if (cb != null && cb.isSelected() && cb.isVisible()) {
-                                                if (isSchedule.get()) {
+                                                if (isThisElementPartOfAScheduleExecution.get()) {
                                                     transmitList.add(e.getClassTokenName());
                                                 }
                                                 if (Device.class.isAssignableFrom(e.getClass())) {
@@ -361,18 +403,19 @@ public abstract class Transmitter extends Element {
                                                 }
                                             }
                                         }
-                                        if (isSchedule.get()) {
-                                            scheduler.addScheduleData("TRANSMITTED", Instant.now(), transmitList);
+                                        if (isThisElementPartOfAScheduleExecution.get()) {
+                                            medipi.getScheduler().addScheduleData("TRANSMITTED", Instant.now(), transmitList);
                                         }
                                         medipi.callDashboard();
 
                                         Platform.runLater(() -> {
-                                            MediPiMessageBox.getInstance().makeMessage("Thank you! Transmission Sucessful: " + getTransmissionResponse());
+                                            medipi.resetAllDevices();
+                                            MediPiMessageBox.getInstance().makeMessage(getTransmissionResponse());
                                         });
 
                                     } else {
                                         Platform.runLater(() -> {
-                                            MediPiMessageBox.getInstance().makeErrorMessage("Transmission Failed: " + getTransmissionResponse(), null);
+                                            MediPiMessageBox.getInstance().makeErrorMessage(getTransmissionResponse(), null);
                                         });
                                     }
                                 } catch (Exception ex) {
@@ -386,35 +429,31 @@ public abstract class Transmitter extends Element {
                     } catch (Exception ex) {
                         MediPiMessageBox.getInstance().makeErrorMessage("Error in creating the message to be transmitted", ex);
                     }
-                    updateMessage(TRANSMITLABELSTATUS[2]);
                     return null;
                 }
 
                 @Override
                 protected void succeeded() {
                     super.succeeded();
-                    transmitButton.disableProperty().unbind();
-                    if (isSchedule.get()) {
-                        scheduler.runningProperty().set(false);
+                    if (isThisElementPartOfAScheduleExecution.get()) {
+                        medipi.getScheduler().runningProperty().set(false);
                     }
-                    medipi.resetAllDevices();
                 }
 
                 @Override
                 protected void failed() {
                     super.failed();
-                    transmitButton.disableProperty().unbind();
-                    if (isSchedule.get()) {
-                        scheduler.runningProperty().set(false);
+                    if (isThisElementPartOfAScheduleExecution.get()) {
+                        medipi.getScheduler().runningProperty().set(false);
                     }
                 }
 
                 @Override
                 protected void cancelled() {
-                    super.failed();
-                    transmitButton.disableProperty().unbind();
-                    if (isSchedule.get()) {
-                        scheduler.runningProperty().set(false);
+                    super.cancelled();
+//                    transmitButton.disableProperty().unbind();
+                    if (isThisElementPartOfAScheduleExecution.get()) {
+                        medipi.getScheduler().runningProperty().set(false);
                     }
                 }
             };
@@ -423,9 +462,9 @@ public abstract class Transmitter extends Element {
             // disable nodes when transmitting
             transmitDataBoxSc.disableProperty().bind(task.runningProperty());
             transmitterWindow.disableProperty().bind(task.runningProperty());
-            transmitButton.disableProperty().bind(task.runningProperty());
+            taskRunningProperty.bind(task.runningProperty());
             button1.disableProperty().bind(
-                    Bindings.when(task.runningProperty().and(isSchedule))
+                    Bindings.when(task.runningProperty().and(isThisElementPartOfAScheduleExecution))
                     .then(true)
                     .otherwise(false)
             );
@@ -433,12 +472,6 @@ public abstract class Transmitter extends Element {
             medipi.scene.cursorProperty().bind(Bindings.when(task.runningProperty())
                     .then(Cursor.WAIT)
                     .otherwise(Cursor.DEFAULT)
-            );
-            //tie the text to execution
-            transmitStatus.textProperty().bind(
-                    Bindings.when(task.runningProperty().not())
-                    .then(TRANSMITLABELSTATUS[0])
-                    .otherwise(task.messageProperty())
             );
             isTransmitting.bind(task.runningProperty());
             Thread th = new Thread(task);
@@ -448,8 +481,13 @@ public abstract class Transmitter extends Element {
     }
 
     @Override
-    public String getDisplayName() {
+    public String getSpecificDeviceDisplayName() {
         return DISPLAYNAME;
+    }
+
+    @Override
+    public String getGenericDeviceDisplayName() {
+        return NAME;
     }
 
     @Override

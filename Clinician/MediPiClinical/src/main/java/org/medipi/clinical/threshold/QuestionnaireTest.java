@@ -15,12 +15,18 @@
  */
 package org.medipi.clinical.threshold;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.IOException;
 import java.util.Date;
 import java.util.List;
 import java.util.Properties;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.medipi.clinical.entities.AttributeThreshold;
 import org.medipi.clinical.entities.RecordingDeviceData;
 import org.springframework.stereotype.Component;
+import org.medipi.clinical.model.QuestionnaireDO;
 
 /**
  *
@@ -34,10 +40,12 @@ public class QuestionnaireTest implements AttributeThresholdTest {
     private static final String QUESTIONNAIRE_TYPE = "__QUESTIONNAIRE_TYPE__";
     private static final String MEDIPICLINICALALERTPASSEDTESTTEXT = "medipi.clinical.alert.questionnairetest.passedtesttext";
     private static final String MEDIPICLINICALALERTFAILEDTESTTEXT = "medipi.clinical.alert.questionnairetest.failedtesttext";
+    private static final String MEDIPICLINICALALERTCANTCALCULATETESTTEXT = "medipi.clinical.alert.questionnairetest.cantcalculatetesttext";
 
     private String failedTestText = null;
     private String passedTestText = null;
     private String questionnaireType = null;
+    private String cantCalculateTestText = null;
 
     /**
      * Initialises the threshold test setting the parameters for its use
@@ -51,6 +59,10 @@ public class QuestionnaireTest implements AttributeThresholdTest {
         failedTestText = properties.getProperty(MEDIPICLINICALALERTFAILEDTESTTEXT);
         if (failedTestText == null || failedTestText.trim().length() == 0) {
             throw new Exception("Cannot find failed test text");
+        }
+        cantCalculateTestText = properties.getProperty(MEDIPICLINICALALERTCANTCALCULATETESTTEXT);
+        if (cantCalculateTestText == null || cantCalculateTestText.trim().length() == 0) {
+            throw new Exception("Cannot find cant calculate test text");
         }
         passedTestText = properties.getProperty(MEDIPICLINICALALERTPASSEDTESTTEXT);
         if (passedTestText == null || passedTestText.trim().length() == 0) {
@@ -67,20 +79,28 @@ public class QuestionnaireTest implements AttributeThresholdTest {
      */
     @Override
     public Boolean test(RecordingDeviceData rdd) {
-        questionnaireType = rdd.getAttributeId().getTypeId().getDisplayName();
-        switch (rdd.getDataValue()) {
-            case GREEN_FLAG:
-                return true;
-            case RED_FLAG:
-                return false;
-            default:
-                // QUESTION: the structure of the questionnaire is to have multiple 
-                //data points for each qurtion and answer. This means that each of 
-                //these will trigger a test for questionnaireTest and therefore all 
-                //except the last data point will return null whihc is equivalent 
-                //to "CANNOT_CALCULATE" - a failure condition. Should the whole 
-                //questionnaire be concatenated into one string line ?
-                return null;
+            questionnaireType = rdd.getAttributeId().getTypeId().getDisplayName();
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            QuestionnaireDO qdo = mapper.readValue(rdd.getDataValue(), new TypeReference<QuestionnaireDO>() {
+            });
+            
+            switch (qdo.getStatus()) {
+                case GREEN_FLAG:
+                    return true;
+                case RED_FLAG:
+                    return false;
+                default:
+                    // QUESTION: the structure of the questionnaire is to have multiple
+                    //data points for each qurtion and answer. This means that each of
+                    //these will trigger a test for questionnaireTest and therefore all
+                    //except the last data point will return null whihc is equivalent
+                    //to "CANNOT_CALCULATE" - a failure condition. Should the whole
+                    //questionnaire be concatenated into one string line ?
+                    return null;
+            }
+        } catch (IOException ex) {
+            return null;
         }
 
     }
@@ -118,6 +138,13 @@ public class QuestionnaireTest implements AttributeThresholdTest {
     @Override
     public String getPassedTestText() {
         String response = passedTestText
+                .replace(QUESTIONNAIRE_TYPE, String.valueOf(questionnaireType));
+        return response;
+    }
+
+    @Override
+    public String getCantCalculateTestText() {
+        String response = cantCalculateTestText
                 .replace(QUESTIONNAIRE_TYPE, String.valueOf(questionnaireType));
         return response;
     }

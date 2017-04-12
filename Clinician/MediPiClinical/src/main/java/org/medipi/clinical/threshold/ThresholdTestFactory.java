@@ -30,6 +30,9 @@ public class ThresholdTestFactory {
     private ChangeOverTimeTest changeOverTimeTest;
 
     @Autowired
+    private RelativeInclusiveHighTest relativeInclusiveHighTest;
+
+    @Autowired
     private QuestionnaireTest questionnaireTest;
 
     public AttributeThresholdTest getInstance(final String testType) {
@@ -41,6 +44,9 @@ public class ThresholdTestFactory {
                 break;
             case "org.medipi.clinical.threshold.ChangeOverTimeTest":
                 attributeThresholdTest = changeOverTimeTest;
+                break;
+            case "org.medipi.clinical.threshold.RelativeInclusiveHighTest":
+                attributeThresholdTest = relativeInclusiveHighTest;
                 break;
             case "org.medipi.clinical.threshold.QuestionnaireTest":
                 attributeThresholdTest = questionnaireTest;

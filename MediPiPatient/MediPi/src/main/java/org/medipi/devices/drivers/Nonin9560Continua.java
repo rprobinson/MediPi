@@ -33,6 +33,7 @@ import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.ProgressIndicator;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -45,10 +46,11 @@ import org.medipi.MediPiMessageBox;
 import org.medipi.devices.Element;
 import org.medipi.devices.Guide;
 import org.medipi.devices.Oximeter;
-import org.medipi.devices.drivers.domain.TimestampValidationInterface;
 import org.medipi.devices.drivers.service.BluetoothPropertiesDO;
 import org.medipi.devices.drivers.service.BluetoothPropertiesService;
 import org.medipi.logging.MediPiLogger;
+import org.medipi.devices.drivers.domain.DeviceTimestampUpdateInterface;
+import org.medipi.devices.drivers.domain.DeviceModeUpdateInterface;
 
 /**
  * A concrete implementation of a specific device - Nonin 9560 PulseOx Pulse
@@ -67,7 +69,7 @@ import org.medipi.logging.MediPiLogger;
  * @author rick@robinsonhq.com
  */
 //@SuppressWarnings("restriction")
-public class Nonin9560Continua extends Oximeter implements TimestampValidationInterface {
+public class Nonin9560Continua extends Oximeter implements DeviceTimestampUpdateInterface, DeviceModeUpdateInterface {
 
     private static final String MAKE = "Nonin";
     private static final String MODEL = "9560";
@@ -75,11 +77,17 @@ public class Nonin9560Continua extends Oximeter implements TimestampValidationIn
     private static final String STARTBUTTONTEXT = "Start";
     private static final String SEARCHING_MESSAGE = "Insert Finger";
     private static final String CONNECTING_MESSAGE = "Connecting";
-    private static final String DOWNLOADING_MESSAGE = "Downloading data";
+    private static final String DOWNLOADING_MESSAGE = "Downloading";
     private ImageView graphic;
+    private ImageView stopImg;
     private String pythonScript;
     private String deviceNamespace;
     private BluetoothPropertiesService bluetoothPropertiesService;
+    private Task<String> task = null;
+    private Task<String> modeTask = null;
+    private Task<String> timeTask = null;
+
+    private Process process = null;
 
     /**
      * Constructor for BeurerBF480
@@ -98,6 +106,7 @@ public class Nonin9560Continua extends Oximeter implements TimestampValidationIn
             MediPiLogger.getInstance().log(Nonin9560Continua.class.getName(), error);
             return error;
         }
+        stopImg = medipi.utils.getImageView("medipi.images.no", 20, 20);
         graphic = medipi.utils.getImageView("medipi.images.arrow", 20, 20);
         graphic.setRotate(90);
         initialGraphic = graphic;
@@ -145,7 +154,7 @@ public class Nonin9560Continua extends Oximeter implements TimestampValidationIn
      * @return make and model of device
      */
     @Override
-    public String getDisplayName() {
+    public String getSpecificDeviceDisplayName() {
         return DISPLAYNAME;
     }
 
@@ -155,29 +164,42 @@ public class Nonin9560Continua extends Oximeter implements TimestampValidationIn
      */
     @Override
     protected void downloadData() {
-        resetDevice();
-        Task<String> task = new Task<String>() {
+        if (task == null || !task.isRunning()) {
+            resetDevice();
+            processData();
+        } else {
+            Platform.runLater(() -> {
+                task.cancel();
+                if (process != null && process.isAlive()) {
+                    process.destroy();
+                }
+            });
+
+        }
+    }
+
+    protected void processData() {
+        task = new Task<String>() {
             ArrayList<ArrayList<String>> data = new ArrayList<>();
 
             @Override
             protected String call() throws Exception {
                 try {
+                    setButton2Name("Stop", stopImg);
                     // input datastream from the device driver
                     BufferedReader stdInput = callHDPPython();
                     if (stdInput != null) {
                         String readData = new String();
                         while ((readData = stdInput.readLine()) != null) {
-                            if (medipi.getDebugMode() == MediPi.DEBUG) {
-                                System.out.println(readData);
-                            }
+                            System.out.println(readData);
                             //Digest the incoming read data
                             if (readData.startsWith("START")) {
-                                setButton2Name(SEARCHING_MESSAGE);
+                                setB2Label(SEARCHING_MESSAGE);
                             } else if (readData.startsWith("METADATA")) {
                                 metadata.add(readData.substring(readData.indexOf(":") + 1));
                                 // the LOOP function allows devices to control a progress bar
                             } else if (readData.startsWith("DATA")) {
-                                setButton2Name(DOWNLOADING_MESSAGE);
+                                setB2Label(DOWNLOADING_MESSAGE);
                                 String dataStream = readData.substring(readData.indexOf(":") + 1);
                                 String[] line = dataStream.split(Pattern.quote(separator));
 //                                // add the data to the data array
@@ -208,6 +230,7 @@ public class Nonin9560Continua extends Oximeter implements TimestampValidationIn
             protected void succeeded() {
                 super.succeeded();
                 setButton2Name(STARTBUTTONTEXT, graphic);
+                setB2Label(null);
                 if (getValue().equals("SUCCESS")) {
                     setData(data);
                 } else {
@@ -218,13 +241,13 @@ public class Nonin9560Continua extends Oximeter implements TimestampValidationIn
             @Override
             protected void scheduled() {
                 super.scheduled();
-                setButton2Name(STARTBUTTONTEXT, graphic);
             }
 
             @Override
             protected void failed() {
                 super.failed();
                 setButton2Name(STARTBUTTONTEXT, graphic);
+                setB2Label(null);
                 MediPiMessageBox.getInstance().makeErrorMessage(getValue(), null);
             }
 
@@ -232,25 +255,23 @@ public class Nonin9560Continua extends Oximeter implements TimestampValidationIn
             protected void cancelled() {
                 super.failed();
                 setButton2Name(STARTBUTTONTEXT, graphic);
-                MediPiMessageBox.getInstance().makeErrorMessage(getValue(), null);
+                setB2Label(null);
+//                MediPiMessageBox.getInstance().makeErrorMessage(getValue(), null);
             }
         };        // Set up the bindings to control the UI elements during the running of the task
 
-        // Disabling Button control
-        actionButton.disableProperty().bind(task.runningProperty());
         progressIndicator.visibleProperty().bind(task.runningProperty());
-        button3.disableProperty().bind(Bindings.when(task.runningProperty().and(isSchedule)).then(true).otherwise(false));
+        button3.disableProperty().bind(Bindings.when(task.runningProperty().and(isThisElementPartOfAScheduleExecution)).then(true).otherwise(false));
+        button1.disableProperty().bind(Bindings.when(task.runningProperty().and(isThisElementPartOfAScheduleExecution)).then(true).otherwise(false));
         new Thread(task).start();
     }
 
     public BufferedReader callHDPPython() {
         try {
-            if (medipi.getDebugMode() == MediPi.DEBUG) {
-                System.out.println(pythonScript);
-            }
+            System.out.println(pythonScript);
             String[] callAndArgs = {"python", pythonScript};
-            Process p = Runtime.getRuntime().exec(callAndArgs);
-            BufferedReader stdInput = new BufferedReader(new InputStreamReader(p.getInputStream()));
+            process = Runtime.getRuntime().exec(callAndArgs);
+            BufferedReader stdInput = new BufferedReader(new InputStreamReader(process.getInputStream()));
             return stdInput;
         } catch (Exception ex) {
             MediPiMessageBox.getInstance().makeErrorMessage("Download of data unsuccessful", ex);
@@ -260,147 +281,176 @@ public class Nonin9560Continua extends Oximeter implements TimestampValidationIn
     }
 
     @Override
-    public Node getTimestampMessageBoxContent() {
+    public Node getDeviceTimestampUpdateMessageBoxContent() {
         Guide guide = null;
         try {
             guide = new Guide(deviceNamespace + ".timeset");
         } catch (Exception ex) {
             return new Label("Cant find the appropriate action for setting the timestamp for " + deviceNamespace);
         }
-
+        ProgressIndicator pi = new ProgressIndicator(ProgressIndicator.INDETERMINATE_PROGRESS);
+        pi.setMinSize(20, 20);
+        pi.setMaxSize(20, 20);
+        pi.setVisible(false);
         VBox timeSyncVbox = new VBox();
         HBox buttonHbox = new HBox();
         Label status = new Label("Unsynchronised");
-        status.setId("resultstext");
-        Button syncButton = new Button("Synchronise Bluetooth Device");
+        status.setId("guide-text");
+        Button syncButton = new Button("Synchronise Time");
         syncButton.setId("button-record");
         buttonHbox.setPadding(new Insets(10, 10, 10, 10));
         buttonHbox.setSpacing(10);
         buttonHbox.getChildren().addAll(
                 syncButton,
                 status,
-                progressIndicator
+                pi
         );
         timeSyncVbox.getChildren().addAll(
                 guide.getGuide(),
                 buttonHbox
         );
-        progressIndicator.visibleProperty().bind(syncButton.disableProperty());
         syncButton.setOnAction((ActionEvent t) -> {
-            // Request focus on the username field by default.
-            syncButton.setDisable(true);
-            status.setText("Finding device");
-            Task<String> task = new Task<String>() {
-                @Override
-                protected String call() throws Exception {
-                    StreamConnection conn = null;
-                    try {
-                        LocalDevice localDevice = LocalDevice.getLocalDevice();
-                        System.out.println("Address: " + localDevice.getBluetoothAddress());
-                        System.out.println("Name: " + localDevice.getFriendlyName());
-                        boolean foundIt = false;
-                        for (Element list : bluetoothPropertiesService.getRegisteredElements()) {
-                            if (list.getClassTokenName().equals(Nonin9560Continua.this.getClassTokenName())) {
-                                foundIt = true;
-                            }
-                        }
-                        if (!foundIt) {
-                            throw new Exception("Can't find the device in the configuration");
-                        }
-                        BluetoothPropertiesDO bpdo = bluetoothPropertiesService.getBluetoothPropertyDOByMedipiDeviceName(Nonin9560Continua.this.getClassTokenName());
+            if (timeTask == null || !timeTask.isRunning()) {
+                status.setText("Attempting to connect...");
+                timeTask = callUpdateTask(syncButton, status, "TIMESTAMP");
+                // Set up the bindings to control the UI elements during the running of the task
+                pi.visibleProperty().bind(timeTask.runningProperty());
+                new Thread(timeTask).start();
+            } else {
+                Platform.runLater(() -> {
+                    timeTask.cancel();
+                    status.setText("Synchronisation Cancelled");
+                });
 
-                        // UUID uuid = new UUID(Integer.valueOf(bpdo.getBtProtocolId()));
-                        //Create the servicve url
-                        String connectionString = bpdo.getUrl();
-
-                        //open server url
-                        //Wait for client connection
-                        System.out.println("\nServer Started. Waiting for clients to connect…");
-
-                        Platform.runLater(() -> status.setText("Trying to connect"));
-                        try {
-                            conn = (StreamConnection) Connector.open(connectionString);
-                            System.out.println("Connected:" + connectionString + "\n");
-                            InputStream is = conn.openInputStream();
-                            OutputStream os = conn.openOutputStream();
-
-                            ensureCorrectTime(os);
-
-                            byte b;
-                            int counter = 0;
-                            final byte ackFormat = (byte) 0x06;
-                            final byte nackFormat = (byte) 0x15;
-
-                            while ((b = (byte) is.read()) != -1) {
-                                if (counter == 0 && b == ackFormat) {
-                                    System.out.println("ACK");
-                                    return "SUCCESS";
-                                } else if (counter == 0 && b == nackFormat) {
-                                    System.out.println("NACK");
-                                    return "FAIL";
-                                }
-                                if (counter == 21) {
-                                    counter = 0;
-                                } else {
-                                    counter++;
-                                }
-
-                            }
-                        } catch (IOException e) {
-
-                            return "FAIL";
-                        }
-                    } catch (Exception e) {
-                        MediPiMessageBox.getInstance().makeErrorMessage("", e);
-                    } finally {
-                        if (conn != null) {
-                            try {
-                                conn.close();
-                            } catch (IOException ex) {
-                                //do nothing as if the connection is null it doesnt need closing
-                            }
-                        }
-                    }
-
-                    return "Unknown error connecting to Meter";
-                }
-
-                // the measure of completion and success is returning "SUCCESS"
-                // all other outcomes indicate failure and pipe the failure
-                // reason given from the device to the error message box
-                @Override
-                protected void succeeded() {
-                    super.succeeded();
-                    if (getValue().equals("SUCCESS")) {
-                        Platform.runLater(() -> status.setText("Sucessfully synchronised"));
-                    } else {
-                        Platform.runLater(() -> status.setText("failed to synchronise"));
-                        syncButton.setDisable(false);
-                    }
-                }
-
-                @Override
-                protected void scheduled() {
-                    super.scheduled();
-                }
-
-                @Override
-                protected void failed() {
-                    super.failed();
-                    Platform.runLater(() -> status.setText("failed to synchronise"));
-                    syncButton.setDisable(false);
-                }
-
-                @Override
-                protected void cancelled() {
-                    super.failed();
-                }
-
-            };        // Set up the bindings to control the UI elements during the running of the task
-            progressIndicator.visibleProperty().bind(task.runningProperty());
-            new Thread(task).start();
+            }
         });
         return timeSyncVbox;
+    }
+
+    private Task<String> callUpdateTask(Button syncButton, Label status, String mode) {
+        Task<String> task = new Task<String>() {
+            @Override
+            protected String call() throws Exception {
+                StreamConnection conn = null;
+                try {
+                    Platform.runLater(() -> syncButton.setText("Stop"));
+                    LocalDevice localDevice = LocalDevice.getLocalDevice();
+                    System.out.println("Address: " + localDevice.getBluetoothAddress());
+                    System.out.println("Name: " + localDevice.getFriendlyName());
+                    boolean foundIt = false;
+                    for (Element list : bluetoothPropertiesService.getRegisteredElements()) {
+                        if (list.getClassTokenName().equals(Nonin9560Continua.this.getClassTokenName())) {
+                            foundIt = true;
+                        }
+                    }
+                    if (!foundIt) {
+                        throw new Exception("Can't find the device in the configuration");
+                    }
+                    BluetoothPropertiesDO bpdo = bluetoothPropertiesService.getBluetoothPropertyDOByMedipiDeviceName(Nonin9560Continua.this.getClassTokenName());
+
+                    // UUID uuid = new UUID(Integer.valueOf(bpdo.getBtProtocolId()));
+                    //Create the servicve url
+                    String connectionString = bpdo.getUrl();
+
+                    //open server url
+                    //Wait for client connection
+                    System.out.println("\nServer Started. Waiting for clients to connect…");
+
+                    try {
+
+                        conn = (StreamConnection) Connector.open(connectionString);
+
+                        InputStream is = conn.openInputStream();
+                        OutputStream os = conn.openOutputStream();
+                        int byteInt;
+                        int counter = 0;
+                        // First need to check that the device is in the correct data format - i.e. Data Format 2 - refer to nonin spec
+                        if (mode.equals("MODE")) {
+                            ensureCorrectDataFormat(os);
+                        } else if (mode.equals("TIMESTAMP")) {
+                            // Next need to update the time if necessary
+                            ensureCorrectTime(os);
+                        }
+                        dataloop:
+                        while ((byteInt = is.read()) != -1) {
+                            System.out.print(byteInt + ",");
+                            if (counter == 0 || counter % 22 == 0) {
+                                switch (byteInt) {
+                                    case 6:
+                                        Platform.runLater(() -> status.setText("Successfully synchronised"));
+                                        return "SUCCESS";
+                                    case 15:
+                                        Platform.runLater(() -> status.setText("Synchronisation Failed"));
+                                        cancel();
+                                        return "CANCEL";
+                                    default:
+                                        break;
+                                }
+                            }
+                            counter++;
+                        }
+                    } catch (IOException e) {
+                        Platform.runLater(() -> status.setText("Failed: follow the guide & retry"));
+                        System.out.println("attempt connection: " + Instant.now() + e.getMessage());
+                        return "FAIL";
+                    }
+
+                } catch (Exception e) {
+                    MediPiMessageBox.getInstance().makeErrorMessage("", e);
+                } finally {
+                    if (conn != null) {
+                        try {
+                            conn.close();
+                        } catch (IOException ex) {
+                            //do nothing as if the connection is null it doesnt need closing
+                        }
+                    }
+                }
+
+                Platform.runLater(() -> status.setText("Failed to synchronise"));
+                return "Unknown error connecting to Meter";
+            }
+
+            // the measure of completion and success is returning "SUCCESS"
+            // all other outcomes indicate failure and pipe the failure
+            // reason given from the device to the error message box
+            @Override
+            protected void succeeded() {
+                super.succeeded();
+                if (mode.equals("MODE")) {
+                    syncButton.setText("Synchronise Mode");
+                } else if (mode.equals("TIMESTAMP")) {
+                    syncButton.setText("Synchronise Time");
+                }
+            }
+
+            @Override
+            protected void scheduled() {
+                super.scheduled();
+            }
+
+            @Override
+            protected void failed() {
+                super.failed();
+                Platform.runLater(() -> status.setText("Failed to synchronise"));
+                if (mode.equals("MODE")) {
+                    syncButton.setText("Synchronise Mode");
+                } else if (mode.equals("TIMESTAMP")) {
+                    syncButton.setText("Synchronise Time");
+                }
+            }
+
+            @Override
+            protected void cancelled() {
+                if (mode.equals("MODE")) {
+                    syncButton.setText("Synchronise Mode");
+                } else if (mode.equals("TIMESTAMP")) {
+                    syncButton.setText("Synchronise Time");
+                }
+            }
+
+        };
+        return task;
     }
 
     private void ensureCorrectTime(OutputStream os) throws IOException {
@@ -427,8 +477,70 @@ public class Nonin9560Continua extends Oximeter implements TimestampValidationIn
         os.write(setdatetime);
     }
 
+    //This methos sets the device to be in data format 13 without ATR (attempt to reconnect) which is required for best operation
+    private void ensureCorrectDataFormat(OutputStream os) throws IOException {
+        byte[] dataFormat = new byte[]{
+            (byte) 0x02, //STX
+            (byte) 0x70, //Op Code
+            (byte) 0x04, //Data Size
+            (byte) 0x02, //Data Type
+            (byte) 0x0D, //Data Format
+            (byte) 0x00, //Options
+            (byte) 0x83, //CheckSum
+            (byte) 0x03 //ETX
+        };
+        os.write(dataFormat);
+    }
+
     private int formatDateElements(int i) {
         return Integer.parseInt(Integer.toHexString(i), 16);
+    }
+
+    @Override
+    public Node getDeviceModeUpateMessageBoxContent() {
+        Guide guide = null;
+        try {
+            guide = new Guide(deviceNamespace + ".modeset");
+        } catch (Exception ex) {
+            return new Label("Cant find the appropriate action for setting the mode for " + deviceNamespace);
+        }
+        ProgressIndicator pi = new ProgressIndicator(ProgressIndicator.INDETERMINATE_PROGRESS);
+        pi.setMinSize(20, 20);
+        pi.setMaxSize(20, 20);
+        pi.setVisible(false);
+        VBox timeSyncVbox = new VBox();
+        HBox buttonHbox = new HBox();
+        Label status = new Label("Unsynchronised");
+        status.setId("guide-text");
+        Button syncButton = new Button("Update Mode");
+        syncButton.setId("button-record");
+        buttonHbox.setPadding(new Insets(10, 10, 10, 10));
+        buttonHbox.setSpacing(10);
+        buttonHbox.getChildren().addAll(
+                syncButton,
+                status,
+                pi
+        );
+        timeSyncVbox.getChildren().addAll(
+                guide.getGuide(),
+                buttonHbox
+        );
+        syncButton.setOnAction((ActionEvent t) -> {
+            if (modeTask == null || !modeTask.isRunning()) {
+                status.setText("Attempting to connect...");
+                modeTask = callUpdateTask(syncButton, status, "MODE");
+                // Set up the bindings to control the UI elements during the running of the task
+                pi.visibleProperty().bind(modeTask.runningProperty());
+                new Thread(modeTask).start();
+            } else {
+                Platform.runLater(() -> {
+                    modeTask.cancel();
+                    status.setText("Synchronisation Cancelled");
+                });
+
+            }
+        });
+        return timeSyncVbox;
     }
 
 }

@@ -84,6 +84,9 @@ public class SendAlertService {
                 alertDO.setAlertText(alert.getAlertText());
                 alertDO.setAlertTime(alert.getAlertTime());
                 alertDO.setType(alert.getDataId().getAttributeId().getTypeId().getType());
+                alertDO.setMake(alert.getDataId().getAttributeId().getTypeId().getMake());
+                alertDO.setModel(alert.getDataId().getAttributeId().getTypeId().getModel());
+                alertDO.setStatus(alert.getDataId().getAlertStatus());
                 alertDO.setAttributeName(alert.getDataId().getAttributeId().getAttributeName());
                 alertDO.setDataValue(alert.getDataId().getDataValue());
                 alertDO.setDataValueTime(alert.getDataId().getDataValueTime());

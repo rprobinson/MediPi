@@ -52,7 +52,7 @@ public class BeurerBM55 extends BloodPressure {
     private static final String MAKE = "Beurer";
     private static final String MODEL = "BM-55";
     private static final String DISPLAYNAME = "Beurer BM-55 Blood Pressure Meter";
-    private static final String STARTBUTTONTEXT = "Start ...";
+    private static final String STARTBUTTONTEXT = "Start";
     // The number of increments of the progress bar - a value of 0 removes the progBar
     private static final Double PROGBARRESOLUTION = 60D;
 
@@ -219,7 +219,8 @@ public class BeurerBM55 extends BloodPressure {
         // Disabling Button control
         downloadButton.disableProperty().bind(task.runningProperty());
         progressIndicator.visibleProperty().bind(task.runningProperty());
-        button3.disableProperty().bind(Bindings.when(task.runningProperty().and(isSchedule)).then(true).otherwise(false));
+        button3.disableProperty().bind(Bindings.when(task.runningProperty().and(isThisElementPartOfAScheduleExecution)).then(true).otherwise(false));
+        button1.disableProperty().bind(Bindings.when(task.runningProperty().and(isThisElementPartOfAScheduleExecution)).then(true).otherwise(false));
         //Last measurement taken large display
         meterVBox.visibleProperty().bind(Bindings.when(task.valueProperty().isEqualTo("SUCCESS")).then(true).otherwise(false));
         new Thread(task).start();
@@ -251,8 +252,11 @@ public class BeurerBM55 extends BloodPressure {
      * @return displayName of device
      */
     @Override
-    public String getDisplayName() {
-        return DISPLAYNAME;
-    }
+    public String getSpecificDeviceDisplayName() {
+        if (measurementContext != null) {
+            return DISPLAYNAME + " (" + measurementContext+")";
+        } else {
+            return DISPLAYNAME;
+        }    }
 
 }

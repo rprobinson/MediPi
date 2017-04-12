@@ -69,6 +69,14 @@ public interface AttributeThresholdTest {
 
     /**
      * Method to return a descriptive string taken from the properties file and
+     * substituted with values from the measurement data describing a cant calculate condition
+     *
+     * @return descriptive string of the alert
+     */
+    public String getCantCalculateTestText();
+
+    /**
+     * Method to return a descriptive string taken from the properties file and
      * substituted with values from the measurement data describing a non-failure condition
      *
      * @return descriptive string of the alert

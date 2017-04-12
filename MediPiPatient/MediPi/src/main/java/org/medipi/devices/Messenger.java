@@ -45,7 +45,12 @@ import org.medipi.downloadable.handlers.DownloadableHandlerManager;
 import org.medipi.downloadable.handlers.MessageHandler;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Instant;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.scene.control.TableCell;
+import javafx.scene.image.Image;
 import javafx.scene.paint.Color;
+import org.medipi.AlertBanner;
 import org.medipi.MediPiProperties;
 import org.medipi.authentication.UnlockConsumer;
 import org.medipi.logging.MediPiLogger;
@@ -65,14 +70,15 @@ import org.medipi.utilities.Utilities;
  * the selected message. As MediPi does not expose any inbound ports, incoming
  * messaging is achieved through periodic polling of a secure location. Any new
  * messages received are digested and the UI is updated. A new unread message
- * alerts the dashboard Tile class to superimpose an notification image. All messages
- * are persisted locally to a configurable file location.
+ * alerts the dashboard Tile class to superimpose an notification image. All
+ * messages are persisted locally to a configurable file location.
  *
- * The messages are encrypted using each patient's certificate and must be decrypted
+ * The messages are encrypted using each patient's certificate and must be
+ * decrypted
  *
  * @author rick@robinsonhq.com
  */
-public class Messenger extends Element implements UnlockConsumer {
+public class Messenger extends Element implements UnlockConsumer, MessageReceiver {
 
     private static final String NAME = "Notifications";
     private static final String DISPLAYNAME = "MediPi Notification Messages";
@@ -80,13 +86,13 @@ public class Messenger extends Element implements UnlockConsumer {
     private TextArea messageView;
     private VBox messengerWindow;
     private String messageDir;
-    private ImageView notificationImageView;
+    private Image notificationImageView;
 
     private final BooleanProperty notificationBooleanProperty = new SimpleBooleanProperty(false);
 
     private TableView<Message> messageList;
     private ObservableList<Message> items = FXCollections.observableArrayList();
-    private boolean locked = false;
+    private boolean locked = true;
 
     /**
      * Constructor for Messenger
@@ -117,7 +123,7 @@ public class Messenger extends Element implements UnlockConsumer {
         messengerWindow.setMaxSize(800, 300);
         // get the image file for the notification image to be superimposed on the dashboard tile when a new message is received
         String notificationImageFile = medipi.getProperties().getProperty(MEDIPIIMAGESEXCLAIM);
-        notificationImageView = new ImageView("file:///" + notificationImageFile);
+        notificationImageView = new Image("file:///" + notificationImageFile);
 
         // Create the view of the message content - scrollable
         messageView = new TextArea();
@@ -134,7 +140,7 @@ public class Messenger extends Element implements UnlockConsumer {
         viewSP.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         viewSP.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
         //ascertain if this element is to be displayed on the dashboard
-        String b = MediPiProperties.getInstance().getProperties().getProperty(MediPi.ELEMENTNAMESPACESTEM + uniqueDeviceName +".showdashboardtile");
+        String b = MediPiProperties.getInstance().getProperties().getProperty(MediPi.ELEMENTNAMESPACESTEM + uniqueDeviceName + ".showdashboardtile");
         if (b == null || b.trim().length() == 0) {
             showTile = new SimpleBooleanProperty(true);
         } else {
@@ -155,10 +161,25 @@ public class Messenger extends Element implements UnlockConsumer {
         messageTitleTC.setMinWidth(300);
         messageTitleTC.setCellValueFactory(
                 new PropertyValueFactory<>("messageTitle"));
-        TableColumn timeTC = new TableColumn("Time");
+
+        TableColumn<Message, Instant> timeTC = new TableColumn<>("Message Time");
+        timeTC.setCellValueFactory(cellData -> cellData.getValue().timeProperty());
         timeTC.setMinWidth(200);
-        timeTC.setCellValueFactory(
-                new PropertyValueFactory<>("time"));
+        timeTC.setCellFactory(column -> {
+            return new TableCell<Message, Instant>() {
+                @Override
+                protected void updateItem(Instant item, boolean empty) {
+                    super.updateItem(item, empty);
+
+                    if (item == null || empty) {
+                        setText(null);
+                    } else {
+                        // Format date.
+                        setText(Utilities.DISPLAY_FORMAT_LOCALTIME.format(item));
+                    }
+                }
+            };
+        });
 
         File list[] = new File(dir.toString()).listFiles();
 
@@ -226,8 +247,7 @@ public class Messenger extends Element implements UnlockConsumer {
         window.visibleProperty().addListener((ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) -> {
             if (newValue) {
                 notificationBooleanProperty.setValue(false);
-                medipi.timeSync.set(true);
-                medipi.getLowerBannerAlert().remove("messagewatcher");
+                AlertBanner.getInstance().removeAlert("messagewatcher");
 
             }
         });
@@ -235,6 +255,7 @@ public class Messenger extends Element implements UnlockConsumer {
         // Register this device with the handler
         DownloadableHandlerManager dhm = medipi.getDownloadableHandlerManager();
         dhm.addHandler("PATIENTMESSAGE", new MessageHandler(medipi.getProperties(), dir));
+
         medipi.getMediPiWindow().registerForAuthenticationCallback(this);
         // successful initiation of the this class results in a null return
         return null;
@@ -246,11 +267,15 @@ public class Messenger extends Element implements UnlockConsumer {
      * @return displayName of device
      */
     @Override
-    public String getDisplayName() {
+
+    public String getSpecificDeviceDisplayName() {
         return DISPLAYNAME;
     }
-
-    public void setItems(ObservableList<Message> items) {
+    @Override
+    public String getGenericDeviceDisplayName() {
+        return NAME;
+    }
+    public void setMessageList(ObservableList<Message> items) {
         this.items = items;
         if (!locked) {
             messageList.setItems(items);
@@ -264,7 +289,8 @@ public class Messenger extends Element implements UnlockConsumer {
      *
      * @return BooleanProperty signalling the presence of a new message
      */
-    protected BooleanProperty getAlertBooleanProperty() {
+    @Override
+    public BooleanProperty getAlertBooleanProperty() {
         return notificationBooleanProperty;
     }
 
@@ -328,7 +354,6 @@ public class Messenger extends Element implements UnlockConsumer {
 
     }
 
-
     /**
      * method to return the component to the dashboard
      *
@@ -338,7 +363,7 @@ public class Messenger extends Element implements UnlockConsumer {
     public BorderPane getDashboardTile() throws Exception {
         DashboardTile dashComponent = new DashboardTile(this, showTile);
         dashComponent.addTitle(NAME);
-        dashComponent.addOverlay(notificationImageView, notificationBooleanProperty);
+        dashComponent.addOverlay(new SimpleObjectProperty<>(notificationImageView), notificationBooleanProperty);
         dashComponent.addOverlay(Color.LIGHTPINK, notificationBooleanProperty);
         return dashComponent.getTile();
     }
@@ -349,7 +374,8 @@ public class Messenger extends Element implements UnlockConsumer {
      * @param failureMessage
      * @param e exception
      */
-    protected void callFailure(String failureMessage, Exception e) {
+    @Override
+    public void callFailure(String failureMessage, Exception e) {
         MediPiMessageBox.getInstance().makeErrorMessage(failureMessage, e);
     }
 

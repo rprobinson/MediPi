@@ -15,12 +15,16 @@
  */
 package org.medipi;
 
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
+import java.util.UUID;
+import javax.ws.rs.ProcessingException;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
 import org.medipi.logging.MediPiLogger;
 import org.medipi.messaging.rest.RESTfulMessagingEngine;
+import org.medipi.messaging.vpn.VPNServiceManager;
 import org.medipi.model.DownloadableDO;
 
 /**
@@ -67,14 +71,24 @@ public class PollDownloads
 
     @Override
     public void run() {
-
+        System.out.println("PollDownloads run at: " + Instant.now());
+        UUID uuid = UUID.randomUUID();
+        VPNServiceManager vpnm = null;
         try {
             // get the patient cert - this is only available after the first login 
             // and therefore no downloads are attempted before the first login
             patientCertName = System.getProperty(MEDIPIPATIENTCERTNAME);
-            if (patientCertName == null || patientCertName.trim().length() == 0) {
+            if (!medipi.wifiSync.get()) {
+                System.out.println("WIFI not available - no polling");
+                // Do not try and download anything before wifi is available
+            } else if (patientCertName == null || patientCertName.trim().length() == 0) {
+                System.out.println("Patient Certificate Name not known");
                 // Do not try and download anything before the user password is input for the first time
             } else {
+                vpnm = VPNServiceManager.getInstance();
+                if (vpnm.isEnabled()) {
+                    vpnm.VPNConnection(VPNServiceManager.OPEN, uuid);
+                }
                 HashMap<String, Object> hs = new HashMap<>();
                 hs.put("deviceId", deviceCertName);
                 hs.put("patientId", patientCertName);
@@ -117,11 +131,23 @@ public class PollDownloads
                 }
 
             }
+        } catch (ProcessingException pe) {
+            MediPiLogger.getInstance().log(PollDownloads.class.getName() + ".error", "Attempt to retreive incoming messages has failed - MediPi Concentrator is not available - please try again later. " + pe.getLocalizedMessage());
+            MediPiMessageBox.getInstance().makeErrorMessage("Attempt to retreive incoming messages has failed - MediPi Concentrator is not available - please try again later.", pe);
         } catch (Exception e) {
-            MediPiLogger.getInstance().log(PollDownloads.class.getName() + ".error", "Error detected when attempting to poll the Concentrator: "+ e.getLocalizedMessage());
-            MediPiMessageBox.getInstance().makeErrorMessage("Error detected when attempting to poll the Concentrator: "+ e.getLocalizedMessage(), e);
-
+            MediPiLogger.getInstance().log(PollDownloads.class.getName() + ".error", "Error detected when attempting to poll the Concentrator: " + e.getLocalizedMessage());
+            MediPiMessageBox.getInstance().makeErrorMessage("Error detected when attempting to poll the Concentrator: " + e.getLocalizedMessage(), e);
+        } finally {
+            System.out.println("pollFinally1");
+            if (vpnm != null && vpnm.isEnabled()) {
+                try {
+                    System.out.println("pollFinally2");
+                    vpnm.VPNConnection(VPNServiceManager.CLOSE, uuid);
+                    System.out.println("pollFinally3");
+                } catch (Exception ex) {
+                    MediPiLogger.getInstance().log(PollDownloads.class.getName(), ex);
+                }
+            }
         }
-
     }
 }

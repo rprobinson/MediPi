@@ -46,9 +46,15 @@ import org.medipi.MediPiProperties;
  */
 public class Guide {
 
+    public static final int RESET = 0;
+    public static final int INCREMENT = 1;
+    public static final int DECREMENT = -1;
     private final String guideSet;
     private final ArrayList<Node[]> instructions = new ArrayList<>();
     private int instructionNo;
+    private Button forward;
+    private Button back;
+    private HBox instructionHBox;
 
     /**
      * Constructor to configure the guide ruleset
@@ -136,7 +142,7 @@ public class Guide {
         guideHBox.setAlignment(Pos.CENTER);
         instructionNo = 0;
         Node n[] = instructions.get(instructionNo);
-        HBox instructionHBox = new HBox();
+        instructionHBox = new HBox();
         instructionHBox.setPadding(new Insets(0, 5, 0, 5));
         instructionHBox.setSpacing(10);
         instructionHBox.setMinHeight(250);
@@ -146,11 +152,11 @@ public class Guide {
                 n[1]
         );
         //add the forward and back buttons
-        Button back = new Button("<");
+        back = new Button("<");
         back.setMinHeight(250);
         back.setMinWidth(50);
         back.setId("guide-button-back");
-        Button forward = new Button(">");
+        forward = new Button(">");
         forward.setMinHeight(250);
         forward.setMinWidth(50);
         forward.setId("guide-button-forward");
@@ -170,31 +176,50 @@ public class Guide {
         }
         //Add functionality to forward button
         forward.setOnAction((ActionEvent t) -> {
-            if (instructionNo == 0) {
-                back.setDisable(false);
-            }
-            instructionNo++;
-            instructionHBox.getChildren().clear();
-            Node[] n1 = instructions.get(instructionNo);
-            instructionHBox.getChildren().addAll(n1[0], n1[1]);
-            if (instructionNo == instructions.size() - 1) {
-                forward.setDisable(true);
-            }
+            changeInstruction(INCREMENT);
         });
         //Add functionality to back button
         back.setOnAction((ActionEvent t) -> {
-            if (instructionNo == instructions.size() - 1) {
-                forward.setDisable(false);
-            }
-            instructionNo--;
-            instructionHBox.getChildren().clear();
-            Node[] n1 = instructions.get(instructionNo);
-            instructionHBox.getChildren().addAll(n1[0], n1[1]);
-            if (instructionNo == 0) {
-                back.setDisable(true);
-            }
+            changeInstruction(DECREMENT);
         });
         return guideVBox;
+    }
+
+    private void changeInstruction(int change) {
+        if (instructionHBox == null) {
+            return;
+        }
+        switch (change) {
+            case -1:
+                instructionNo--;
+                break;
+            case 0:
+                instructionNo = 0;
+                break;
+            case 1:
+                instructionNo++;
+                break;
+            default:
+                return;
+        }
+
+        instructionHBox.getChildren().clear();
+        Node[] n1 = instructions.get(instructionNo);
+        instructionHBox.getChildren().addAll(n1[0], n1[1]);
+        if (instructionNo == instructions.size() - 1) {
+            forward.setDisable(true);
+        } else {
+            forward.setDisable(false);
+        }
+        if (instructionNo == 0) {
+            back.setDisable(true);
+        } else {
+            back.setDisable(false);
+        }
+    }
+
+    public void reset() {
+        changeInstruction(RESET);
     }
 
 }

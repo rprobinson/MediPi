@@ -32,6 +32,7 @@ import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import org.hibernate.annotations.GenerationTime;
 
 /**
  * Entity class encapsulating RecordingDeviceData database table
@@ -45,7 +46,7 @@ import javax.validation.constraints.Size;
     @NamedQuery(name = "RecordingDeviceData.isAlreadyStored", query = "SELECT d FROM RecordingDeviceData d WHERE d.attributeId = :attributeId AND d.dataValue = :dataValue AND d.dataValueTime = :dataValueTime AND d.patientUuid = :patientUuid"),
     @NamedQuery(name = "RecordingDeviceData.findBypatientUuidAfterDate", query = "SELECT d FROM RecordingDeviceData d, RecordingDeviceAttribute a, RecordingDeviceType t WHERE d.attributeId = a.attributeId AND a.typeId =t.typeId AND d.patientUuid.patientUuid = :patientUuid AND d.dataValueTime > :requestDate AND t.type = :type ORDER BY d.dataValueTime"),
     @NamedQuery(name = "RecordingDeviceData.findByTypeAttributeAndData", query = "SELECT d FROM RecordingDeviceData d, RecordingDeviceAttribute a, RecordingDeviceType t WHERE d.attributeId = a.attributeId AND a.typeId =t.typeId AND d.patientUuid.patientUuid = :patientUuid AND t.type = :type AND a.attributeName = :attributeName AND d.dataValueTime = :dataValueTime AND d.dataValue = :dataValue"),
-    @NamedQuery(name = "RecordingDeviceData.findByPatientAndDownloadedTime", query = "SELECT d FROM RecordingDeviceData d, Patient p WHERE d.patientUuid.patientUuid = p.patientUuid AND p.patientUuid = :patientUuid AND d.downloadedTime > :downloadedTime"),
+    @NamedQuery(name = "RecordingDeviceData.findByPatientAndDownloadedTime", query = "SELECT d FROM RecordingDeviceData d, Patient p WHERE d.patientUuid.patientUuid = p.patientUuid AND p.patientUuid = :patientUuid AND d.downloadedTime > :downloadedTime AND d.downloadedTime<= :endTime"),
     //
     @NamedQuery(name = "RecordingDeviceData.findAll", query = "SELECT d FROM RecordingDeviceData d"),
     @NamedQuery(name = "RecordingDeviceData.findByDataId", query = "SELECT d FROM RecordingDeviceData d WHERE d.dataId = :dataId"),
@@ -53,8 +54,6 @@ import javax.validation.constraints.Size;
     @NamedQuery(name = "RecordingDeviceData.findByDataValueTime", query = "SELECT d FROM RecordingDeviceData d WHERE d.dataValueTime = :dataValueTime"),
     @NamedQuery(name = "RecordingDeviceData.findByDownloadedTime", query = "SELECT d FROM RecordingDeviceData d WHERE d.downloadedTime = :downloadedTime")})
 public class RecordingDeviceData implements Serializable {
-
-
 
     @Column(name = "schedule_effective_time")
     @Temporal(TemporalType.TIMESTAMP)
@@ -79,9 +78,10 @@ public class RecordingDeviceData implements Serializable {
     @Column(name = "data_value_time")
     @Temporal(TemporalType.TIMESTAMP)
     private Date dataValueTime;
-    @Basic(optional = false)
-    @NotNull
-    @Column(name = "downloaded_time")
+//    @Basic(optional = false)
+//    @NotNull
+    @Column(name = "downloaded_time", insertable = false, updatable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP(3)")
+    @org.hibernate.annotations.Generated(value = GenerationTime.INSERT)
     @Temporal(TemporalType.TIMESTAMP)
     private Date downloadedTime;
 //    @OneToMany(cascade = CascadeType.ALL, mappedBy = "dataId")
@@ -204,5 +204,4 @@ public class RecordingDeviceData implements Serializable {
 //    public void setAlertCollection(Collection<Alert> alertCollection) {
 //        this.alertCollection = alertCollection;
 //    }
-
 }

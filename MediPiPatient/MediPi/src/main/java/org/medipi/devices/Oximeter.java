@@ -25,6 +25,7 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -55,11 +56,12 @@ import org.medipi.utilities.Utilities;
  */
 public abstract class Oximeter extends Device {
 
-    private final String DEVICE_TYPE = "Oximeter";
+    private final String GENERIC_DEVICE_NAME = "Oximeter";
     private static final String PROFILEID = "urn:nhs-en:profile:Oximeter";
     protected Button actionButton;
     private ArrayList<ArrayList<String>> deviceData = new ArrayList<>();
-
+    private Instant schedStartTime = null;
+    private Instant schedExpireTime = null;
     private VBox oxiWindow;
     private Label meanPulseTF;
     private Label meanPulseDB;
@@ -187,7 +189,9 @@ public abstract class Oximeter extends Device {
 
         // Setup reccord button action to start or stop the main task
         actionButton.setOnAction((ActionEvent t) -> {
-            downloadData();
+            if (confirmReset()) {
+                downloadData();
+            }
         });
 
         meanPulseTF.textProperty().bind(
@@ -220,6 +224,12 @@ public abstract class Oximeter extends Device {
                 .then("")
                 .otherwise("measured at")
         );
+        window.visibleProperty().addListener((ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) -> {
+            if (newValue) {
+                guide.reset();
+
+            }
+        });
 
         // bind the button disable to the time sync indicator
         actionButton.disableProperty().bind(medipi.timeSync.not());
@@ -231,13 +241,13 @@ public abstract class Oximeter extends Device {
     }
 
     /**
-     * method to get the generic Type of the device
+     * method to get the generic device name of the device
      *
-     * @return generic type of device e.g. Oximeter
+     * @return generic device name e.g. Oximeter
      */
     @Override
-    public String getType() {
-        return DEVICE_TYPE;
+    public String getGenericDeviceDisplayName() {
+        return GENERIC_DEVICE_NAME;
     }
 
     @Override
@@ -255,6 +265,8 @@ public abstract class Oximeter extends Device {
         spO2.set(0);
         lastMeasurementTime.set("");
         resultsSummary.setValue("");
+        schedStartTime = null;
+        schedExpireTime = null;
     }
 
     /**
@@ -274,11 +286,11 @@ public abstract class Oximeter extends Device {
         }
         sb.append("metadata->make->").append(getMake()).append("\n");
         sb.append("metadata->model->").append(getModel()).append("\n");
-        sb.append("metadata->displayname->").append(getDisplayName()).append("\n");
+        sb.append("metadata->displayname->").append(getSpecificDeviceDisplayName()).append("\n");
         sb.append("metadata->datadelimiter->").append(separator).append("\n");
-        if (scheduler != null) {
-            sb.append("metadata->scheduleeffectivedate->").append(Utilities.ISO8601FORMATDATEMILLI_UTC.format(scheduler.getCurrentScheduledEventTime())).append("\n");
-            sb.append("metadata->scheduleexpirydate->").append(Utilities.ISO8601FORMATDATEMILLI_UTC.format(scheduler.getNextScheduledEventTime())).append("\n");
+        if (medipi.getScheduler() != null) {
+            sb.append("metadata->scheduleeffectivedate->").append(Utilities.ISO8601FORMATDATEMILLI_UTC.format(schedStartTime)).append("\n");
+            sb.append("metadata->scheduleexpirydate->").append(Utilities.ISO8601FORMATDATEMILLI_UTC.format(schedExpireTime)).append("\n");
         }
         sb.append("metadata->columns->");
         for (String string : columns) {
@@ -317,9 +329,22 @@ public abstract class Oximeter extends Device {
 
     @Override
     public void setData(ArrayList<ArrayList<String>> data) {
-        data = deviceTimestampChecker.checkTimestamp(data);
+        boolean batteryMessage = false;
+            if (data == null ||data.isEmpty()) {
+                // This is a work round for the battery replacement in Nonin 9560 finger Oximeter
+                batteryMessage = true;
+            }
+            data = deviceTimestampChecker.checkTimestamp(data);
+        String dataCheckMessage = null;
+        if ((dataCheckMessage = deviceTimestampChecker.getMessages()) != null) {
+            if (batteryMessage) {
+                // This is a work round for the battery replacement in Nonin 9560 finger Oximeter
+                MediPiMessageBox.getInstance().makeMessage(getSpecificDeviceDisplayName() + "\n" + dataCheckMessage + "\n" + "This condition can happen with the Nonin 9560 Pulse Oximeter when the batteries need replacing. Retry the measurement and replace them if this message is repeated");
+            } else {
+                MediPiMessageBox.getInstance().makeMessage(getSpecificDeviceDisplayName() + "\n" + dataCheckMessage);
+            }
+        }
         if (data == null || data.isEmpty()) {
-            MediPiMessageBox.getInstance().makeMessage("No data is available from " + getDisplayName());
         } else {
             for (ArrayList<String> a : data) {
                 Instant i = Instant.parse(a.get(0));
@@ -329,7 +354,13 @@ public abstract class Oximeter extends Device {
                 hasData.set(true);
             }
             deviceData = data;
+            Scheduler scheduler = null;
+            if ((scheduler = medipi.getScheduler()) != null) {
+                schedStartTime = scheduler.getCurrentScheduleStartTime();
+                schedExpireTime = scheduler.getCurrentScheduleExpiryTime();
+            }
         }
+
     }
 
     protected void displayData(Instant time, int pulse, int spo2) {
@@ -337,8 +368,7 @@ public abstract class Oximeter extends Device {
             this.pulse.set(pulse);
             this.spO2.set(spo2);
             this.lastMeasurementTime.set(Utilities.DISPLAY_DEVICE_FORMAT_LOCALTIME.format(time));
-            resultsSummary.set(
-                    getType() + " - "
+            resultsSummary.set(getGenericDeviceDisplayName() + " - "
                     + this.pulse.getValue().toString() + "BPM, "
                     + this.spO2.getValue().toString() + "%SpO2");
         });
@@ -352,7 +382,7 @@ public abstract class Oximeter extends Device {
     @Override
     public BorderPane getDashboardTile() throws Exception {
         DashboardTile dashComponent = new DashboardTile(this, showTile);
-        dashComponent.addTitle(getType());
+        dashComponent.addTitle(getGenericDeviceDisplayName());
         dashComponent.addOverlay(meanPulseDB, "BPM");
         dashComponent.addOverlay(meanSpO2DB, "SpO2");
         dashComponent.addOverlay(Color.LIGHTGREEN, hasDataProperty());

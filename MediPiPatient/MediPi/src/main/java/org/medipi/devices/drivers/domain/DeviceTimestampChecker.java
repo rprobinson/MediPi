@@ -28,6 +28,7 @@ import javafx.scene.layout.GridPane;
 import javafx.util.Pair;
 import org.medipi.MediPi;
 import org.medipi.devices.Element;
+import org.medipi.devices.Scheduler;
 
 /**
  * Class to check through the timestamps from a device and assess them against
@@ -46,8 +47,8 @@ import org.medipi.devices.Element;
  * very immediately taken but will be recent e.g. within the last hour
  *
  * These tests may result in the device requiring resetting to the correct time.
- * The TimestampalidationInterface is used to call the specific guide 
- * 
+ * The TimestampalidationInterface is used to call the specific guide
+ *
  * @author rick@robinsonhq.com
  */
 public class DeviceTimestampChecker {
@@ -62,10 +63,35 @@ public class DeviceTimestampChecker {
     private int realtimeDeviceTimestampDeviation = -1;
     private Element element;
     private String deviceNamespace;
+    private StringBuilder dataResponseMessage = null;
+    private MediPi medipi;
+    private boolean enforceWithinCurrentScheduledPeriod = false;
+    private boolean latestValueOnly = false;
 
-    public DeviceTimestampChecker(MediPi medipi, Element elem) throws Exception {
+    public DeviceTimestampChecker(MediPi m, Element elem) throws Exception {
         element = elem;
+        medipi = m;
         deviceNamespace = MediPi.ELEMENTNAMESPACESTEM + element.getClassTokenName();
+        String enforce = medipi.getProperties().getProperty(deviceNamespace + ".enforcewithincurrentscheduledperiod");
+        if (enforce != null) {
+            if (enforce.trim().toLowerCase().startsWith("y")) {
+                enforceWithinCurrentScheduledPeriod = true;
+            } else {
+                enforceWithinCurrentScheduledPeriod = false;
+            }
+        } else {
+            enforceWithinCurrentScheduledPeriod = false;
+        }
+        String latest = medipi.getProperties().getProperty(deviceNamespace + ".returnonlythelatestvalue");
+        if (latest != null) {
+            if (latest.trim().toLowerCase().startsWith("y")) {
+                latestValueOnly = true;
+            } else {
+                latestValueOnly = false;
+            }
+        } else {
+            latestValueOnly = false;
+        }
         try {
             String time = medipi.getProperties().getProperty(deviceNamespace + ".storeddevicetimestampdeviation");
             if (time == null || time.trim().length() == 0) {
@@ -89,14 +115,16 @@ public class DeviceTimestampChecker {
     }
 
     public ArrayList<ArrayList<String>> checkTimestamp(ArrayList<ArrayList<String>> list) {
-        ArrayList<ArrayList<String>> result = new ArrayList<ArrayList<String>>();
+        ArrayList<ArrayList<String>> result = new ArrayList<>();
         boolean withinRealTimeDeviation = false;
         boolean withinStoredDeviation = false;
+        dataResponseMessage = new StringBuilder();
         if (list.isEmpty()) {
+            dataResponseMessage.append("No data is available from the device.\n");
             return result;
         }
         if (storedDeviceTimestampDeviation == -1 && realtimeDeviceTimestampDeviation == -1) {
-            return list;
+            return latestValueOnly(isWithinCurrentScheduledPeriod(list));
         }
 
         if (realtimeDeviceTimestampDeviation != -1 && storedDeviceTimestampDeviation != -1) {
@@ -105,11 +133,18 @@ public class DeviceTimestampChecker {
                 callDialogue();
                 return null;
             } else {
-                return isStoredInPeriod(result, realtimeDeviceTimestampDeviation);
+                result = latestValueOnly(isStoredInPeriod(result, realtimeDeviceTimestampDeviation));
+                if (result == null) {
+                    callDialogue();
+                    return null;
+                } else {
+                    return result;
+                }
+
             }
         }
         if (realtimeDeviceTimestampDeviation != -1) {
-            result = isRealTimeInPeriod(list);
+            result = latestValueOnly(isRealTimeInPeriod(list));
             if (result == null) {
                 callDialogue();
                 return null;
@@ -119,7 +154,13 @@ public class DeviceTimestampChecker {
 
         }
         if (storedDeviceTimestampDeviation != -1) {
-            return isStoredInPeriod(list, 0);
+            result = latestValueOnly(isStoredInPeriod(list, 0));
+            if (result == null) {
+                callDialogue();
+                return null;
+            } else {
+                return result;
+            }
         }
         return result;
         // sort the list in reverse order
@@ -151,19 +192,20 @@ public class DeviceTimestampChecker {
         ArrayList<ArrayList<String>> returnList = new ArrayList<ArrayList<String>>();
 
         for (ArrayList<String> a : inArray) {
-            Instant i = Instant.parse(a.get(0));
+            Instant dataTime = Instant.parse(a.get(0));
             Instant postLimit = now.plus(futureTollerance, ChronoUnit.MINUTES);
             Instant priorLimit = now.minus(storedDeviceTimestampDeviation, ChronoUnit.MINUTES);
 
-            if (i.isAfter(priorLimit) && i.isBefore(postLimit)) {
+            if (dataTime.isAfter(priorLimit) && dataTime.isBefore(postLimit)) {
                 //Physiological device clock is within stored threshold - accept
                 returnList.add(a);
             } else //Physiological device clock is beyong the future limit therefore all data is questionable wrt timestamp - REJECT ALL
-            {
-                if (i.isAfter(postLimit)) {
+             if (dataTime.isAfter(postLimit)) {
+                    dataResponseMessage.append("A measurement taken at " + dataTime + " is in the future and therfore all data is deemed suspect.\n");
                     return null;
+                } else {
+                    dataResponseMessage.append("A measurement taken at " + dataTime + " is too old and has been ignored.\n");
                 }
-            }
 
         }
         // After having tested all results return those which are in the acceptable timeframe.
@@ -182,23 +224,24 @@ public class DeviceTimestampChecker {
         boolean unacceptableResult = false;
 
         for (ArrayList<String> a : inArray) {
-            Instant i = Instant.parse(a.get(0));
+            Instant dataTime = Instant.parse(a.get(0));
             Instant postLimit = now.plus(realtimeDeviceTimestampDeviation, ChronoUnit.MINUTES);
             Instant priorLimit = now.minus(realtimeDeviceTimestampDeviation, ChronoUnit.MINUTES);
 
-            if (i.isAfter(priorLimit) && i.isBefore(postLimit)) {
+            if (dataTime.isAfter(priorLimit) && dataTime.isBefore(postLimit)) {
                 //Physiological device clock is within REALTIME threshold - accept
                 requiredResult = true;
             } else //Physiological device clock is beyong the future limit therefore all data is questionable wrt timestamp - REJECT ALL
-            {
-                if (i.isAfter(postLimit)) {
+             if (dataTime.isAfter(postLimit)) {
+                    dataResponseMessage.append("A measurement taken at " + dataTime + " is in the future and therfore all data is deemed suspect.\n");
                     unacceptableResult = true;
+                } else {
+                    dataResponseMessage.append("A measurement taken at " + dataTime + " is too old and has been ignored.\n");
                 }
-            }
 
         }
-        // After having tested all results provided that there is 1 acceptable 
-        // result and 0 unacceptable results we pass all data points. 
+        // After having tested all results, provided that there is 1 acceptable 
+        // result and 0 unacceptable results, we pass all data points. 
         // Otherwise the whole list is abandoned
         if (unacceptableResult || !requiredResult) {
             return null;
@@ -211,12 +254,14 @@ public class DeviceTimestampChecker {
     }
 
     private void showDialogue() {
-        TimestampValidationInterface tvi = (TimestampValidationInterface) element;
-        Node guide = tvi.getTimestampMessageBoxContent();
+        DeviceTimestampUpdateInterface tvi = (DeviceTimestampUpdateInterface) element;
+        Node guide = tvi.getDeviceTimestampUpdateMessageBoxContent();
         // Create the custom dialog.
         Dialog<Pair<String, String>> dialog = new Dialog<>();
+        dialog.getDialogPane().getStylesheets().add("file:///" + medipi.getCssfile());
+        dialog.getDialogPane().setId("message-window");
         dialog.setTitle("Time Synchronisation");
-        dialog.setHeaderText(element.getDisplayName() + " requires time synchronisation");
+        dialog.setHeaderText(element.getSpecificDeviceDisplayName() + " requires time synchronisation");
 
 // Set the button types.
         ButtonType okButton = new ButtonType("OK", ButtonData.OK_DONE);
@@ -239,5 +284,67 @@ public class DeviceTimestampChecker {
         });
 
         dialog.showAndWait();
+    }
+
+    private ArrayList<ArrayList<String>> isWithinCurrentScheduledPeriod(ArrayList<ArrayList<String>> list) {
+        Scheduler scheduler = null;
+        if ((scheduler = medipi.getScheduler()) != null && enforceWithinCurrentScheduledPeriod) {
+            ArrayList<ArrayList<String>> returnList = new ArrayList<>();
+
+            for (ArrayList<String> a : list) {
+                Instant dataTime = Instant.parse(a.get(0));
+
+                if (scheduler.getCurrentScheduleStartTime().isBefore(dataTime) && scheduler.getCurrentScheduleExpiryTime().isAfter(dataTime)) {
+                    //Physiological device clock is within scheduled period - accept
+                    returnList.add(a);
+                } else {
+                    dataResponseMessage.append("A measurement taken at " + dataTime + " is outside the current scheduled period and have been ignored.\n");
+                }
+
+            }
+            // After having tested all results return those which are in the acceptable timeframe.
+            // If any resuilts are before the prior threshold these are excluded
+            // If any results are before the post threshold the whole list is abandoned
+            if (returnList.isEmpty()) {
+                return null;
+            } else {
+                return returnList;
+            }
+        } else {
+            return list;
+        }
+    }
+
+    private ArrayList<ArrayList<String>> latestValueOnly(ArrayList<ArrayList<String>> list) {
+        if (latestValueOnly && list !=null) {
+            ArrayList<ArrayList<String>> returnList = new ArrayList<>();
+
+            Instant latestDataTime = Instant.EPOCH;
+            ArrayList<String> latestValue = null;
+            for (ArrayList<String> a : list) {
+                if (latestDataTime.isBefore(Instant.parse(a.get(0)))) {
+                    latestDataTime = Instant.parse(a.get(0));
+                    latestValue = a;
+                }
+            }
+            if (!latestValue.isEmpty()) {
+                returnList.add(latestValue);
+            }
+            if (returnList.isEmpty()) {
+                return null;
+            } else {
+                return returnList;
+            }
+        } else {
+            return list;
+        }
+    }
+
+    public String getMessages() {
+        if (dataResponseMessage.toString() == null || dataResponseMessage.toString().equals("")) {
+            return null;
+        } else {
+            return dataResponseMessage.toString();
+        }
     }
 }

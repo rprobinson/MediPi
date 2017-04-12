@@ -43,7 +43,6 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
-import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
@@ -455,7 +454,7 @@ public class UploadEncryptionAdapter {
                     .subject(new String(encryptedKey, StandardCharsets.UTF_8))
                     .build();
 
-            System.out.println(claimsSet.toJSONObject());
+//            System.out.println(claimsSet.toJSONObject());
 
             // Request JWT encrypted with RSA-OAEP-256 and 256-bit AES/GCM
             JWEHeader header = new JWEHeader(JWEAlgorithm.RSA_OAEP_256, EncryptionMethod.A256GCM);
@@ -565,7 +564,7 @@ public class UploadEncryptionAdapter {
             try {
                 JWSVerifier verifier = new RSASSAVerifier(signPublicKey);
                 if (jwsObject.verify(verifier)) {
-                    System.out.println(jwsObject.getPayload().toString());
+//                    System.out.println(jwsObject.getPayload().toString());
                     return true;
                 } else {
                     throw new Exception("Signature does not verify.");
@@ -632,10 +631,10 @@ public class UploadEncryptionAdapter {
                     if (isSelfSigned(trustedCerts[i])) {
                         // found root ca
                         found = true;
-                        System.out.println("validating root" + trustedCerts[i].getSubjectX500Principal().getName());
+//                        System.out.println("validating root" + trustedCerts[i].getSubjectX500Principal().getName());
                     } else if (!client.equals(trustedCerts[i])) {
                         // find parent ca
-                        System.out.println("validating via:" + trustedCerts[i].getSubjectX500Principal().getName());
+//                        System.out.println("validating via:" + trustedCerts[i].getSubjectX500Principal().getName());
                         found = validateKeyChain(trustedCerts[i], trustedCerts);
                     }
                 } catch (CertPathValidatorException e) {

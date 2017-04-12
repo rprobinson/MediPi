@@ -27,6 +27,7 @@ import static java.nio.file.StandardWatchEventKinds.OVERFLOW;
 import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import javafx.collections.ObservableMap;
@@ -42,15 +43,15 @@ import org.apache.commons.io.IOUtils;
 public class TimeServerWatcher extends Thread {
 
     private static final String MEDIPITIMESYNCSERVERRESPONSESTRING = "medipi.timesyncserver.responsestring";
-    private static final String ALERTBANNERMESSAGE = "Clock not synchronised, please wait";
+    private static final String ALERTBANNERMESSAGE = "Readings can't be taken until clock syncs...";
     private static final String CLASSKEY = "timeserver";
     private final WatchService watcher;
     private final Map<WatchKey, Path> keys;
     private boolean trace = false;
     private final MediPi medipi;
     private final Path dir;
-    ObservableMap<String, String> alertBanner;
     private String timeSyncSuccessString ="";
+    private AlertBanner alertBanner = AlertBanner.getInstance();
 
     @SuppressWarnings("unchecked")
     static <T> WatchEvent<T> cast(WatchEvent<?> event) {
@@ -77,8 +78,6 @@ public class TimeServerWatcher extends Thread {
         // enable trace after initial registration
         this.trace = true;
 
-        alertBanner = medipi.getLowerBannerAlert();
-
         testFileContents(dir.resolve("timesync.txt"));
         start();
     }
@@ -100,6 +99,7 @@ public class TimeServerWatcher extends Thread {
     @Override
     public void run() {
 
+        System.out.println("TimeServerWatcher run at: "+Instant.now());
         boolean running = true;
         while (running) {
 
@@ -157,14 +157,14 @@ public class TimeServerWatcher extends Thread {
             String everything = IOUtils.toString(inputStream);
             if (everything.toLowerCase().contains(timeSyncSuccessString)) {
                 medipi.timeSync.set(true);
-                alertBanner.remove(CLASSKEY);
+                alertBanner.removeAlert(CLASSKEY);
             } else {
                 medipi.timeSync.set(false);
-                alertBanner.put(CLASSKEY, ALERTBANNERMESSAGE);
+                alertBanner.addAlert(CLASSKEY, ALERTBANNERMESSAGE);
             }
         } catch (FileNotFoundException ex) {
             medipi.timeSync.set(false);
-            alertBanner.put(CLASSKEY, ALERTBANNERMESSAGE);
+            alertBanner.addAlert(CLASSKEY, ALERTBANNERMESSAGE);
         } catch (IOException ex) {
             return "Can't access the Time server directory";
         } finally {

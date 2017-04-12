@@ -89,17 +89,13 @@ public abstract class Element {
      * The centre button (2) on the bottom banner
      */
     protected Button button2 = null;
-
-    /**
-     * Reference to the Scheduler class if present
-     */
-    protected Scheduler scheduler = null;
+    protected Label b2Label = new Label();
 
     /**
      * when this Element is called this defines if it is being called as part of
      * a scheduled chain of measurements
      */
-    protected BooleanProperty isSchedule = new SimpleBooleanProperty(false);
+    protected BooleanProperty isThisElementPartOfAScheduleExecution = new SimpleBooleanProperty(false);
 
     protected ProgressIndicator progressIndicator = new ProgressIndicator(ProgressIndicator.INDETERMINATE_PROGRESS);
     protected boolean confirm = false;
@@ -117,9 +113,9 @@ public abstract class Element {
         //bind the visibility property so that when not visible the panel doesnt take any space
         window.managedProperty().bind(window.visibleProperty());
         // set up the bottom button banner
-        bottom.setMinHeight(70);
-        bottom.setMaxHeight(70);
-        bottom.setPadding(new Insets(0, 10, 0, 10));
+        bottom.setMinHeight(50);
+        bottom.setMaxHeight(50);
+        bottom.setPadding(new Insets(0, 10, 10, 10));
         progressIndicator.setMinSize(40, 40);
         progressIndicator.setMaxSize(40, 40);
         progressIndicator.setVisible(false);
@@ -174,12 +170,29 @@ public abstract class Element {
     }
 
     /**
-     * setter for an instance of Scheduler
+     * Allows the device window to be made visible or invisible.
      *
-     * @param s the instance of scheduler to be set
      */
-    public void setScheduler(Scheduler s) {
-        scheduler = s;
+    public void callDeviceWindow() {
+        // == null : normal mode when no schedule is being run
+        ImageView iw = medipi.utils.getImageView("medipi.images.arrow", 20, 20);
+        iw.setRotate(180);
+        Button b1 = new Button("Back", iw);
+        b1.setId("button-back");
+        b1.setAlignment(Pos.CENTER_RIGHT);
+        b1.setOnAction((ActionEvent t) -> {
+            if (confirmation()) {
+                medipi.callDashboard();
+            }
+        });
+        // This dummy button is present to allow binding against it for disabling the next button in schedule mode
+        Button b3 = new Button("Dummy");
+        b3.setVisible(false);
+        isThisElementPartOfAScheduleExecution.set(false);
+        setButton1(b1);
+        setButton3(b3);
+        medipi.hideAllWindows();
+        window.setVisible(true);
     }
 
     /**
@@ -187,78 +200,112 @@ public abstract class Element {
      * recursive class which calls itself as many times as ElementClass Tokens
      * there are in the chain
      *
-     * @param ClassTokenChain an array list of Element Class Tokens defining the
-     * order of the scheduled measurements
+     * @param fwdClassTokenChain an array list of Element Class Tokens defining
+     * the order of the scheduled measurements
      */
-    public void callDeviceWindow(ArrayList<String> ClassTokenChain) {
-        if (ClassTokenChain == null) {
-            // == null : normal mode when no schedule is being run
+    public void callDeviceWindow(ArrayList<String> bckClassTokenChain, ArrayList<String> fwdClassTokenChain) {
+        // as part of a scheduled list of element Class Tokens
+        // The Cancel Schedule button doesn't get disabled when any of the 
+        // Element tasks are in operation - should these be stopped if cancel
+        // is activated? 
+        //where there are >1 scheduled elements left to call
+
+        if (bckClassTokenChain.isEmpty()) {
+            // first token
             ImageView iw = medipi.utils.getImageView("medipi.images.arrow", 20, 20);
             iw.setRotate(180);
-            Button b3 = new Button("Back", iw);
-            b3.setId("button-back");
-            b3.setOnAction((ActionEvent t) -> {
+            Button b1 = new Button("Back", iw);
+            b1.setId("button-back");
+            b1.setAlignment(Pos.CENTER_RIGHT);
+            b1.setOnAction((ActionEvent t) -> {
                 if (confirmation()) {
-                    medipi.callDashboard();
+                    medipi.getScheduler().callDeviceWindow();
+                    medipi.getScheduler().runningProperty().set(false);
                 }
             });
-            isSchedule.set(false);
+            isThisElementPartOfAScheduleExecution.set(true);
+            Button b3 = makeNextButton(fwdClassTokenChain, bckClassTokenChain);
+            setButton1(b1);
             setButton3(b3);
-            setButton1(null);
+        } else if (fwdClassTokenChain.isEmpty()) {
+            // Last token
+            isThisElementPartOfAScheduleExecution.set(true);
+            Button b1 = makeBackButton(bckClassTokenChain, fwdClassTokenChain);
+            setButton1(b1);
+            setButton3(null);
         } else {
-            // as part of a scheduled list of element Class Tokens
-            // The Cancel Schedule button doesn't get disabled when any of the 
-            // Element tasks are in operation - should these be stopped if cancel
-            // is activated? 
-            Button b1 = new Button("Cancel", medipi.utils.getImageView("medipi.images.cancel", 20, 20));
-            b1.setId("button-cancel");
-            b1.setOnAction((ActionEvent t) -> {
-                medipi.callDashboard();
-                scheduler.runningProperty().set(false);
-            });
-            if (ClassTokenChain.isEmpty()) {
-                // Last token
-                isSchedule.set(true);
-                setButton1(b1);
-                setButton3(null);
-            } else {
-                //where there are >1 scheduled elements left to call
-                String nextDevice = ClassTokenChain.get(0);
-                ArrayList<String> remainingDevices = new ArrayList(ClassTokenChain.subList(1, ClassTokenChain.size()));
 
-                Button b3 = new Button("Next", medipi.utils.getImageView("medipi.images.arrow", 20, 20));
-                b3.setId("button-next");
-                b3.setOnAction((ActionEvent t) -> {
-                    if (confirmation()) {
-                        Element e = medipi.getElement(nextDevice);
-                        e.callDeviceWindow(remainingDevices);
-                        if (Device.class.isAssignableFrom(Element.this.getClass())) {
-                            Device d = (Device) Element.this;
-                            if (d.hasDataProperty().get()) {
-                                scheduler.addScheduleData(Scheduler.MEASURED, Instant.now(), new ArrayList<>(Arrays.asList(getClassTokenName())));
-                            }
-                        }
-                    }
-                });
+            Button b1 = makeBackButton(bckClassTokenChain, fwdClassTokenChain);
 
-                isSchedule.set(true);
-                setButton3(b3);
-                setButton1(b1);
+            Button b3 = makeNextButton(fwdClassTokenChain, bckClassTokenChain);
 
-            }
+            isThisElementPartOfAScheduleExecution.set(true);
+            setButton3(b3);
+            setButton1(b1);
 
         }
+
         medipi.hideAllWindows();
         window.setVisible(true);
+    }
+
+    private Button makeNextButton(ArrayList<String> fwdClassTokenChain, ArrayList<String> bckClassTokenChain) {
+        Button b3 = new Button("Next", medipi.utils.getImageView("medipi.images.arrow", 20, 20));
+        b3.setId("button-next");
+        b3.setAlignment(Pos.CENTER);
+        b3.setOnAction((ActionEvent t) -> {
+            if (confirmation()) {
+                String nextDevice = fwdClassTokenChain.get(0);
+                ArrayList<String> remainingDevices = new ArrayList(fwdClassTokenChain.subList(1, fwdClassTokenChain.size()));
+                ArrayList<String> previousDevices = bckClassTokenChain;
+                previousDevices.add(getClassTokenName());
+                Element e = medipi.getElement(nextDevice);
+                e.callDeviceWindow(previousDevices, remainingDevices);
+                //NEED TO DO SOMETHING TO RE_IMPLEMENT ADDITION OF SCHEDIULER METADATA MEASURED
+                if (Device.class.isAssignableFrom(Element.this.getClass())) {
+                    Device d = (Device) Element.this;
+                    if (d.hasDataProperty().get()) {
+                        medipi.getScheduler().addScheduleData(Scheduler.MEASURED, Instant.now(), new ArrayList<>(Arrays.asList(getClassTokenName())));
+                    }
+                }
+            }
+        });
+        return b3;
+    }
+
+    private Button makeBackButton(ArrayList<String> bckClassTokenChain, ArrayList<String> fwdClassTokenChain) {
+        //where there are >1 scheduled elements left to call
+
+        ImageView iw = medipi.utils.getImageView("medipi.images.arrow", 20, 20);
+        iw.setRotate(180);
+        Button b1 = new Button("Back", iw);
+        b1.setId("button-back");
+        b1.setAlignment(Pos.CENTER_RIGHT);
+        b1.setOnAction((ActionEvent t) -> {
+            if (confirmation()) {
+                String prevDevice = bckClassTokenChain.get(bckClassTokenChain.size() - 1);
+                ArrayList<String> remainingDevices = fwdClassTokenChain;
+                remainingDevices.add(0, getClassTokenName());
+                ArrayList<String> previousDevices = new ArrayList(bckClassTokenChain.subList(0, bckClassTokenChain.size() - 1));
+                Element e = medipi.getElement(prevDevice);
+                e.callDeviceWindow(previousDevices, remainingDevices);
+            }
+        });
+        return b1;
     }
 
     private boolean confirmation() {
         if (confirm) {
             Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "", ButtonType.YES, ButtonType.NO);
-            alert.setTitle(getDisplayName());
-            alert.setHeaderText(getDisplayName());
-            Text text = new Text("Confirm that the input value from " + getDisplayName() + " is correct?");
+            alert.setTitle(getSpecificDeviceDisplayName());
+            alert.setHeaderText(null);
+            alert.getDialogPane().setMaxSize(400, 300);
+            alert.getDialogPane().getStylesheets().add("file:///" + medipi.getCssfile());
+            alert.getDialogPane().setId("message-box");
+            Text text = new Text("Confirm that the input value from " + getSpecificDeviceDisplayName() + " is correct?");
             text.setWrappingWidth(400);
+            alert.setX(50);
+            alert.setY(150);
             alert.getDialogPane().setContent(text);
 
             Optional<ButtonType> result = alert.showAndWait();
@@ -285,15 +332,32 @@ public abstract class Element {
         if (b != null) {
             button2 = b;
             b2hb = new HBox();
+            b2hb.setMinWidth(400);
             b2hb.setSpacing(10);
-            b2hb.getChildren().addAll(button2, progressIndicator);
-            b2hb.setAlignment(Pos.TOP_CENTER);
+            b2hb.getChildren().addAll(
+                    button2,
+                    b2Label,
+                    progressIndicator);
+            b2hb.setAlignment(Pos.CENTER_LEFT);
+            b2hb.setPadding(new Insets(0, 10, 0, 50));
             bottom.setCenter(b2hb);
         }
     }
 
     public void setButton2Name(String name) {
         setButton2Name(name, null);
+    }
+
+    public void setB2Label(String name) {
+        if (Platform.isFxApplicationThread()) {
+            b2Label.setText(name);
+            b2Label.setId("element-text");
+        } else {
+            Platform.runLater(() -> {
+                b2Label.setText(name);
+                b2Label.setId("element-text");
+            });
+        }
     }
 
     public void setButton2Name(String name, Node graphic) {
@@ -320,6 +384,7 @@ public abstract class Element {
         if (b != null) {
             button1 = b;
             bottom.setLeft(button1);
+            button1.setAlignment(Pos.CENTER_LEFT);
         }
     }
 
@@ -334,6 +399,7 @@ public abstract class Element {
         bottom.getChildren().remove(button3);
         if (b != null) {
             button3 = b;
+            button3.setAlignment(Pos.CENTER_RIGHT);
             bottom.setRight(button3);
         }
     }
@@ -344,7 +410,7 @@ public abstract class Element {
      * @return and imageView for this Element
      */
     public ImageView getImage() {
-        return medipi.utils.getImageView(MediPi.ELEMENTNAMESPACESTEM + classToken + ".image", null, null);
+        return medipi.utils.getImageView(MediPi.ELEMENTNAMESPACESTEM + classToken + ".image", null, null, false);
     }
 
     /**
@@ -353,7 +419,7 @@ public abstract class Element {
      *
      */
     public void setElementTitle() {
-        Label title = new Label(this.getDisplayName());
+        Label title = new Label(this.getSpecificDeviceDisplayName());
         title.setId("element-title");
         window.setTop(title);
     }
@@ -372,7 +438,7 @@ public abstract class Element {
      *
      * @return String representation of the Element's Name
      */
-    public abstract String getDisplayName();
+    public abstract String getSpecificDeviceDisplayName();
 
     /**
      * Abstract method to get the dashboard tile
@@ -381,5 +447,12 @@ public abstract class Element {
      * @throws Exception
      */
     public abstract BorderPane getDashboardTile() throws Exception;
+
+    /**
+     * method to get the generic Type of the device e.g."Blood Pressure"
+     *
+     * @return generic type of device
+     */
+    public abstract String getGenericDeviceDisplayName();
 
 }

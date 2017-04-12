@@ -22,6 +22,7 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.StringProperty;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
+import javafx.scene.text.Text;
 import org.medipi.model.DeviceDataDO;
 
 /**
@@ -70,18 +71,11 @@ public abstract class Device extends Element {
     public abstract String init() throws Exception;
 
     /**
-     * method to get the generic Type of the device e.g."Blood Pressure"
-     *
-     * @return generic type of device
-     */
-    public abstract String getType();
-
-    /**
      * Method to get the data payload including the metadata
      *
      * @return DeviceDataDO representation of the data
      */
-    public abstract DeviceDataDO getData();
+    public abstract DeviceDataDO getData() throws Exception;
 
     /**
      * Method to set the data payload
@@ -135,10 +129,14 @@ public abstract class Device extends Element {
             return true;
         }
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-        alert.setTitle(getDisplayName());
-        alert.setHeaderText("MediPi Reset Dialog");
-        alert.setContentText(getDisplayName() + "\n" + getResultsSummary().getValue() + "\nThis reading has not been transmitted.\nAre you sure you want to reset?");
-
+        alert.setTitle(getSpecificDeviceDisplayName());
+        alert.setHeaderText(null);
+        alert.getDialogPane().getStylesheets().add("file:///" + medipi.getCssfile());
+        alert.getDialogPane().setMaxSize(600, 300);
+        alert.getDialogPane().setId("message-box");
+        Text text = new Text(getSpecificDeviceDisplayName() + "\n\n" + getResultsSummary().getValue() + "\nThis reading has not been transmitted.\nAre you sure you want to reset?");
+        text.setWrappingWidth(600);
+        alert.getDialogPane().setContent(text);
         Optional<ButtonType> result = alert.showAndWait();
         if (result.get() == ButtonType.OK) {
             return true;

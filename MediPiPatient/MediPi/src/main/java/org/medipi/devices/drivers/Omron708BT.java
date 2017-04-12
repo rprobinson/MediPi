@@ -19,8 +19,14 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.regex.Pattern;
+import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.concurrent.Task;
 import javafx.scene.Node;
@@ -33,8 +39,8 @@ import org.medipi.MediPiMessageBox;
 import org.medipi.devices.BloodPressure;
 import org.medipi.devices.Guide;
 import org.medipi.devices.drivers.domain.DeviceTimestampChecker;
-import org.medipi.devices.drivers.domain.TimestampValidationInterface;
 import org.medipi.logging.MediPiLogger;
+import org.medipi.devices.drivers.domain.DeviceTimestampUpdateInterface;
 
 /**
  * A concrete implementation of a specific device - Omron708BT Blood Pressure
@@ -53,16 +59,19 @@ import org.medipi.logging.MediPiLogger;
  * @author rick@robinsonhq.com
  */
 @SuppressWarnings("restriction")
-public class Omron708BT extends BloodPressure implements TimestampValidationInterface {
+public class Omron708BT extends BloodPressure implements DeviceTimestampUpdateInterface {
 
     private static final String MAKE = "Omron";
     private static final String MODEL = "708-BT";
     private static final String DISPLAYNAME = "Omron 708-BT Blood Pressure Meter";
-    private static final String STARTBUTTONTEXT = "Start ...";
+    private static final String STARTBUTTONTEXT = "Start";
     // The number of increments of the progress bar - a value of 0 removes the progBar
     private static final Double PROGBARRESOLUTION = 60D;
+    private ImageView stopImg;
     private String deviceNamespace;
+    private Task<String> task = null;
     private DeviceTimestampChecker deviceTimestampChecker;
+    private Process process = null;
 
     String pythonScript;
 
@@ -87,7 +96,7 @@ public class Omron708BT extends BloodPressure implements TimestampValidationInte
         }
 
         progressBarResolution = PROGBARRESOLUTION;
-
+        stopImg = medipi.utils.getImageView("medipi.images.no", 20, 20);
         graphic = medipi.utils.getImageView("medipi.images.arrow", 20, 20);
         graphic.setRotate(90);
         initialGraphic = graphic;
@@ -119,34 +128,52 @@ public class Omron708BT extends BloodPressure implements TimestampValidationInte
      * the generic device class
      */
     @Override
-    public void downloadData(final VBox meterVBox) {
-        Task<String> task = new Task<String>() {
+    public void downloadData(VBox v) {
+        if (task == null || !task.isRunning()) {
+            resetDevice();
+            processData();
+        } else {
+            Platform.runLater(() -> {
+                task.cancel();
+                if (process != null && process.isAlive()) {
+                    process.destroy();
+                }
+            });
+
+        }
+    }
+
+    protected void processData() {
+        task = new Task<String>() {
             ArrayList<ArrayList<String>> data = new ArrayList<>();
 
             @Override
             protected String call() throws Exception {
                 try {
+                    setButton2Name("Stop", stopImg);
                     // input datastream from the device driver
                     BufferedReader stdInput = callHDPPython();
                     if (stdInput != null) {
                         String readData = new String();
                         while ((readData = stdInput.readLine()) != null) {
-                            if (medipi.getDebugMode() == MediPi.DEBUG) {
-                                System.out.println(readData);
-                            }
+                            System.out.println(readData);
                             //Digest the incoming read data
                             if (readData.startsWith("START")) {
-                                setButton2Name("Press Upload");
+                                setB2Label("Press Upload");
                                 updateProgress(0D, progressBarResolution);
                             } else if (readData.startsWith("METADATA")) {
                                 metadata.add(readData.substring(readData.indexOf(":") + 1));
                             } else if (readData.startsWith("DATA")) {
-                                setButton2Name("Downloading");
+                                setB2Label("Downloading");
                                 String dataStream = readData.substring(readData.indexOf(":") + 1);
                                 String[] line = dataStream.split(Pattern.quote(separator));
                                 // add the data to the data array
                                 final ArrayList<String> values = new ArrayList<>();
-                                values.add(line[0]);
+                                // compensate for the date/time change
+                                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
+                                LocalDateTime localtDateAndTime = LocalDateTime.parse(line[0], formatter);
+                                ZonedDateTime zDate = ZonedDateTime.of(localtDateAndTime, ZoneId.systemDefault());
+                                values.add(zDate.toInstant().toString());
                                 values.add(line[1]);
                                 values.add(line[2]);
                                 values.add(line[3]);
@@ -175,6 +202,7 @@ public class Omron708BT extends BloodPressure implements TimestampValidationInte
             protected void succeeded() {
                 super.succeeded();
                 setButton2Name(STARTBUTTONTEXT, graphic);
+                setB2Label(null);
                 if (getValue().equals("SUCCESS")) {
                     setData(data);
                 } else {
@@ -185,13 +213,13 @@ public class Omron708BT extends BloodPressure implements TimestampValidationInte
             @Override
             protected void scheduled() {
                 super.scheduled();
-                setButton2Name(STARTBUTTONTEXT, graphic);
             }
 
             @Override
             protected void failed() {
                 super.failed();
                 setButton2Name(STARTBUTTONTEXT, graphic);
+                setB2Label(null);
                 MediPiMessageBox.getInstance().makeErrorMessage(getValue(), null);
             }
 
@@ -199,7 +227,7 @@ public class Omron708BT extends BloodPressure implements TimestampValidationInte
             protected void cancelled() {
                 super.failed();
                 setButton2Name(STARTBUTTONTEXT, graphic);
-                MediPiMessageBox.getInstance().makeErrorMessage(getValue(), null);
+                setB2Label(null);
             }
 
         };        // Set up the bindings to control the UI elements during the running of the task
@@ -208,10 +236,9 @@ public class Omron708BT extends BloodPressure implements TimestampValidationInte
             downProg.visibleProperty().bind(task.runningProperty());
         }
 
-        // Disabling Button control
-        downloadButton.disableProperty().bind(task.runningProperty());
         progressIndicator.visibleProperty().bind(task.runningProperty());
-        button3.disableProperty().bind(Bindings.when(task.runningProperty().and(isSchedule)).then(true).otherwise(false));
+        button3.disableProperty().bind(Bindings.when(task.runningProperty().and(isThisElementPartOfAScheduleExecution)).then(true).otherwise(false));
+        button1.disableProperty().bind(Bindings.when(task.runningProperty().and(isThisElementPartOfAScheduleExecution)).then(true).otherwise(false));
         //Last measurement taken large display
 //        meterVBox.visibleProperty().bind(Bindings.when(task.valueProperty().isEqualTo("SUCCESS")).then(true).otherwise(false));
         new Thread(task).start();
@@ -219,12 +246,10 @@ public class Omron708BT extends BloodPressure implements TimestampValidationInte
 
     public BufferedReader callHDPPython() {
         try {
-            if (medipi.getDebugMode() == MediPi.DEBUG) {
-                System.out.println(pythonScript);
-            }
+            System.out.println(pythonScript);
             String[] callAndArgs = {"python", pythonScript};
-            Process p = Runtime.getRuntime().exec(callAndArgs);
-            BufferedReader stdInput = new BufferedReader(new InputStreamReader(p.getInputStream()));
+            process = Runtime.getRuntime().exec(callAndArgs);
+            BufferedReader stdInput = new BufferedReader(new InputStreamReader(process.getInputStream()));
             return stdInput;
         } catch (Exception ex) {
             MediPiMessageBox.getInstance().makeErrorMessage("Download of data unsuccessful", ex);
@@ -259,12 +284,16 @@ public class Omron708BT extends BloodPressure implements TimestampValidationInte
      * @return displayName of device
      */
     @Override
-    public String getDisplayName() {
-        return DISPLAYNAME;
+    public String getSpecificDeviceDisplayName() {
+        if (measurementContext != null) {
+            return DISPLAYNAME + " (" + measurementContext + ")";
+        } else {
+            return DISPLAYNAME;
+        }
     }
 
     @Override
-    public Node getTimestampMessageBoxContent() {
+    public Node getDeviceTimestampUpdateMessageBoxContent() {
         try {
             Guide guide = new Guide(deviceNamespace + ".timeset");
             return guide.getGuide();

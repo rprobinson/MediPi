@@ -25,7 +25,7 @@ import javafx.scene.image.ImageView;
 /**
  * Utilities class to allow universal access to useful methods or public Objects
  *
- * 
+ *
  * @author rick@robinsonhq.com
  */
 public class Utilities {
@@ -38,13 +38,15 @@ public class Utilities {
     public static final DateFormat DISPLAY_OXIMETER_TIME_FORMAT_DATE = new SimpleDateFormat("HH:mm:ss");
 
     public static final DateTimeFormatter DISPLAY_DOB_FORMAT = DateTimeFormatter.ofPattern("dd-MMM-yyyy");
-    public static final DateTimeFormatter DISPLAY_DEVICE_FORMAT_LOCALTIME = DateTimeFormatter.ofPattern("HH:mm:ss dd/MM/yyyy").withZone(ZoneId.systemDefault());
+//    public static final DateTimeFormatter DISPLAY_DEVICE_FORMAT_LOCALTIME = DateTimeFormatter.ofPattern("HH:mm:ss dd/MM/yyyy").withZone(ZoneId.systemDefault());
+    public static final DateTimeFormatter DISPLAY_DEVICE_FORMAT_LOCALTIME = DateTimeFormatter.ofPattern("EEE d MMM, h:mma").withZone(ZoneId.systemDefault());
     public static final DateTimeFormatter DISPLAY_SCHEDULE_FORMAT_LOCALTIME = DateTimeFormatter.ofPattern("EEE d MMM, h:mma").withZone(ZoneId.systemDefault());
     public static final DateTimeFormatter INTERNAL_FORMAT_UTC = DateTimeFormatter.ofPattern("yyyyMMddHHmmss").withZone(ZoneId.of("Z"));
     public static final DateTimeFormatter INTERNAL_SPINE_FORMAT_UTC = DateTimeFormatter.ofPattern("yyyyMMddHHmmss.SSS").withZone(ZoneId.of("Z"));
     public static final DateTimeFormatter DISPLAY_FORMAT_LOCALTIME = DateTimeFormatter.ofPattern("EEE d MMM yyyy HH:mm:ss z").withZone(ZoneId.systemDefault());
     public static final DateTimeFormatter ISO8601FORMATDATEMILLI_UTC = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").withZone(ZoneId.of("Z"));
     public static final DateTimeFormatter DISPLAY_TABLE_FORMAT_LOCALTIME = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm").withZone(ZoneId.systemDefault());
+
     /**
      *
      * @param mp
@@ -62,11 +64,27 @@ public class Utilities {
      * @return ImageView of the property name
      */
     public ImageView getImageView(String property, Integer w, Integer h) {
+        return getImageView(property, w, h, true);
+    }
+
+    /**
+     * Utility method to return an imageView from a MediPi property reference
+     *
+     * @param property MediPi property reference
+     * @param w width of returned imageView
+     * @param h height of returned imageView
+     * @return ImageView of the property name
+     */
+    public ImageView getImageView(String property, Integer w, Integer h, boolean defaultImageWhenNotAvailable) {
 
         String img = properties.getProperty(property);
         ImageView image;
         if (img == null || img.trim().length() == 0) {
-            image = new ImageView("/org/medipi/Default.jpg");
+            if (!defaultImageWhenNotAvailable) {
+                image = new ImageView();
+            } else {
+                image = new ImageView("/org/medipi/Default.jpg");
+            }
         } else {
             image = new ImageView("file:///" + img);
         }

@@ -40,13 +40,16 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import org.medipi.DashboardTile;
 import org.medipi.MediPi;
+import org.medipi.MediPiMessageBox;
 import org.medipi.MediPiProperties;
+import org.medipi.devices.drivers.domain.DeviceTimestampChecker;
 import org.medipi.model.DeviceDataDO;
 import org.medipi.utilities.Roller;
 import org.medipi.utilities.Utilities;
 
 /**
- * Class to display and handle the functionality for a manual input only thermometer
+ * Class to display and handle the functionality for a manual input only
+ * thermometer
  *
  * TODO; this class is not genericised as are the other device classes and will
  * need refactoring to be so. This has been done in the first instance for
@@ -56,10 +59,12 @@ import org.medipi.utilities.Utilities;
  */
 public abstract class Thermometer extends Device {
 
-    private final String DEVICE_TYPE = "Thermometer";
+    private final String GENERIC_DEVICE_NAME = "Thermometer";
     private static final String PROFILEID = "urn:nhs-en:profile:Thermometer";
     protected Button actionButton;
     private ArrayList<ArrayList<String>> deviceData = new ArrayList<>();
+    private Instant schedStartTime = null;
+    private Instant schedExpireTime = null;
     private VBox thermWindow;
     private Roller tempTens;
     private Roller tempUnits;
@@ -73,6 +78,7 @@ public abstract class Thermometer extends Device {
     private final StringProperty resultsSummary = new SimpleStringProperty();
     protected static String initialButtonText;
     protected static Node initialGraphic = null;
+    private DeviceTimestampChecker deviceTimestampChecker;
 
     protected ArrayList<String> columns = new ArrayList<>();
     protected ArrayList<String> format = new ArrayList<>();
@@ -122,11 +128,11 @@ public abstract class Thermometer extends Device {
             showTile = new SimpleBooleanProperty(!b.toLowerCase().startsWith("n"));
         }
         tempDB = new Label("");
-        tempTens = new Roller(35, 110, 3, 4);
-        tempUnits = new Roller(35, 110, 0, 9);
+        tempTens = new Roller(50, 110, 3, 4);
+        tempUnits = new Roller(50, 110, 0, 9);
         Label tempPoint = new Label(".");
         tempPoint.setId("resultstext");
-        tempTenths = new Roller(35, 110, 0, 9);
+        tempTenths = new Roller(50, 110, 0, 9);
         tempTens.textProperty().addListener(new ChangeListener<String>() {
             @Override
             public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
@@ -168,7 +174,7 @@ public abstract class Thermometer extends Device {
                 units
         );
         resultsVBox = new VBox();
-        resultsVBox.setPrefWidth(200);
+        resultsVBox.setMinWidth(200);
         resultsVBox.setId("resultsbox");
         resultsVBox.getChildren().addAll(
                 thermHbox,
@@ -203,12 +209,19 @@ public abstract class Thermometer extends Device {
                 .then("")
                 .otherwise("measured at")
         );
+        window.visibleProperty().addListener((ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) -> {
+            if (newValue) {
+                guide.reset();
+
+            }
+        });
         // successful initiation of the this class results in a null return
         // bind the button disable to the time sync indicator
         tempTens.disableProperty().bind(medipi.timeSync.not());
         tempUnits.disableProperty().bind(medipi.timeSync.not());
         tempPoint.disableProperty().bind(medipi.timeSync.not());
         tempTenths.disableProperty().bind(medipi.timeSync.not());
+        deviceTimestampChecker = new DeviceTimestampChecker(medipi, this);
         return null;
     }
 
@@ -221,9 +234,23 @@ public abstract class Thermometer extends Device {
             ArrayList<String> deviceDataSingleRow = new ArrayList<>();
             deviceDataSingleRow.add(valueTime.toString());
             deviceDataSingleRow.add(String.valueOf(value));
+            
             deviceData.add(deviceDataSingleRow);
-            hasData.set(true);
-            confirm = true;
+            deviceData = (deviceTimestampChecker.checkTimestamp(deviceData));
+            String dataCheckMessage = null;
+            if ((dataCheckMessage = deviceTimestampChecker.getMessages()) != null) {
+                MediPiMessageBox.getInstance().makeMessage(getSpecificDeviceDisplayName() + "\n" + dataCheckMessage);
+            }
+            if (deviceData == null || deviceData.isEmpty()) {
+            } else {
+                hasData.set(true);
+                confirm = true;
+                Scheduler scheduler = null;
+                if ((scheduler = medipi.getScheduler()) != null) {
+                    schedStartTime = scheduler.getCurrentScheduleStartTime();
+                    schedExpireTime = scheduler.getCurrentScheduleExpiryTime();
+                }
+            }
         } else {
             deviceData = new ArrayList<>();
             hasData.set(false);
@@ -253,8 +280,8 @@ public abstract class Thermometer extends Device {
      * @return generic type of device e.g. Oximeter
      */
     @Override
-    public String getType() {
-        return DEVICE_TYPE;
+    public String getGenericDeviceDisplayName() {
+        return GENERIC_DEVICE_NAME;
     }
 
     @Override
@@ -273,6 +300,8 @@ public abstract class Thermometer extends Device {
         tempUnits.reset();
         tempTenths.reset();
         resultsSummary.setValue("");
+        schedStartTime = null;
+        schedExpireTime = null;
     }
 
     /**
@@ -289,11 +318,11 @@ public abstract class Thermometer extends Device {
         sb.append("metadata->persist->medipiversion->").append(medipi.getVersion()).append("\n");
         sb.append("metadata->make->").append(getMake()).append("\n");
         sb.append("metadata->model->").append(getModel()).append("\n");
-        sb.append("metadata->displayname->").append(getDisplayName()).append("\n");
+        sb.append("metadata->displayname->").append(getSpecificDeviceDisplayName()).append("\n");
         sb.append("metadata->datadelimiter->").append(separator).append("\n");
-        if (scheduler != null) {
-            sb.append("metadata->scheduleeffectivedate->").append(Utilities.ISO8601FORMATDATEMILLI_UTC.format(scheduler.getCurrentScheduledEventTime())).append("\n");
-            sb.append("metadata->scheduleexpirydate->").append(Utilities.ISO8601FORMATDATEMILLI_UTC.format(scheduler.getNextScheduledEventTime())).append("\n");
+        if (medipi.getScheduler() != null) {
+            sb.append("metadata->scheduleeffectivedate->").append(Utilities.ISO8601FORMATDATEMILLI_UTC.format(schedStartTime)).append("\n");
+            sb.append("metadata->scheduleexpirydate->").append(Utilities.ISO8601FORMATDATEMILLI_UTC.format(schedExpireTime)).append("\n");
         }
         sb.append("metadata->columns->");
         for (String string : columns) {
@@ -339,8 +368,7 @@ public abstract class Thermometer extends Device {
         Platform.runLater(() -> {
             this.temp.set(temp);
             this.lastMeasurementTime.set(Utilities.DISPLAY_DEVICE_FORMAT_LOCALTIME.format(time));
-            resultsSummary.set(
-                    getType() + " - "
+            resultsSummary.set(getGenericDeviceDisplayName() + " - "
                     + this.temp.getValue().toString() + (char) 176 + "C");
         });
     }
@@ -353,7 +381,7 @@ public abstract class Thermometer extends Device {
     @Override
     public BorderPane getDashboardTile() throws Exception {
         DashboardTile dashComponent = new DashboardTile(this, showTile);
-        dashComponent.addTitle(getType());
+        dashComponent.addTitle(getGenericDeviceDisplayName());
         dashComponent.addOverlay(tempDB, (char) 176 + "C");
         dashComponent.addOverlay(Color.LIGHTGREEN, hasDataProperty());
         return dashComponent.getTile();

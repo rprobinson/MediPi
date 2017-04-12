@@ -172,8 +172,8 @@ public class BTStreamEXT extends BluetoothService implements Runnable {
             (byte) 0x04, //Data Size
             (byte) 0x02, //Data Type
             (byte) 0x0D, //Data Format
-            (byte) 0x80, //Options
-            (byte) 0x103, //CheckSum
+            (byte) 0x00, //Options
+            (byte) 0x83, //CheckSum
             (byte) 0x03 //ETX
         };
         os.write(dataFormat2);

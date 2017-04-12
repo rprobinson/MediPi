@@ -16,6 +16,7 @@
 package org.medipi.devices.drivers;
 
 import java.util.ArrayList;
+import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.concurrent.Task;
 import javafx.scene.image.ImageView;
@@ -52,7 +53,9 @@ public class MarsdenM430 extends Scale {
     private static final Double PROGBARRESOLUTION = 1D;
     private BluetoothPropertiesService bluetoothPropertiesService;
     private ImageView graphic;
+    private ImageView stopImg;
     private String deviceNamespace;
+    private Task<String> task = null;
 
     /**
      * Constructor for BeurerBF480
@@ -65,6 +68,7 @@ public class MarsdenM430 extends Scale {
     public String init() throws Exception {
         deviceNamespace = MediPi.ELEMENTNAMESPACESTEM + getClassTokenName();
         progressBarResolution = PROGBARRESOLUTION;
+        stopImg = medipi.utils.getImageView("medipi.images.no", 20, 20);
         graphic = medipi.utils.getImageView("medipi.images.arrow", 20, 20);
         graphic.setRotate(90);
         initialGraphic = graphic;
@@ -89,17 +93,31 @@ public class MarsdenM430 extends Scale {
      */
     @Override
     protected void downloadData() {
+        if (task == null || !task.isRunning()) {
+            resetDevice();
+            processData();
+        } else {
+            Platform.runLater(() -> {
+                task.cancel();
+            });
+
+        }
+    }
+
+    protected void processData() {
         try {
-            Task<String> task = new Task<String>() {
+            task = new Task<String>() {
+                BTStreamFixedLength bluetoothService = null;
                 ArrayList<ArrayList<String>> data = new ArrayList<>();
 
                 @Override
                 protected String call() throws Exception {
+                    setButton2Name("Stop", stopImg);
                     String operationStatus = "Unknown error connecting to Scale";
                     try {
                         // input datastream from the device driver
                         updateProgress(Double.parseDouble("0"), progressBarResolution);
-                        BTStreamFixedLength bluetoothService = new BTStreamFixedLength(MarsdenM430.this);
+                        bluetoothService = new BTStreamFixedLength(MarsdenM430.this);
                         bluetoothService.setSearchingMessage(TURN_ON_SCALES);
                         bluetoothService.setConnectionMessage(NOW_STAND_ON_SCALES);
                         bluetoothService.setDownloadingMessage(DOWNLOADING);
@@ -107,7 +125,9 @@ public class MarsdenM430 extends Scale {
                         //This is a blocking method until data arrives (or not)
                         byte[] result = bluetoothService.getFixedLengthStream(btp.getUrl(), 217);
                         if (result == null) {
-                            operationStatus = "Could not find " + getDisplayName() + " scales. Are they switched on and in range? (within ~3 metres)";
+                            return null;
+                        } else if (result[0] == -1) {
+                            operationStatus = "Could not find " + getSpecificDeviceDisplayName() + " scales. Are they switched on and in range? (within ~3 metres)";
                             return operationStatus;
                         }
                         M430Measurement measurement = new M430Measurement(deviceNamespace);
@@ -129,7 +149,7 @@ public class MarsdenM430 extends Scale {
                         operationStatus = ex.getLocalizedMessage();
                         return operationStatus;
                     } finally {
-                        setButton2Name(STARTBUTTONTEXT, graphic);
+                        setB2Label(null);
                     }
                     return operationStatus;
                 }
@@ -140,6 +160,11 @@ public class MarsdenM430 extends Scale {
                 @Override
                 protected void succeeded() {
                     super.succeeded();
+                    setButton2Name(STARTBUTTONTEXT, graphic);
+                    setB2Label(null);
+                    if (bluetoothService != null) {
+                        bluetoothService.StopLookingForBTConnection();
+                    }
                     if (getValue().equals("SUCCESS")) {
                         setData(data);
                         // take the time of downloading the data
@@ -156,13 +181,22 @@ public class MarsdenM430 extends Scale {
                 @Override
                 protected void failed() {
                     super.failed();
+                    setButton2Name(STARTBUTTONTEXT, graphic);
+                    setB2Label(null);
+                    if (bluetoothService != null) {
+                        bluetoothService.StopLookingForBTConnection();
+                    }
                     MediPiMessageBox.getInstance().makeErrorMessage(getValue(), null);
                 }
 
                 @Override
                 protected void cancelled() {
                     super.failed();
-                    MediPiMessageBox.getInstance().makeErrorMessage(getValue(), null);
+                    setButton2Name(STARTBUTTONTEXT, graphic);
+                    setB2Label(null);
+                    if (bluetoothService != null) {
+                        bluetoothService.StopLookingForBTConnection();
+                    }
                 }
             };
 
@@ -171,10 +205,9 @@ public class MarsdenM430 extends Scale {
                 downProg.progressProperty().bind(task.progressProperty());
                 downProg.visibleProperty().bind(task.runningProperty());
             }
-            // Disabling Button control
-            downloadButton.disableProperty().bind(task.runningProperty());
             progressIndicator.visibleProperty().bind(task.runningProperty());
-            button3.disableProperty().bind(Bindings.when(task.runningProperty().and(this.isSchedule)).then(true).otherwise(false));
+            button3.disableProperty().bind(Bindings.when(task.runningProperty().and(this.isThisElementPartOfAScheduleExecution)).then(true).otherwise(false));
+            button1.disableProperty().bind(Bindings.when(task.runningProperty().and(this.isThisElementPartOfAScheduleExecution)).then(true).otherwise(false));
             new Thread(task).start();
         } catch (Exception ex) {
             MediPiMessageBox.getInstance().makeErrorMessage("Download of data unsuccessful", ex);
@@ -207,7 +240,7 @@ public class MarsdenM430 extends Scale {
      * @return displayName of device
      */
     @Override
-    public String getDisplayName() {
+    public String getSpecificDeviceDisplayName() {
         return DISPLAYNAME;
     }
 }

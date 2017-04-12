@@ -54,8 +54,32 @@ public class DataThresholdTest {
     @Autowired
     private MediPiLogger logger;
 
+    private static final String MEDIPICLINICALALERTSENDPOSITIVEALERTS = "medipi.clinical.alert.sendpositivealerts";
+    private static final String MEDIPICLINICALALERTSENDNEGATIVEALERTS = "medipi.clinical.alert.sendnegativealerts";
+    private static final String MEDIPICLINICALALERTSENDCANNOTCALCULATEALERTS = "medipi.clinical.alert.sendcannotcalculatealerts";
+    private boolean sendPositiveAlerts = false;
+    private boolean sendNegativeAlerts = false;
+    private boolean sendCannotCalculateAlerts = false;
 
     public void testNewData(RecordingDeviceAttribute rda, Patient patient, RecordingDeviceData rddSet, AlertListDO alertListDO) throws InstantiationException, ClassNotFoundException, IllegalAccessException {
+        String spa = utils.getProperties().getProperty(MEDIPICLINICALALERTSENDPOSITIVEALERTS);
+        if (spa != null && spa.toLowerCase().startsWith("y")) {
+            sendPositiveAlerts = true;
+        } else {
+            sendPositiveAlerts = false;
+        }
+        String sna = utils.getProperties().getProperty(MEDIPICLINICALALERTSENDNEGATIVEALERTS);
+        if (sna != null && sna.toLowerCase().startsWith("y")) {
+            sendNegativeAlerts = true;
+        } else {
+            sendNegativeAlerts = false;
+        }
+        String scca = utils.getProperties().getProperty(MEDIPICLINICALALERTSENDCANNOTCALCULATEALERTS);
+        if (scca != null && scca.toLowerCase().startsWith("y")) {
+            sendCannotCalculateAlerts = true;
+        } else {
+            sendCannotCalculateAlerts = false;
+        }        
         // find the latest threshold type using the attribute
         AttributeThreshold at = this.attributeThresholdDAOImpl.findLatestByAttributeAndPatientAndDate(rda.getAttributeId(), patient.getPatientUuid(), rddSet.getDataValueTime());
         if (at != null) {
@@ -70,40 +94,32 @@ public class DataThresholdTest {
                     if (result == null) {
                         //This means the result is not calculatable
                         testStatus = "CANNOT_CALCULATE";
+                        if (sendCannotCalculateAlerts) {
+                            System.out.println("CANNOT CALCULATE ALERT TO BE SENT");
+                            String alertText = thresholdTest.getCantCalculateTestText()
+                                    .replace("__ATTRIBUTE_NAME__", rddSet.getAttributeId().getAttributeName())
+                                    .replace("__MEASUREMENT_DATE__", Utilities.DISPLAY_FORMAT.format(rddSet.getDataValueTime()));
+                            CreateAlert(thresholdTest, rddSet, patient, alertListDO, alertText, testStatus);
+                        }
                     } else if (!result) {
                         // send alert
-                        System.out.println("ALERT TO BE SENT");
                         testStatus = "OUT_OF_THRESHOLD";
-
-                        //create the Alert
-                        Alert alert = new Alert();
-                        String alertText = thresholdTest.getFailedTestText()
-                                .replace("__ATTRIBUTE_NAME__", rddSet.getAttributeId().getAttributeName())
-                                .replace("__MEASUREMENT_DATE__", Utilities.DISPLAY_FORMAT.format(rddSet.getDataValueTime()));
-                        alert.setAlertText(alertText);
-                        alert.setAlertTime(new Date());
-                        alert.setDataId(rddSet);
-                        alert.setPatientUuid(patient);
-                        try {
-                            Alert updatedAlert = alertDAOImpl.save(alert);
-                            //create the alert data object to be serialised to the concentrator
-                            AlertDO alertDO = new AlertDO(alert.getPatientUuid().getPatientUuid());
-                            alertDO.setAlertId(updatedAlert.getAlertId());
-                            alertDO.setAlertText(alert.getAlertText());
-                            alertDO.setAlertTime(alert.getAlertTime());
-                            alertDO.setType(rddSet.getAttributeId().getTypeId().getType());
-                            alertDO.setAttributeName(rddSet.getAttributeId().getAttributeName());
-                            alertDO.setDataValue(rddSet.getDataValue());
-                            alertDO.setDataValueTime(rddSet.getDataValueTime());
-                            alertListDO.addAlert(alertDO);
-                        } catch (Exception e) {
-                            logger.log(DataThresholdTest.class.getName() + ".dbIssue", "Attempt to write alert for dataId" + rddSet.getDataId() + " to DB failed");
-
+                        if (sendNegativeAlerts) {
+                            System.out.println("NEGATIVE ALERT TO BE SENT");
+                            String alertText = thresholdTest.getFailedTestText()
+                                    .replace("__ATTRIBUTE_NAME__", rddSet.getAttributeId().getAttributeName())
+                                    .replace("__MEASUREMENT_DATE__", Utilities.DISPLAY_FORMAT.format(rddSet.getDataValueTime()));
+                            CreateAlert(thresholdTest, rddSet, patient, alertListDO, alertText, testStatus);
                         }
-
                     } else {
-                        System.out.println("No ALERT NECESSARY");
                         testStatus = "IN_THRESHOLD";
+                        if (sendPositiveAlerts) {
+                            System.out.println("POSITIVE ALERT TO BE SENT");
+                            String alertText = thresholdTest.getPassedTestText()
+                                    .replace("__ATTRIBUTE_NAME__", rddSet.getAttributeId().getAttributeName())
+                                    .replace("__MEASUREMENT_DATE__", Utilities.DISPLAY_FORMAT.format(rddSet.getDataValueTime()));
+                            CreateAlert(thresholdTest, rddSet, patient, alertListDO, alertText, testStatus);
+                        }
                     }
                     rddSet.setAlertStatus(testStatus);
                     this.recordingDeviceDataDAOImpl.update(rddSet);
@@ -115,6 +131,34 @@ public class DataThresholdTest {
             }
         } else {
             // if there is no associated test for a data attribute type - no action
+        }
+    }
+
+    private void CreateAlert(AttributeThresholdTest thresholdTest, RecordingDeviceData rddSet, Patient patient, AlertListDO alertListDO, String alertText, String testStatus) {
+        //create the Alert
+        Alert alert = new Alert();
+        alert.setAlertText(alertText);
+        alert.setAlertTime(new Date());
+        alert.setDataId(rddSet);
+        alert.setPatientUuid(patient);
+        try {
+            Alert updatedAlert = alertDAOImpl.save(alert);
+            //create the alert data object to be serialised to the concentrator
+            AlertDO alertDO = new AlertDO(alert.getPatientUuid().getPatientUuid());
+            alertDO.setAlertId(updatedAlert.getAlertId());
+            alertDO.setAlertText(alert.getAlertText());
+            alertDO.setAlertTime(alert.getAlertTime());
+            alertDO.setType(rddSet.getAttributeId().getTypeId().getType());
+            alertDO.setMake(alert.getDataId().getAttributeId().getTypeId().getMake());
+            alertDO.setModel(alert.getDataId().getAttributeId().getTypeId().getModel());
+            alertDO.setStatus(testStatus);
+            alertDO.setAttributeName(rddSet.getAttributeId().getAttributeName());
+            alertDO.setDataValue(rddSet.getDataValue());
+            alertDO.setDataValueTime(rddSet.getDataValueTime());
+            alertListDO.addAlert(alertDO);
+        } catch (Exception e) {
+            logger.log(DataThresholdTest.class.getName() + ".dbIssue", "Attempt to write alert for dataId" + rddSet.getDataId() + " to DB failed");
+
         }
     }
 

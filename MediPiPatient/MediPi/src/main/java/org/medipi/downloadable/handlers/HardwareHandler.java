@@ -134,16 +134,16 @@ public class HardwareHandler implements DownloadableHandler {
                         // Depending on the type of file perform actions
 
                         MediPiLogger.getInstance().log(HardwareHandler.class.getName() + ".info", "Hardware Downloadable download completed - Downloadable UUID: " + ddo.getDownloadableUuid());
-                        // Sucessful download now must be acked
+                        // Successful download now must be acked
                         // The downloadableUUID is returned in the post - not necessary but needs some payload
                         Response downloadAck = rme.executePost(null, Entity.json(ddo.getDownloadableUuid()));
                         if (downloadAck != null) {
                             if (downloadAck.getStatus() == Response.Status.OK.getStatusCode()) {
                                 //No further action necessary
-                                MediPiLogger.getInstance().log(HardwareHandler.class.getName() + ".info", "Hardware Downloadable download acked sucessfully - Downloadable UUID: " + ddo.getDownloadableUuid());
+                                MediPiLogger.getInstance().log(HardwareHandler.class.getName() + ".info", "Hardware Downloadable download acked successfully - Downloadable UUID: " + ddo.getDownloadableUuid());
                             } else {
                                 //FAILED TO ACK THE MESSAGE - put a message box to the patient
-                                MediPiLogger.getInstance().log(HardwareHandler.class.getName() + ".error", "Hardware Downloadable download failed to ack sucessfully - Downloadable UUID: " + ddo.getDownloadableUuid());
+                                MediPiLogger.getInstance().log(HardwareHandler.class.getName() + ".error", "Hardware Downloadable download failed to ack successfully - Downloadable UUID: " + ddo.getDownloadableUuid());
 
                             }
                         }

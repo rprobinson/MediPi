@@ -16,10 +16,13 @@
 package org.medipi.messaging.rest;
 
 import java.util.HashMap;
+import java.util.UUID;
+import javax.ws.rs.ProcessingException;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
 import org.medipi.devices.Transmitter;
 import org.medipi.logging.MediPiLogger;
+import org.medipi.messaging.vpn.VPNServiceManager;
 import org.medipi.model.EncryptedAndSignedUploadDO;
 
 /**
@@ -78,6 +81,8 @@ public class RESTTransmitter extends Transmitter {
      */
     @Override
     public Boolean transmit(EncryptedAndSignedUploadDO message) {
+        UUID uuid = UUID.randomUUID();
+        VPNServiceManager vpnm = null;
         try {
             //Collect patient and hardware device names to be used as part of the restful path
             String patientCertName = System.getProperty("medipi.patient.cert.name");
@@ -91,6 +96,10 @@ public class RESTTransmitter extends Transmitter {
                 transmissionResponse = "Device identity not set";
                 MediPiLogger.getInstance().log(RESTTransmitter.class.getName() + ".error", "Device identity not set");
                 return false;
+            }
+            vpnm = VPNServiceManager.getInstance();
+            if (vpnm.isEnabled()) {
+                vpnm.VPNConnection(VPNServiceManager.OPEN, uuid);
             }
             HashMap<String, Object> params = new HashMap<>();
             params.put("deviceId", deviceCertName);
@@ -107,8 +116,8 @@ public class RESTTransmitter extends Transmitter {
                 System.out.println("PatientUpload returned status = " + postResponse.getStatus());
                 //POSITIVE RESPONSE
                 if (postResponse.getStatus() == Response.Status.OK.getStatusCode() || postResponse.getStatus() == Response.Status.ACCEPTED.getStatusCode()) {
-                    MediPiLogger.getInstance().log(RESTTransmitter.class.getName() + ".info", "New Patient Upload sucessfully sent - MediPiUploadEnvelope UUID: " + message.getUploadUuid());
-                    transmissionResponse = postResponse.readEntity(String.class);
+                    MediPiLogger.getInstance().log(RESTTransmitter.class.getName() + ".info", "New Patient Upload successfully sent - MediPiUploadEnvelope UUID: " + message.getUploadUuid());
+                    transmissionResponse = "Thank you! Your recordings have been sent to your clinician.";
                     return true;
                 } else {
                     //ERROR RESPONSE
@@ -135,9 +144,22 @@ public class RESTTransmitter extends Transmitter {
                     }
                 }
             }
-        } catch (Exception ex) {
-            transmissionResponse = "Error transmitting message to recipient: "+ex.getLocalizedMessage();
+        } catch (ProcessingException pe) {
+            MediPiLogger.getInstance().log(RESTTransmitter.class.getName() + ".error", "Attempt to send data failed - MediPi Concentrator is not available - please try again later. " + pe.getLocalizedMessage());
+            transmissionResponse = "Attempt to send data failed - MediPi Concentrator is not available - please try again later.";
             return false;
+        } catch (Exception ex) {
+            MediPiLogger.getInstance().log(RESTTransmitter.class.getName() + ".error", "Error transmitting message to recipient: " + ex.getLocalizedMessage());
+            transmissionResponse = "Error transmitting message to recipient: " + ex.getLocalizedMessage();
+            return false;
+        } finally {
+            if (vpnm != null && vpnm.isEnabled()) {
+                try {
+                    vpnm.VPNConnection(VPNServiceManager.CLOSE,uuid);
+                } catch (Exception ex) {
+                    MediPiLogger.getInstance().log(RESTTransmitter.class.getName(), ex);
+                }
+            }
         }
         return false;
     }
