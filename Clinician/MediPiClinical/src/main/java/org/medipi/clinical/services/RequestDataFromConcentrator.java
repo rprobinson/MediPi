@@ -139,6 +139,7 @@ public class RequestDataFromConcentrator {
                                         // Create the container for any possible alerts
                                         AlertListDO alertListDO = new AlertListDO(patient.getPatientUuid());
                                         // loop through all the individual datapoints, persiste them to the DB and test for any thresholds
+                                        System.out.println("patient:"+patient.getPatientUuid()+" data items:"+pdr.getRecordingDeviceDataList().size());
                                         for (RecordingDeviceData rdd : pdr.getRecordingDeviceDataList()) {
                                             updateRecordingDeviceData(rdd, patient, alertListDO);
                                         }

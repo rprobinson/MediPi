@@ -32,15 +32,15 @@ import org.springframework.stereotype.Component;
  * @author rick@robinsonhq.com
  */
 @Component
-public class SimpleInclusiveHighLowTest implements AttributeThresholdTest {
+public class RelativeInclusiveHighTest implements AttributeThresholdTest {
 
-    private static final String LOWER_THRESHOLD_LIMIT = "__LOWER_THRESHOLD_LIMIT__";
+    private static final String ABSOLUTE_REFERENCE = "__ABSOLUTE_REFERENCE__";
     private static final String UPPER_THRESHOLD_LIMIT = "__UPPER_THRESHOLD_LIMIT__";
     private static final String DATA_VALUE = "__DATA_VALUE__";
     private static final String ATTRIBUTE_UNITS = "__ATTRIBUTE_UNITS__";
-    private static final String MEDIPICLINICALALERTPASSEDTESTTEXT = "medipi.clinical.alert.simpleinclusivehighlowtest.passedtesttext";
-    private static final String MEDIPICLINICALALERTFAILEDTESTTEXT = "medipi.clinical.alert.simpleinclusivehighlowtest.failedtesttext";
-    private static final String MEDIPICLINICALALERTCANTCALCULATETESTTEXT = "medipi.clinical.alert.simpleinclusivehighlowtest.cantcalculatetesttext";
+    private static final String MEDIPICLINICALALERTPASSEDTESTTEXT = "medipi.clinical.alert.relativeinclusivehightest.passedtesttext";
+    private static final String MEDIPICLINICALALERTFAILEDTESTTEXT = "medipi.clinical.alert.relativeinclusivehightest.failedtesttext";
+    private static final String MEDIPICLINICALALERTCANTCALCULATETESTTEXT = "medipi.clinical.alert.relativeinclusivehightest.cantcalculatetesttext";
 
     @Autowired
     private RecordingDeviceDataDAOImpl recordingDeviceDataDAOImpl;
@@ -50,7 +50,7 @@ public class SimpleInclusiveHighLowTest implements AttributeThresholdTest {
 
     private Properties properties;
     private AttributeThreshold attributeThreshold;
-    private double lowValue;
+    private double absoluteReference;
     private double highValue;
     private double dataValue;
     private String attributeUnits = null;
@@ -80,7 +80,7 @@ public class SimpleInclusiveHighLowTest implements AttributeThresholdTest {
         if (passedTestText == null || passedTestText.trim().length() == 0) {
             throw new Exception("Cannot find passed test text");
         }
-        lowValue = getLowValue(attributeThreshold.getThresholdLowValue());
+        absoluteReference = getLowValue(attributeThreshold.getThresholdLowValue());
         highValue = getHighValue(attributeThreshold.getThresholdHighValue());
 
     }
@@ -89,9 +89,9 @@ public class SimpleInclusiveHighLowTest implements AttributeThresholdTest {
         try {
             return Double.valueOf(low);
         } catch (NumberFormatException nfe) {
-            MediPiLogger.getInstance().log(SimpleInclusiveHighLowTest.class.getName() + "error", "Error in converting the low threshold values to a double " + nfe.getLocalizedMessage());
-            System.out.println("Error in converting the low threshold values to a double" + nfe.getLocalizedMessage());
-            throw new Exception("Error in converting the low threshold values to a double");
+            MediPiLogger.getInstance().log(RelativeInclusiveHighTest.class.getName() + "error", "Error in converting the absolute value to a double " + nfe.getLocalizedMessage());
+            System.out.println("Error in converting the absolute value to a double" + nfe.getLocalizedMessage());
+            throw new Exception("Error in converting the absolute value to a double");
         }
     }
 
@@ -99,16 +99,17 @@ public class SimpleInclusiveHighLowTest implements AttributeThresholdTest {
         try {
             return Double.valueOf(high);
         } catch (NumberFormatException nfe) {
-            MediPiLogger.getInstance().log(SimpleInclusiveHighLowTest.class.getName() + "error", "Error in converting the high threshold values to a double " + nfe.getLocalizedMessage());
+            MediPiLogger.getInstance().log(RelativeInclusiveHighTest.class.getName() + "error", "Error in converting the high threshold values to a double " + nfe.getLocalizedMessage());
             System.out.println("Error in converting the high threshold values to a double" + nfe.getLocalizedMessage());
             throw new Exception("Error in converting the high threshold values to a double");
         }
-    }    
+    }
+
     private double getDataValue(String data) throws Exception {
         try {
             return Double.valueOf(data);
         } catch (NumberFormatException nfe) {
-            MediPiLogger.getInstance().log(SimpleInclusiveHighLowTest.class.getName() + "error", "Error in converting the data values to a double " + nfe.getLocalizedMessage());
+            MediPiLogger.getInstance().log(RelativeInclusiveHighTest.class.getName() + "error", "Error in converting the data values to a double " + nfe.getLocalizedMessage());
             System.out.println("Error in converting the data values to a double" + nfe.getLocalizedMessage());
             throw new Exception("Error in converting the data values to a double");
         }
@@ -127,14 +128,14 @@ public class SimpleInclusiveHighLowTest implements AttributeThresholdTest {
             attributeUnits = rdd.getAttributeId().getAttributeUnits();
             dataValue = Double.valueOf(rdd.getDataValue());
 
-            return !(dataValue > highValue || dataValue < lowValue);
+            return (dataValue < absoluteReference + highValue);
 
         } catch (NumberFormatException nfe) {
-            MediPiLogger.getInstance().log(SimpleInclusiveHighLowTest.class.getName() + "error", "Error in converting the incoming data value to be tested to a double " + nfe.getLocalizedMessage());
+            MediPiLogger.getInstance().log(RelativeInclusiveHighTest.class.getName() + "error", "Error in converting the incoming data value to be tested to a double " + nfe.getLocalizedMessage());
             System.out.println("Error in converting the incoming data value to be tested to a double" + nfe.getLocalizedMessage());
             return null;
         } catch (Exception e) {
-            MediPiLogger.getInstance().log(ChangeOverTimeTest.class.getName() + "error", "Error in testing the simple inclusive high low value: " + e.getLocalizedMessage());
+            MediPiLogger.getInstance().log(RelativeInclusiveHighTest.class.getName() + "error", "Error in testing the simple inclusive high low value: " + e.getLocalizedMessage());
             System.out.println("Error in testing the simple inclusive high low value: " + e.getLocalizedMessage());
             return null;
         }
@@ -159,7 +160,7 @@ public class SimpleInclusiveHighLowTest implements AttributeThresholdTest {
             return null;
         } else {
             double low = getLowValue(at.getThresholdLowValue());
-            double high = getHighValue(at.getThresholdHighValue());
+            double high = low + getHighValue(at.getThresholdHighValue());
             List<Double> thresholdList = new ArrayList<>();
 
             thresholdList.add(low);
@@ -181,7 +182,7 @@ public class SimpleInclusiveHighLowTest implements AttributeThresholdTest {
                 .replace(DATA_VALUE, String.valueOf(dataValue))
                 .replace(ATTRIBUTE_UNITS, attributeUnits)
                 .replace(UPPER_THRESHOLD_LIMIT, String.valueOf(highValue))
-                .replace(LOWER_THRESHOLD_LIMIT, String.valueOf(lowValue));
+                .replace(ABSOLUTE_REFERENCE, String.valueOf(absoluteReference));
         return response;
     }
 
@@ -191,7 +192,7 @@ public class SimpleInclusiveHighLowTest implements AttributeThresholdTest {
                 .replace(DATA_VALUE, String.valueOf(dataValue))
                 .replace(ATTRIBUTE_UNITS, attributeUnits)
                 .replace(UPPER_THRESHOLD_LIMIT, String.valueOf(highValue))
-                .replace(LOWER_THRESHOLD_LIMIT, String.valueOf(lowValue));
+                .replace(ABSOLUTE_REFERENCE, String.valueOf(absoluteReference));
         return response;
     }
 
@@ -201,7 +202,7 @@ public class SimpleInclusiveHighLowTest implements AttributeThresholdTest {
                 .replace(DATA_VALUE, String.valueOf(dataValue))
                 .replace(ATTRIBUTE_UNITS, attributeUnits)
                 .replace(UPPER_THRESHOLD_LIMIT, String.valueOf(highValue))
-                .replace(LOWER_THRESHOLD_LIMIT, String.valueOf(lowValue));
+                .replace(ABSOLUTE_REFERENCE, String.valueOf(absoluteReference));
         return response;
     }
 

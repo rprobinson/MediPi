@@ -25,7 +25,7 @@ import org.springframework.stereotype.Repository;
 
 /**
  * Implementation of the RecordingDeviceData data access object
- * 
+ *
  * @author rick@robinsonhq.com
  */
 @Repository
@@ -41,6 +41,7 @@ public class RecordingDeviceDataDAOImpl extends GenericDAOImpl<RecordingDeviceDa
                 .getResultList();
 
     }
+
     @Override
     public Date dateOfLatestMeasurement(Patient patient, String type) {
         return this.getEntityManager().createNamedQuery("RecordingDeviceData.dateOfLatestMeasurement", Date.class)
@@ -56,7 +57,8 @@ public class RecordingDeviceDataDAOImpl extends GenericDAOImpl<RecordingDeviceDa
                 .setParameter("patientGroup", patientGroup)
                 .getSingleResult();
 
-    }        
+    }
+
     @Override
     public RecordingDeviceData findByPatientAndScheduledTime(Patient patient, Date scheduleEffectiveTime, Date scheduleExpiryTime) {
         return this.getEntityManager().createNamedQuery("RecordingDeviceData.findByPatientAndScheduledTime", RecordingDeviceData.class)
@@ -65,6 +67,7 @@ public class RecordingDeviceDataDAOImpl extends GenericDAOImpl<RecordingDeviceDa
                 .setParameter("scheduleExpiryTime", scheduleExpiryTime)
                 .getSingleResult();
     }
+
     @Override
     public List<RecordingDeviceData> findByPatientAndAttributeAndPeriod(String patientUuid, int attributeId, Date periodStartTime, Date periodEndTime) {
         return this.getEntityManager().createNamedQuery("RecordingDeviceData.findByPatientAndAttributeAndPeriod", RecordingDeviceData.class)
@@ -73,6 +76,15 @@ public class RecordingDeviceDataDAOImpl extends GenericDAOImpl<RecordingDeviceDa
                 .setParameter("periodStartTime", periodStartTime)
                 .setParameter("periodEndTime", periodEndTime)
                 .getResultList();
+    }
+
+    @Override
+    public Date findFirstEntryBeforePeriod(String patientUuid, int attributeId, Date periodStartTime) {
+        return this.getEntityManager().createNamedQuery("RecordingDeviceData.findFirstEntryBeforePeriod", Date.class)
+                .setParameter("patientUuid", patientUuid)
+                .setParameter("attributeId", attributeId)
+                .setParameter("periodStartTime", periodStartTime)
+                .getSingleResult();
     }
 
 }

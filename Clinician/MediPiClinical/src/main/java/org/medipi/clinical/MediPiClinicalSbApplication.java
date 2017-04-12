@@ -18,8 +18,6 @@ package org.medipi.clinical;
 import java.io.File;
 import java.util.Date;
 import java.util.Properties;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
 import org.medipi.clinical.logging.MediPiLogger;
 import org.medipi.clinical.services.SSLClientHttpRequestFactory;
 import org.medipi.clinical.utilities.Utilities;
@@ -28,7 +26,6 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.context.embedded.ServletContextInitializer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -53,8 +50,8 @@ public class MediPiClinicalSbApplication implements CommandLineRunner {
     private static final String LOG = "medipi.log";
     // MediPi version Number
     private static final String MEDIPINAME = "MediPi Clinical";
-    private static final String VERSION = "MediPiClinical_v1.0.2";
-    private static final String VERSIONNAME = "PILOT-20170103-1";
+    private static final String VERSION = "MediPiClinical_v1.0.3";
+    private static final String VERSIONNAME = "PILOT-20170412-1";
     private final MediPiLogger logger = MediPiLogger.getInstance();
 
     @Autowired
