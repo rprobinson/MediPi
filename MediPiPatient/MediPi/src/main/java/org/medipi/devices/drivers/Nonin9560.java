@@ -104,7 +104,7 @@ public class Nonin9560 extends Oximeter implements DeviceServiceMeasurement {
      * @return make and model of device
      */
     @Override
-    public String getDisplayName() {
+    public String getSpecificDeviceDisplayName() {
         return DISPLAYNAME;
     }
 
@@ -129,7 +129,7 @@ public class Nonin9560 extends Oximeter implements DeviceServiceMeasurement {
             Task<String> task = new Task<String>() {
                 @Override
                 protected String call() throws Exception {
-                    String operationStatus = "Unknown error connecting to " + getDisplayName();
+                    String operationStatus = "Unknown error connecting to " + getSpecificDeviceDisplayName();
                     try {
                         // input datastream from the device driver
                         BTStreamEXT bluetoothService = new BTStreamEXT(Nonin9560.this);
@@ -196,7 +196,8 @@ public class Nonin9560 extends Oximeter implements DeviceServiceMeasurement {
             // Disabling Button control
             actionButton.disableProperty().bind(task.runningProperty());
             progressIndicator.visibleProperty().bind(task.runningProperty());
-            button3.disableProperty().bind(Bindings.when(task.runningProperty().and(this.isSchedule)).then(true).otherwise(false));
+            button3.disableProperty().bind(Bindings.when(task.runningProperty().and(this.isThisElementPartOfAScheduleExecution)).then(true).otherwise(false));
+            button1.disableProperty().bind(Bindings.when(task.runningProperty().and(this.isThisElementPartOfAScheduleExecution)).then(true).otherwise(false));
             new Thread(task).start();
         } catch (Exception ex) {
             MediPiMessageBox.getInstance().makeErrorMessage("Download of data unsuccessful", ex);

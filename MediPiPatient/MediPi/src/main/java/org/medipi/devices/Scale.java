@@ -15,6 +15,8 @@
  */
 package org.medipi.devices;
 
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.UUID;
@@ -26,6 +28,7 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -49,21 +52,22 @@ import org.medipi.model.DeviceDataDO;
  * Class to display and handle the functionality for a generic Diagnostic Scale
  * Medical Device.
  *
- * Generic Scale class which exposes basic generic information and the
- * data to other classes and allows the classes which are specific to a
- * particular device to set data
+ * Generic Scale class which exposes basic generic information and the data to
+ * other classes and allows the classes which are specific to a particular
+ * device to set data
  *
  * @author rick@robinsonhq.com
  */
 @SuppressWarnings("restriction")
 public abstract class Scale extends Device {
 
-    private final String DEVICE_TYPE = "Scale";
+    private final String GENERIC_DEVICE_NAME = "Scale";
     private final static String PROFILEID = "urn:nhs-en:profile:DiagnosticScale";
     private VBox scaleWindow;
 
     private Label weightDB;
     private Label weightTF;
+    private Label weightInStoneTF;
     private Label measurementTimeTF;
     private Label measurementTimeLabel;
     private VBox resultsVBox;
@@ -73,13 +77,17 @@ public abstract class Scale extends Device {
     protected static String initialButtonText;
     protected static ImageView initialGraphic = null;
     private ArrayList<ArrayList<String>> deviceData = new ArrayList<>();
+    private Instant schedStartTime = null;
+    private Instant schedExpireTime = null;
 
     protected DoubleProperty weight = new SimpleDoubleProperty(0D);
+    protected DoubleProperty weightStones = new SimpleDoubleProperty(0D);
     private final StringProperty lastMeasurementTime = new SimpleStringProperty();
     private final StringProperty resultsSummary = new SimpleStringProperty();
     protected ProgressBar downProg = new ProgressBar(0.0F);
 
     protected HBox weightHBox;
+    protected HBox weightInStoneHBox;
     protected ArrayList<String> columns = new ArrayList<>();
     protected ArrayList<String> format = new ArrayList<>();
     protected ArrayList<String> units = new ArrayList<>();
@@ -134,7 +142,7 @@ public abstract class Scale extends Device {
         }
         Guide guide = new Guide(MediPi.ELEMENTNAMESPACESTEM + uniqueDeviceName + ".guide");
         //ascertain if this element is to be displayed on the dashboard
-        String b = MediPiProperties.getInstance().getProperties().getProperty(MediPi.ELEMENTNAMESPACESTEM + uniqueDeviceName +".showdashboardtile");
+        String b = MediPiProperties.getInstance().getProperties().getProperty(MediPi.ELEMENTNAMESPACESTEM + uniqueDeviceName + ".showdashboardtile");
         if (b == null || b.trim().length() == 0) {
             showTile = new SimpleBooleanProperty(true);
         } else {
@@ -145,8 +153,10 @@ public abstract class Scale extends Device {
         // downloaded from the device
         // Mass reading
         weightTF = new Label("--");
+        weightInStoneTF = new Label("--");
         weightDB = new Label("");
         weightTF.setId("resultstext");
+        weightInStoneTF.setId("resultstext");
         measurementTimeTF = new Label("");
         measurementTimeTF.setId("resultstimetext");
         measurementTimeLabel = new Label("");
@@ -161,11 +171,22 @@ public abstract class Scale extends Device {
                 weightTF,
                 kg
         );
+        weightInStoneHBox = new HBox();
+        weightInStoneHBox.setAlignment(Pos.CENTER_LEFT);
+        weightInStoneHBox.setId("resultsbox");
+        weightInStoneHBox.setPrefWidth(200);
+        Label stone = new Label("st");
+        stone.setId("resultsunits");
+        weightInStoneHBox.getChildren().addAll(
+                weightInStoneTF,
+                stone
+        );
         resultsVBox = new VBox();
         resultsVBox.setPrefWidth(200);
         resultsVBox.setId("resultsbox");
         resultsVBox.getChildren().addAll(
                 weightHBox,
+                weightInStoneHBox,
                 measurementTimeLabel,
                 measurementTimeTF
         );
@@ -188,6 +209,11 @@ public abstract class Scale extends Device {
                 .then("--")
                 .otherwise(weight.asString())
         );
+        weightInStoneTF.textProperty().bind(
+                Bindings.when(weightStones.isEqualTo(0))
+                .then("--")
+                .otherwise(weightStones.asString())
+        );
         weightDB.textProperty().bind(
                 Bindings.when(weight.isEqualTo(0))
                 .then("")
@@ -203,6 +229,12 @@ public abstract class Scale extends Device {
                 .then("")
                 .otherwise("measured at")
         );
+        window.visibleProperty().addListener((ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) -> {
+            if (newValue) {
+                guide.reset();
+
+            }
+        });
         // bind the button disable to the time sync indicator
         downloadButton.disableProperty().bind(medipi.timeSync.not());
 
@@ -215,8 +247,10 @@ public abstract class Scale extends Device {
     private void downloadButton() {
         // Setup download button action to run in its own thread
         downloadButton.setOnAction((ActionEvent t) -> {
-            resetDevice();
-            downloadData();
+            if (confirmReset()) {
+                resetDevice();
+                downloadData();
+            }
         });
     }
 
@@ -226,8 +260,8 @@ public abstract class Scale extends Device {
      * @return generic type of device e.g. Blood Pressure
      */
     @Override
-    public String getType() {
-        return DEVICE_TYPE;
+    public String getGenericDeviceDisplayName() {
+        return GENERIC_DEVICE_NAME;
     }
 
     @Override
@@ -241,8 +275,11 @@ public abstract class Scale extends Device {
         deviceData = new ArrayList<>();
         hasData.set(false);
         weight.set(0);
+        weightStones.set(0);
         lastMeasurementTime.set("");
         resultsSummary.setValue("");
+        schedStartTime = null;
+        schedExpireTime = null;
     }
 
     /**
@@ -258,11 +295,11 @@ public abstract class Scale extends Device {
         sb.append("metadata->persist->medipiversion->").append(medipi.getVersion()).append("\n");
         sb.append("metadata->make->").append(getMake()).append("\n");
         sb.append("metadata->model->").append(getModel()).append("\n");
-        sb.append("metadata->displayname->").append(getDisplayName()).append("\n");
+        sb.append("metadata->displayname->").append(getSpecificDeviceDisplayName()).append("\n");
         sb.append("metadata->datadelimiter->").append(medipi.getDataSeparator()).append("\n");
-        if (scheduler != null) {
-            sb.append("metadata->scheduleeffectivedate->").append(Utilities.ISO8601FORMATDATEMILLI_UTC.format(scheduler.getCurrentScheduledEventTime())).append("\n");
-            sb.append("metadata->scheduleexpirydate->").append(Utilities.ISO8601FORMATDATEMILLI_UTC.format(scheduler.getNextScheduledEventTime())).append("\n");
+        if (medipi.getScheduler() != null) {
+            sb.append("metadata->scheduleeffectivedate->").append(Utilities.ISO8601FORMATDATEMILLI_UTC.format(schedStartTime)).append("\n");
+            sb.append("metadata->scheduleexpirydate->").append(Utilities.ISO8601FORMATDATEMILLI_UTC.format(schedExpireTime)).append("\n");
         }
         sb.append("metadata->columns->");
         for (String string : columns) {
@@ -307,17 +344,20 @@ public abstract class Scale extends Device {
     @Override
     public BorderPane getDashboardTile() throws Exception {
         DashboardTile dashComponent = new DashboardTile(this, showTile);
-        dashComponent.addTitle(getType());
+        dashComponent.addTitle(getGenericDeviceDisplayName());
         dashComponent.addOverlay(weightDB, "kg");
         dashComponent.addOverlay(Color.LIGHTGREEN, hasDataProperty());
         return dashComponent.getTile();
     }
-    
+
     @Override
     public void setData(ArrayList<ArrayList<String>> data) {
         data = deviceTimestampChecker.checkTimestamp(data);
+        String dataCheckMessage = null;
+        if ((dataCheckMessage = deviceTimestampChecker.getMessages()) != null) {
+            MediPiMessageBox.getInstance().makeMessage(getSpecificDeviceDisplayName() + "\n" + dataCheckMessage);
+        }
         if (data == null || data.isEmpty()) {
-            MediPiMessageBox.getInstance().makeMessage("No data is available from " + getDisplayName());
         } else {
             for (ArrayList<String> a : data) {
                 Instant i = Instant.parse(a.get(0));
@@ -326,8 +366,14 @@ public abstract class Scale extends Device {
                 hasData.set(true);
             }
             deviceData = data;
+            Scheduler scheduler = null;
+            if ((scheduler = medipi.getScheduler()) != null) {
+                schedStartTime = scheduler.getCurrentScheduleStartTime();
+                schedExpireTime = scheduler.getCurrentScheduleExpiryTime();
+            }
         }
     }
+
     /**
      * Private method to add data to the internal structure and propogate it to
      * the UI
@@ -339,10 +385,10 @@ public abstract class Scale extends Device {
         //weight graph - this is expected for all data points
         Platform.runLater(() -> {
             this.weight.set(weight);
+            this.weightStones.set(convertToStone(weight));
             this.lastMeasurementTime.set(Utilities.DISPLAY_DEVICE_FORMAT_LOCALTIME.format(time));
-            resultsSummary.set(
-                    getType()+" - "+
-                    this.weight.getValue().toString() + "kg");
+            resultsSummary.set(getGenericDeviceDisplayName() + " - "
+                    + this.weight.getValue().toString() + "kg");
         });
     }
 
@@ -351,10 +397,14 @@ public abstract class Scale extends Device {
      *
      */
     protected abstract void downloadData();
-    
-   @Override
+
+    @Override
     public StringProperty getResultsSummary() {
-       return resultsSummary;
+        return resultsSummary;
+    }
+
+    private double convertToStone(double weight) {
+        return (double)Math.round((weight * 0.157473044418) * 100d) / 100d;
     }
 
 }

@@ -41,27 +41,42 @@ public class DownloadableHandlerManager {
 
     /**
      * Method to add a new handler
+     *
      * @param name handler name
      * @param instance Handler instance
      */
     public void addHandler(String name, DownloadableHandler instance) {
-        handlers.put(name, instance);
+        if (handlers.get(name) == null) {
+            handlers.put(name, instance);
+        } else{
+            System.out.println("Handler named "+ name + " already registered with DownloadableHandlerManager");
+            MediPiLogger.getInstance().log(DownloadableHandlerManager.class.getName() + "error", "Handler named "+ name + " already registered with DownloadableHandlerManager");
+        }
     }
 
     /**
+     * Method to find if there are any handlers registered to determine if MediPi needs to pool the concentrator
+     *
+     * @return boolean if there have been any handlers registered
+     */
+    public boolean hasHandlers(){
+        return !handlers.isEmpty();
+    }
+    /**
      * Method to call handle on the downloadable object handler
+     *
      * @param downloadable
      */
     public void handle(DownloadableDO downloadable) {
         if (bootException != null) {
             MediPiMessageBox.getInstance().makeErrorMessage("There has been an issue starting the DownloadableHandlerManager: ", bootException);
-            MediPiLogger.getInstance().log(RESTfulMessagingEngine.class.getName() + "error", "There has been an issue starting the DownloadableHandlerManager: "+ bootException.getLocalizedMessage());
+            MediPiLogger.getInstance().log(DownloadableHandlerManager.class.getName() + "error", "There has been an issue starting the DownloadableHandlerManager: " + bootException.getLocalizedMessage());
         }
 
         DownloadableHandler h = handlers.get(downloadable.getDownloadType());
         if (h == null) {
-            MediPiMessageBox.getInstance().makeErrorMessage("An incoming update has failed: No handler found: "+downloadable.getDownloadType(), null);
-            MediPiLogger.getInstance().log(RESTfulMessagingEngine.class.getName() + "error", "An incoming update has failed: No handler found: "+downloadable.getDownloadType());
+            MediPiMessageBox.getInstance().makeErrorMessage("An incoming update has failed: No handler found: " + downloadable.getDownloadType(), null);
+            MediPiLogger.getInstance().log(DownloadableHandlerManager.class.getName() + "error", "An incoming update has failed: No handler found: " + downloadable.getDownloadType());
         } else {
             h.handle(downloadable);
         }

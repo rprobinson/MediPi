@@ -21,14 +21,16 @@ import java.net.NetworkInterface;
 import java.util.Enumeration;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
+import org.medipi.AlertBanner;
 import org.medipi.MediPi;
 import org.medipi.MediPiProperties;
 
 /**
  * Class to Manage the basic VPN connection through to the MediPi Concentrator
- * 
- * This class uses the commandline interface to bring the vpn connection up and down 
- * 
+ *
+ * This class uses the commandline interface to bring the vpn connection up and
+ * down
+ *
  * @author damian
  */
 public class VPNConnectionManager {
@@ -91,7 +93,8 @@ public class VPNConnectionManager {
 
     }
 
-    public boolean up() throws Exception {
+    public synchronized boolean up() throws Exception {
+
         if (VPNConnectionManager.hasTunnel()) {
             hasTunnelProperty.set(MediPi.VPNCONNECTED);
             return false;
@@ -102,6 +105,7 @@ public class VPNConnectionManager {
         } else if (OS.equals("UNIX")) {
             openVpnProcess = Runtime.getRuntime().exec(openVpnCommand + " " + connectionName);
         }
+
         InputStreamReader in = new InputStreamReader(openVpnProcess.getInputStream());
         String line = null;
         BufferedReader br = new BufferedReader(in);
@@ -114,6 +118,20 @@ public class VPNConnectionManager {
                 hasTunnelProperty.set(MediPi.VPNCONNECTED);
                 return true;
 
+            }
+            if (line.contains("Network is unreachable")) {
+                hasTunnelProperty.set(MediPi.VPNFAILED);
+                System.out.println("internet down");
+                throw new Exception("Network is unreachable");
+            }
+            if (line.contains("Connection timed out")) {
+                hasTunnelProperty.set(MediPi.VPNFAILED);
+                System.out.println("VPN Connection timed out");
+                continue;
+            }            
+            if (line.contains("Connection reset")) {
+                hasTunnelProperty.set(MediPi.VPNRESTARTING);
+                continue;
             }
 
             //
@@ -133,22 +151,28 @@ public class VPNConnectionManager {
         throw new Exception("Did not create tunnel: " + sb.toString());
     }
 
-    public boolean down() throws Exception {
+    public synchronized boolean down() throws Exception {
+        //Check there is an open VPN connection to close
+        if (!VPNConnectionManager.hasTunnel()) {
+            hasTunnelProperty.set(MediPi.VPNNOTCONNECTED);
+            return false;
+        }
         try {
-            if (openVpnProcess == null) {
-                externalKill();
-                return false;
-            } else {
-                int i = openVpnProcess.destroyForcibly().waitFor();
-                System.out.println("forcibly destroy output = "+ i);
-                //vpn-client-096
-                // Other things to consider are an external call to make sure that
-                // if we think we've killed the VPN process then when we did so the
-                // action did actually remove the VPN routing table entries... 
-                // ... because that doesn't always happen cleanly.
-                //
-                return true;
-            }
+            externalKill();
+            return true;
+//            if (openVpnProcess == null) {
+//                externalKill();
+//                return false;
+//            } else {
+//                int i = openVpnProcess.destroyForcibly().waitFor();
+//                System.out.println("forcibly destroy output = " + i);
+//                // Other things to consider are an external call to make sure that
+//                // if we think we've killed the VPN process then when we did so the
+//                // action did actually remove the VPN routing table entries... 
+//                // ... because that doesn't always happen cleanly.
+//                //
+//                return true;
+//            }
         } finally {
             Thread.sleep(1000);
             if (VPNConnectionManager.hasTunnel()) {
@@ -165,8 +189,9 @@ public class VPNConnectionManager {
         // Call out to something configurable that will in a system-specific
         // way find and kill the openvpn process that we don't now controln/
 
-        int i = Runtime.getRuntime().exec(new String[]{openVpnKiller, clientName}).waitFor();
-                System.out.println("external kill output = "+ i);
+        System.out.println("start kill attempt");
+        int i = Runtime.getRuntime().exec(new String[]{openVpnKiller}).waitFor();
+        System.out.println("external kill output = " + i);
 //        p.waitFor();
     }
 
@@ -185,7 +210,7 @@ public class VPNConnectionManager {
                     return n;
                 }
             } else if (OS.equals("UNIX")) {
-                if (n.getName().contains("tun")||n.getName().contains("tap")) {
+                if (n.getName().contains("tun") || n.getName().contains("tap")) {
                     return n;
                 }
 
@@ -195,8 +220,7 @@ public class VPNConnectionManager {
         return null;
     }
 
-    protected IntegerProperty getTunnelProperty() {
+    protected IntegerProperty getVPNTunnelProperty() {
         return hasTunnelProperty;
     }
-
 }

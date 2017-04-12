@@ -15,29 +15,23 @@
  */
 package org.medipi.devices;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.UUID;
-import javafx.beans.binding.Bindings;
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
-import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.control.Separator;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -58,8 +52,9 @@ import org.medipi.utilities.Utilities;
  * Ultimately the questionnaire ends when an advisory response is returned. The
  * results can transmitted. The transmittable data contains all the questions,
  * answers and advice given in plain text irrespective of ultimate advice
- * 
- * A questionnaire is ultimately judged on its outcome: green flag or red flag status
+ *
+ * A questionnaire is ultimately judged on its outcome: green flag or red flag
+ * status
  *
  * @author rick@robinsonhq.com
  */
@@ -67,15 +62,15 @@ public class Questionnaire extends Device {
 
     private static final String PROFILEID = "urn:nhs-en:profile:Questionnaire";
     private static final String NAME = "Questionnaire";
-    private static final String MAKE = "NONE";
     private static final String MODEL = "NONE";
     private static final String GREEN_FLAG = "GREEN_FLAG";
     private static final String RED_FLAG = "RED_FLAG";
     private final HashMap<String, String[]> responses = new HashMap<>();
     private final HashMap<String, String> questions = new HashMap<>();
     private final HashMap<String, String[]> questionnaire = new HashMap<>();
-    private final ArrayList<String> data = new ArrayList<>();
-    private String redFlagStatus;
+    private QuestionnaireDO data = new QuestionnaireDO();
+    private Instant schedStartTime = null;
+    private Instant schedExpireTime = null;
     private final StringProperty resultsSummary = new SimpleStringProperty();
     private Instant dataTime;
     private VBox questionnaireWindow;
@@ -120,7 +115,7 @@ public class Questionnaire extends Device {
             throw new Exception("The Questionnaire doesn't have a title name");
         }
         //ascertain if this element is to be displayed on the dashboard
-        String b = MediPiProperties.getInstance().getProperties().getProperty(MediPi.ELEMENTNAMESPACESTEM + uniqueDeviceName +".showdashboardtile");
+        String b = MediPiProperties.getInstance().getProperties().getProperty(MediPi.ELEMENTNAMESPACESTEM + uniqueDeviceName + ".showdashboardtile");
         if (b == null || b.trim().length() == 0) {
             showTile = new SimpleBooleanProperty(true);
         } else {
@@ -144,7 +139,7 @@ public class Questionnaire extends Device {
         questionLine.setId("questionnaire-questionpanel");
         questionLine.setMinHeight(100);
         questionLine.setMaxHeight(100);
-     
+
         // Scrollable result window
         ScrollPane listSP = new ScrollPane();
         responseLabel = new Label("");
@@ -180,8 +175,10 @@ public class Questionnaire extends Device {
         }
         loadRules(questionSet);
         startButton.setOnAction((ActionEvent t) -> {
-            resetDevice();
-            execute(firstRuleName);
+            if (confirmReset()) {
+                resetDevice();
+                execute(firstRuleName);
+            }
         });
         setButton2(startButton);
 
@@ -199,8 +196,8 @@ public class Questionnaire extends Device {
     }
 
     @Override
-    public String getType() {
-        return NAME;
+    public String getGenericDeviceDisplayName() {
+        return titleName;
     }
 
     @Override
@@ -208,10 +205,11 @@ public class Questionnaire extends Device {
         question.setText("");
         responseLabel.setText("");
         questionLine.getChildren().clear();
-        data.clear();
-        redFlagStatus = "";
+        data = new QuestionnaireDO();
         resultsSummary.setValue("");
         questionNo = 0;
+        schedStartTime = null;
+        schedExpireTime = null;
     }
 
     // This is a recursive method used for each line of the questionnaire
@@ -222,7 +220,7 @@ public class Questionnaire extends Device {
         final int TRUE_RESPONSE = 1;
         final int FALSE_RESPONSE = 2;
         // handle buttons for when being run as part of a schedule 
-        if (isSchedule.get()) {
+        if (isThisElementPartOfAScheduleExecution.get()) {
             button1.setDisable(true);
             button3.setDisable(true);
         }
@@ -235,30 +233,14 @@ public class Questionnaire extends Device {
         //actions for clicking "yes"
         yes.setOnAction((ActionEvent t) -> {
             // add data to data arraylist for transmission later
-            data.add(questions.get(rule[QUESTION]));
-            data.add(yes.getText());
+            String[] conv = {questions.get(rule[QUESTION]), yes.getText()};
+            data.addConversation(conv);
             yes.setDisable(true);
             no.setDisable(true);
             no.setVisible(false);
             String[] response = responses.get(rule[TRUE_RESPONSE]);
             if (response != null) {
-                // add data to data arraylist for transmission later
-                // n.b. 1 millisecond is added to the response to differentiate it and maintain unique timestamps
-                data.add(response[1]);
-                boolean redFlag = Boolean.valueOf(response[0]);
-                if (redFlag) {
-                    redFlagStatus = RED_FLAG;
-                } else {
-                    redFlagStatus = GREEN_FLAG;
-                }
-                resultsSummary.setValue(getDisplayName() + " completed");
-                dataTime = Instant.now();
-                responseLabel.setText(response[1]);
-                if (isSchedule.get()) {
-                    button1.setDisable(false);
-                    button3.setDisable(false);
-                }
-                // take the time of downloading the data
+                executeLastStep(response);
             } else {
                 // if there is no utimate advice to be given as a result of
                 // this question recursively execute the subsequent question(s)
@@ -269,30 +251,14 @@ public class Questionnaire extends Device {
         //actions for clicking "no"
         no.setOnAction((ActionEvent t) -> {
             // add data to data arraylist for transmission later
-            data.add(questions.get(rule[QUESTION]));
-            data.add(no.getText());
+            String[] conv = {questions.get(rule[QUESTION]), no.getText()};
+            data.addConversation(conv);
             yes.setDisable(true);
             yes.setVisible(false);
             no.setDisable(true);
             String[] response = responses.get(rule[FALSE_RESPONSE]);
             if (response != null) {
-                // add data to data arraylist for transmission later
-                // n.b. 1 millisecond is added to the response to differentiate it and maintain unique timestamps
-                data.add(response[1]);
-                boolean redFlag = Boolean.valueOf(response[0]);
-                if (redFlag) {
-                    redFlagStatus = RED_FLAG;
-                } else {
-                    redFlagStatus = GREEN_FLAG;
-                }
-                resultsSummary.setValue(getDisplayName() + " completed");
-                dataTime = Instant.now();
-                responseLabel.setText(response[1]);
-                if (isSchedule.get()) {
-                    button1.setDisable(false);
-                    button3.setDisable(false);
-                }
-                // take the time of downloading the data
+                executeLastStep(response);
             } else {
                 // if there is no utimate advice to be given as a result of
                 // this question recursively execute the subsequent question(s)
@@ -309,6 +275,30 @@ public class Questionnaire extends Device {
                 no
         );
 
+    }
+
+    private void executeLastStep(String[] response) {
+        // add data to data arraylist for transmission later
+        // n.b. 1 millisecond is added to the response to differentiate it and maintain unique timestamps
+        data.setAdvice(response[1]);
+        boolean redFlag = Boolean.valueOf(response[0]);
+        if (redFlag) {
+            data.setStatus(RED_FLAG);
+        } else {
+            data.setStatus(GREEN_FLAG);
+        }
+        resultsSummary.setValue(getSpecificDeviceDisplayName() + " completed");
+        dataTime = Instant.now();
+        responseLabel.setText(response[1]);
+        Scheduler scheduler = null;
+        if ((scheduler = medipi.getScheduler()) != null) {
+            schedStartTime = scheduler.getCurrentScheduleStartTime();
+            schedExpireTime = scheduler.getCurrentScheduleExpiryTime();
+        }
+        if (isThisElementPartOfAScheduleExecution.get()) {
+            button1.setDisable(false);
+            button3.setDisable(false);
+        }
     }
 
     // Read ruleset line by line and depending on type of rule call appropriate methods
@@ -463,9 +453,10 @@ public class Questionnaire extends Device {
      *
      *
      * @return DevicedataDO containing the payload
+     * @throws java.lang.Exception
      */
     @Override
-    public DeviceDataDO getData() {
+    public DeviceDataDO getData() throws Exception{
         DeviceDataDO payload = new DeviceDataDO(UUID.randomUUID().toString());
         StringBuilder sb = new StringBuilder();
         //Add MetaData
@@ -473,30 +464,25 @@ public class Questionnaire extends Device {
         sb.append("metadata->persist->questionnaireversion->").append(titleName).append("\n");
         sb.append("metadata->make->").append(getMake()).append("\n");
         sb.append("metadata->model->").append(getModel()).append("\n");
-        sb.append("metadata->displayname->").append(getDisplayName()).append("\n");
+        sb.append("metadata->displayname->").append(getSpecificDeviceDisplayName()).append("\n");
         sb.append("metadata->datadelimiter->").append(medipi.getDataSeparator()).append("\n");
-        if (scheduler != null) {
-            sb.append("metadata->scheduleeffectivedate->").append(Utilities.ISO8601FORMATDATEMILLI_UTC.format(scheduler.getCurrentScheduledEventTime())).append("\n");
-            sb.append("metadata->scheduleexpirydate->").append(Utilities.ISO8601FORMATDATEMILLI_UTC.format(scheduler.getNextScheduledEventTime())).append("\n");
+        if (medipi.getScheduler() != null) {
+            sb.append("metadata->scheduleeffectivedate->").append(Utilities.ISO8601FORMATDATEMILLI_UTC.format(schedStartTime)).append("\n");
+            sb.append("metadata->scheduleexpirydate->").append(Utilities.ISO8601FORMATDATEMILLI_UTC.format(schedExpireTime)).append("\n");
         }
         sb.append("metadata->columns->")
                 .append("iso8601time").append(medipi.getDataSeparator())
-                .append("conversation").append(medipi.getDataSeparator())
                 .append("outcome").append("\n");
         sb.append("metadata->format->")
                 .append("DATE").append(medipi.getDataSeparator())
-                .append("STRING").append(medipi.getDataSeparator())
                 .append("STRING").append("\n");
         sb.append("metadata->units->")
-                .append("NONE").append(medipi.getDataSeparator())
                 .append("NONE").append(medipi.getDataSeparator())
                 .append("NONE").append("\n");
         // Add Downloaded data
         sb.append(dataTime.toString());
         sb.append(medipi.getDataSeparator());
-        sb.append(String.join("|", data));
-        sb.append(medipi.getDataSeparator());
-        sb.append(redFlagStatus);
+        sb.append(getJSON(data));
         sb.append("\n");
         payload.setProfileId(PROFILEID);
         payload.setPayload(sb.toString());
@@ -506,7 +492,7 @@ public class Questionnaire extends Device {
     @Override
     public BorderPane getDashboardTile() throws Exception {
         DashboardTile dashComponent = new DashboardTile(this, showTile);
-        dashComponent.addTitle(getDisplayName());
+        dashComponent.addTitle(getSpecificDeviceDisplayName());
         dashComponent.addOverlay(Color.LIGHTGREEN, hasDataProperty());
         return dashComponent.getTile();
     }
@@ -518,7 +504,7 @@ public class Questionnaire extends Device {
      */
     @Override
     public String getMake() {
-        return MAKE;
+        return titleName;
     }
 
     /**
@@ -537,7 +523,7 @@ public class Questionnaire extends Device {
      * @return displayName of device
      */
     @Override
-    public String getDisplayName() {
+    public String getSpecificDeviceDisplayName() {
         return titleName;
     }
 
@@ -545,9 +531,16 @@ public class Questionnaire extends Device {
     public StringProperty getResultsSummary() {
         return resultsSummary;
     }
+
     @Override
     public void setData(ArrayList<ArrayList<String>> deviceData) {
         throw new UnsupportedOperationException("This method is not used as the class has no extensions");
+    }
+
+    private String getJSON(QuestionnaireDO data) throws JsonProcessingException{
+            ObjectMapper mapper = new ObjectMapper();
+            return mapper.writeValueAsString(data);
+        
     }
 
 }

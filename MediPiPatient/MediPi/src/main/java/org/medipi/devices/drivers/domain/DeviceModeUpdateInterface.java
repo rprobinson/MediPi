@@ -23,7 +23,7 @@ import javafx.scene.Node;
  *
  * @author rick@robinsonhq.com
  */
-public interface TimestampValidationInterface {
+public interface DeviceModeUpdateInterface {
 
-    public Node getTimestampMessageBoxContent();
+    public Node getDeviceModeUpateMessageBoxContent();
 }

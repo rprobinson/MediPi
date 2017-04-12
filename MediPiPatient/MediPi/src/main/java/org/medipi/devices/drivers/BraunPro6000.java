@@ -22,9 +22,9 @@ import org.medipi.MediPiMessageBox;
 import org.medipi.devices.Thermometer;
 
 /**
- * An implementation of a specific device - Temp101
- *
- * TODO; this class need refactoring in asscociation with the Thermometer class.
+ * An implementation of a specific device - BraunPro6000
+
+ TODO; this class need refactoring in asscociation with the Thermometer class.
  * This class is essentially a dummy to provide some formatting data to the
  * "generic" device class
  *
@@ -32,18 +32,18 @@ import org.medipi.devices.Thermometer;
  * @author rick@robinsonhq.com
  */
 @SuppressWarnings("restriction")
-public class Temp101 extends Thermometer {
+public class BraunPro6000 extends Thermometer {
 
-    private static final String MAKE = "TempCo";
-    private static final String MODEL = "101";
-    private static final String DISPLAYNAME = "TempCo 101 Tympanic Thermometer";
+    private static final String MAKE = "Braun";
+    private static final String MODEL = "Pro";
+    private static final String DISPLAYNAME = "Braun Pro 6000 Tympanic Thermometer";
     // The number of increments of the progress bar - a value of 0 removes the progBar
     private ImageView graphic;
 
     /**
-     * Constructor for BeurerBF480
+     * Constructor for BraunPro6000
      */
-    public Temp101() {
+    public BraunPro6000() {
     }
 
     // initialise and load the configuration data
@@ -55,7 +55,7 @@ public class Temp101 extends Thermometer {
         units.add("NONE");
         columns.add("temperature");
         format.add("DOUBLE");
-        units.add("CELCIUS");
+        units.add("CELSIUS");
         return super.init();
     }
 
@@ -85,7 +85,7 @@ public class Temp101 extends Thermometer {
      * @return displayName of device
      */
     @Override
-    public String getDisplayName() {
+    public String getSpecificDeviceDisplayName() {
         return DISPLAYNAME;
     }
 

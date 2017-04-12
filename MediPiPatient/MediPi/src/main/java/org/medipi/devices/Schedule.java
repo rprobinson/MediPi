@@ -15,100 +15,112 @@
  */
 package org.medipi.devices;
 
+import java.io.Serializable;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.UUID;
-import javafx.beans.property.SimpleIntegerProperty;
-import javafx.beans.property.SimpleLongProperty;
-import javafx.beans.property.SimpleStringProperty;
-import org.medipi.MediPiMessageBox;
-import org.medipi.utilities.Utilities;
 
 /**
- * Class to encapsulate the data for the Scheduler Class table.
- *
- * There are getter methods for different formats of the same data because of
- * the way this class is tied with the scheduler List table. This requires
- * investigation
+ * Class to contain the bluetooth properties for devices which may have been
+ * paired but MediPi needs MAC address for in order to communicate serially with
  *
  * @author rick@robinsonhq.com
  */
-public class Schedule {
+public class Schedule implements Serializable {
 
-    private SimpleStringProperty uuid;
-    private SimpleStringProperty eventType;
-    private SimpleLongProperty time;
-    private SimpleStringProperty deviceSched;
-    private SimpleIntegerProperty repeat;
+    private static final long serialVersionUID = 1L;
+    private UUID uuid;
+    private String eventType;
+    private Instant time;
+    private int repeat;
+    private ArrayList<String> deviceSched;
 
     /**
-     * Constructor which takes the untokenised line of the schedule table and
-     * parses it into a meaningful table
-     *
-     * @param u UUID
-     * @param type Type of schedule row
-     * @param d Instant string
-     * @param r repeat string
-     * @param dl list of devices to be scheduled
+     * Constructor
      */
-    public Schedule(UUID u, String type, Instant d, int r, ArrayList<String> dl) {
-        try {
-            //unique event number
-            this.uuid = new SimpleStringProperty(u.toString());
-            // event status
-            this.eventType = new SimpleStringProperty(type);
-            this.time = new SimpleLongProperty(d.toEpochMilli());
-            //repeat rate in mins
-            this.repeat = new SimpleIntegerProperty(r);
-            //devices to be called
-            StringBuilder devices = new StringBuilder();
-            for (String s : dl) {
-                devices.append(s);
-                devices.append(" ");
-            }
-            this.deviceSched = new SimpleStringProperty(devices.toString().trim());
-        } catch (Exception ex) {
-            MediPiMessageBox.getInstance().makeErrorMessage("failure to tokenise the schedule: ", ex);
-        }
-
+    public Schedule() {
     }
 
-    public String getUUIDDisp() {
-        return uuid.get();
+    public Schedule(UUID uuid, String eventType, Instant time, int repeat, ArrayList<String> deviceSched) {
+        this.uuid = uuid;
+        this.eventType = eventType;
+        this.time = time;
+        this.repeat = repeat;
+        this.deviceSched = deviceSched;
+    }
+    public Schedule(ScheduleItem scheduleItem) {
+        this.uuid = scheduleItem.getUUID();
+        this.eventType = scheduleItem.getEventTypeDisp();
+        this.time = Instant.ofEpochMilli(scheduleItem.getTime());
+        this.repeat = scheduleItem.getRepeat();
+        this.deviceSched = scheduleItem.getDeviceSched();
     }
 
-    public UUID getUUID() {
-        return UUID.fromString(uuid.get());
+    public UUID getUuid() {
+        return uuid;
     }
 
-    public String getEventTypeDisp() {
-        return eventType.get();
+    public void setUuid(UUID uuid) {
+        this.uuid = uuid;
     }
 
-    public String getTimeDisp() {
-        Instant instant = Instant.ofEpochMilli(time.get());
-        return Utilities.DISPLAY_SCHEDULE_FORMAT_LOCALTIME.format(instant);
+    public String getEventType() {
+        return eventType;
     }
 
-    public Long getTime() {
-        return time.get();
+    public void setEventType(String eventType) {
+        this.eventType = eventType;
     }
 
-    public String getRepeatDisp() {
-        return String.valueOf(repeat.get());
+    public Instant getTime() {
+        return time;
+    }
+
+    public void setTime(Instant time) {
+        this.time = time;
     }
 
     public int getRepeat() {
-        return repeat.get();
+        return repeat;
     }
 
-    public String getDeviceSchedDisp() {
-        return deviceSched.get();
+    public void setRepeat(int repeat) {
+        this.repeat = repeat;
     }
 
     public ArrayList<String> getDeviceSched() {
-        return new ArrayList<>(Arrays.asList(deviceSched.get().split("\\s+")));
+        return deviceSched;
+    }
+
+    public void setDeviceSched(ArrayList<String> deviceSched) {
+        this.deviceSched = deviceSched;
+    }
+
+
+
+    @Override
+    public int hashCode() {
+        int hash = 0;
+        hash += (uuid != null ? uuid.hashCode() : 0);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        // TODO: Warning - this method won't work in the case the id fields are not set
+        if (!(object instanceof Schedule)) {
+            return false;
+        }
+        Schedule other = (Schedule) object;
+        if ((this.uuid == null && other.uuid != null) || (this.uuid != null && !this.uuid.equals(other.uuid))) {
+            return false;
+        }
+        return true;
+    }
+
+    @Override
+    public String toString() {
+        return "org.medipi.model.BluetoothProperties [ uuid=" + uuid + " ]";
     }
 
 }

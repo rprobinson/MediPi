@@ -42,8 +42,8 @@ import org.medipi.utilities.Utilities;
  *
  * This class defines the device which is to be connected, defines the data to
  * be collected and passes this forward to the generic device class
-
-* @author rick@robinsonhq.com
+ *
+ * @author rick@robinsonhq.com
  */
 public class ContecCMS50DPlus extends Oximeter {
 
@@ -93,8 +93,8 @@ public class ContecCMS50DPlus extends Oximeter {
             transmitAverages = !b.toLowerCase().startsWith("n");
         }
 
-         initialButtonText = RECORD;
-         initialGraphic = medipi.utils.getImageView("medipi.images.record", 20, 20);
+        initialButtonText = RECORD;
+        initialGraphic = medipi.utils.getImageView("medipi.images.record", 20, 20);
 
         columns.add("iso8601time");
         columns.add("pulse");
@@ -114,7 +114,7 @@ public class ContecCMS50DPlus extends Oximeter {
         if (!transmitAverages) {
             units.add("NONE");
         }
-       measurement = new CMS50DPlusMeasurement(portName, medipi.getDataSeparator());
+        measurement = new CMS50DPlusMeasurement(portName, medipi.getDataSeparator());
         return super.init();
     }
 
@@ -139,6 +139,7 @@ public class ContecCMS50DPlus extends Oximeter {
     private void processData() {
         task = new Task<String>() {
             ArrayList<ArrayList<String>> data = new ArrayList<>();
+
             @Override
             protected String call() throws Exception {
                 try {
@@ -253,7 +254,13 @@ public class ContecCMS50DPlus extends Oximeter {
                 );
         button3.disableProperty()
                 .bind(
-                        Bindings.when(task.runningProperty().and(isSchedule))
+                        Bindings.when(task.runningProperty().and(isThisElementPartOfAScheduleExecution))
+                        .then(true)
+                        .otherwise(false)
+                );
+        button1.disableProperty()
+                .bind(
+                        Bindings.when(task.runningProperty().and(isThisElementPartOfAScheduleExecution))
                         .then(true)
                         .otherwise(false)
                 );
@@ -271,6 +278,7 @@ public class ContecCMS50DPlus extends Oximeter {
     public String getMake() {
         return MAKE;
     }
+
     /**
      * method to get the Make and Model of the device
      *
@@ -280,13 +288,14 @@ public class ContecCMS50DPlus extends Oximeter {
     public String getModel() {
         return MODEL;
     }
+
     /**
      * method to get the Make and Model of the device
      *
      * @return make and model of device
      */
     @Override
-    public String getDisplayName() {
+    public String getSpecificDeviceDisplayName() {
         return DISPLAYNAME;
     }
 

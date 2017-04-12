@@ -24,6 +24,7 @@ import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintStream;
 import java.net.NetworkInterface;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -34,17 +35,14 @@ import java.security.cert.CertificateException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Enumeration;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import javafx.animation.Interpolator;
-import javafx.animation.Timeline;
-import javafx.animation.TranslateTransition;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
@@ -53,19 +51,19 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
-import javafx.collections.FXCollections;
-import javafx.collections.MapChangeListener;
-import javafx.collections.ObservableMap;
 import javafx.event.ActionEvent;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Separator;
+import javafx.scene.control.TextArea;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
@@ -76,10 +74,12 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.TilePane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
-import javafx.util.Duration;
+import org.apache.commons.io.output.TeeOutputStream;
 import org.medipi.devices.Device;
+import org.medipi.devices.Scheduler;
 import org.medipi.downloadable.handlers.DownloadableHandlerManager;
 import org.medipi.downloadable.handlers.HardwareHandler;
 import org.medipi.logging.MediPiLogger;
@@ -120,8 +120,8 @@ public class MediPi extends Application {
 
     // MediPi version Number
     private static final String MEDIPINAME = "MediPi Telehealth";
-    private static final String VERSION = "MediPi_v1.0.13";
-    private static final String VERSIONNAME = "PILOT-20161228-1";
+    private static final String VERSION = "MediPi_v1.0.15";
+    private static final String VERSIONNAME = "PILOT-20170403-1";
 
     // Set the MediPi Log directory
     private static final String LOG = "medipi.log";
@@ -138,11 +138,11 @@ public class MediPi extends Application {
     private static final String CSS = "medipi.css";
     //List of elements e.g. Oximeter,Scales,Blood Pressure, transmitter, messenger etc to be loaded into MediPi
     private static final String ELEMENTS = "medipi.elementclasstokens";
-    // not sure what the best setting for this thread pool is but 3 seems to work - this is for the downloadable timer
-    private static final int TIMER_THREAD_POOL_SIZE = 3;
 
     // The period of time in seconds to wait before retrying to access the MediPi Concentrator server
     private static final String MEDIPIDOWNLOADPOLLPERIOD = "medipi.downloadable.pollperiod";
+    // The period of time in seconds to wait before retrying to access the MediPi Concentrator server
+    private static final String MEDIPIWIFIMONITORREFRESHPERIOD = "medipi.wifi.monitorresfreshperiod";
     // Specify action to take when MEdiPi Patient is closed
     private static final String MEDIPISHUTDOWNLINUXOSONCLOSE = "medipi.shutdownlinuxosonclose";
     // System property set in this class when device is authenticated 
@@ -155,7 +155,13 @@ public class MediPi extends Application {
     private static final String MEDIPIDATASEPARATOR = "medipi.dataseparator";
     // time sync directory
     private static final String MEDIPITIMESYNCSERVERDIRECTORY = "medipi.timesyncserver.directory";
-    
+    // turn on the download functionality to update software on the fly
+    private static final String MEDIPIDOWNLOADABLEDOWNLOADUPDATES = "medipi.downloadable.downloadupdates";
+    // polling executor service
+    public static ScheduledExecutorService POLLSERVICE = Executors.newSingleThreadScheduledExecutor();
+    // WIFI monitor executor service
+    public static ScheduledExecutorService WIFIMONITORSERVICE = Executors.newSingleThreadScheduledExecutor();
+
     private Stage primaryStage;
     private final ArrayList<Element> elements = new ArrayList<>();
     private final ScrollPane dashTileSc = new ScrollPane();
@@ -168,28 +174,29 @@ public class MediPi extends Application {
     private Properties properties;
     private MediPiWindow mediPiWindow;
     private final IntegerProperty vpnConnectionIndicatorProperty = new SimpleIntegerProperty(0);
-    public static final Integer VPNFAILED = -1;
-    public static final Integer VPNNOTCONNECTED = 0;
-    public static final Integer VPNCONNECTING = 1;
-    public static final Integer VPNCONNECTED = 2;
+    private IntegerProperty wifiConnectionIndicatorProperty = new SimpleIntegerProperty(0);
+    public static final int VPNFAILED = -1;
+    public static final int VPNNOTCONNECTED = 0;
+    public static final int VPNCONNECTING = 1;
+    public static final int VPNRESTARTING = 2;
+    public static final int VPNCONNECTED = 3;
+    public static final int WIFINOTCONNECTED = 0;
+    public static final int WIFICONNECTED = 1;
     private Integer screenwidth = 800;
     private Integer screenheight = 480;
     private boolean closeLinuxOS = false;
-    private ObservableMap<String, String> alertBannerMap;
-    private final Label alertBannerMessage = new Label("");
     private final Label patientForename = new Label();
     private final Label patientSurname = new Label();
     private final Label nhsNumber = new Label();
     private final Label dob = new Label();
-
+    private Scheduler scheduler = null;
+    private String cssfile = null;
     /**
-     * Debug mode governing standard output and error reporting. Debug mode can
-     * take one of 3 values: "debug" mode this will report to standard out debug
-     * messages. "errorsuppress" mode this will suppress all error messages to
-     * the UI, instead outputting to standard out. "none" mode will not report
-     * any standard output messages
+     * When set on the debug mode will send all std and err output to the
+     * version screen accessed by tapping the MediPi Telehealth banner label
+     *
      */
-    private int debugMode = NONE;
+    private boolean debugMode = false;
 
     // Instantiation of the download handler 
     private DownloadableHandlerManager dhm = new DownloadableHandlerManager();
@@ -198,16 +205,6 @@ public class MediPi extends Application {
      * allows access to scene to allow the cursor to be set
      */
     public Scene scene;
-    //DEBUG states
-    //"NONE" mode will not report any standard output messages
-    public static final int NONE = 0;
-
-    //"DEBUG" mode this will report to standard out debug messages
-    public static final int DEBUG = 1;
-
-    // "ERRORSUPPRESS" mode this will suppress all error messages to the UI,
-    // instead outputting to standard out
-    public static final int ERRORSUPPRESSING = 2;
 
     // "ELEMENTNAMESPACESTEM" a single variable to contain element stem
     public static final String ELEMENTNAMESPACESTEM = "medipi.element.";
@@ -224,6 +221,12 @@ public class MediPi extends Application {
     public BooleanProperty timeSync = new SimpleBooleanProperty(false);
 
     /**
+     * Property encapsulating wifi connectivity status used by transmitter and
+     * polling to determine if connection is possible
+     */
+    public BooleanProperty wifiSync = new SimpleBooleanProperty(false);
+
+    /**
      * Properties from the main properties file
      *
      * @return
@@ -238,15 +241,6 @@ public class MediPi extends Application {
      */
     public IntegerProperty getVPNConnectionIndicator() {
         return vpnConnectionIndicatorProperty;
-    }
-
-    /**
-     * Method to get the debug mode
-     *
-     * @return int representation of debug mode
-     */
-    public int getDebugMode() {
-        return debugMode;
     }
 
     /**
@@ -269,6 +263,22 @@ public class MediPi extends Application {
         return mediPiWindow;
     }
 
+    public Scheduler getScheduler() {
+        return scheduler;
+    }
+
+    public void setScheduler(Scheduler s) {
+        scheduler = s;
+    }
+
+    public Integer getScreenheight() {
+        return screenheight;
+    }
+
+    public String getCssfile() {
+        return cssfile;
+    }
+
     /**
      * Main javaFX start method
      *
@@ -279,6 +289,16 @@ public class MediPi extends Application {
     public void start(Stage stg) throws Exception {
         try {
             primaryStage = stg;
+
+            // Code to capture all stdout and errout and display on screen for debugging purposes
+            TextArea stdoutText = new TextArea();
+            stdoutText.setPrefWidth(800);
+            stdoutText.setPrefHeight(300);
+            stdoutText.setWrapText(true);
+            StdOutConsole console = new StdOutConsole(stdoutText);
+            PrintStream cps = new PrintStream(console, true);
+            TeeOutputStream myOut = new TeeOutputStream(cps, System.out);
+            PrintStream ps = new PrintStream(myOut);
 
             // set versioning and print to standard output
             versionIdent = MEDIPINAME + " " + VERSION + "-" + VERSIONNAME + " starting at " + Instant.now().toString();
@@ -308,15 +328,19 @@ public class MediPi extends Application {
             StackPane root = new StackPane();
             scene = new Scene(root, screenwidth, screenheight);
 
-            //Create a map object to contain all the alert messages to be displayed on the lower banner
-            Map<String, String> map = new HashMap<>();
-            alertBannerMap = FXCollections.observableMap(map);
             // what should MediPi do when exitting?
             String shut = properties.getProperty(MEDIPISHUTDOWNLINUXOSONCLOSE);
             if (shut == null || shut.trim().length() == 0 || shut.toLowerCase().startsWith("n")) {
                 closeLinuxOS = false;
             } else {
                 closeLinuxOS = true;
+            }
+            //set debug mode
+            String dbm = properties.getProperty(DEBUGMODE);
+            if (dbm == null || dbm.trim().length() == 0 || !dbm.toLowerCase().trim().startsWith("y")) {
+                debugMode = false;
+            } else {
+                debugMode = true;
             }
             //Instantiate Message Box Class
             MediPiMessageBox message = MediPiMessageBox.getInstance();
@@ -337,15 +361,6 @@ public class MediPi extends Application {
             dataSeparator = properties.getProperty(MEDIPIDATASEPARATOR);
             if (dataSeparator == null || dataSeparator.trim().equals("")) {
                 dataSeparator = "^";
-            }
-            //set debug mode - this may need to be removed for production
-            String dbm = properties.getProperty(DEBUGMODE);
-            if (dbm == null || dbm.trim().length() == 0 || dbm.toLowerCase().trim().equals("none")) {
-                debugMode = NONE;
-            } else if (dbm.toLowerCase().trim().equals("debug")) {
-                debugMode = DEBUG;
-            } else if (dbm.toLowerCase().trim().equals("errorsuppressing")) {
-                debugMode = ERRORSUPPRESSING;
             }
 
             // It has been difficult to access all the Mac address/IP Addresses (whether they 
@@ -370,7 +385,7 @@ public class MediPi extends Application {
                     makeFatalErrorMessage("Device certificate is not correct for this device", null);
                     return;
                 }
-                
+
                 String ksf = MediPiProperties.getInstance().getProperties().getProperty(MEDIPIDEVICECERTLOCATION);
                 // read the hardware address for each device
                 for (String device : devices) {
@@ -378,7 +393,7 @@ public class MediPi extends Application {
                         BufferedReader in = new BufferedReader(reader);
                         String addr = in.readLine();
                         try {
-                            
+
                             KeyStore keyStore = KeyStore.getInstance("jks");
                             try (FileInputStream fis = new FileInputStream(ksf)) {
                                 //the MAC address used to unlock the JKS must be lowercase
@@ -391,7 +406,7 @@ public class MediPi extends Application {
                             }
                         } catch (KeyStoreException | IOException | NoSuchAlgorithmException | CertificateException e) {
                         }
-                        
+
                         System.out.println(String.format("%5s: %s", device, addr));
                     } catch (IOException e) {
                         makeFatalErrorMessage("Device certificate is not correct for this device", null);
@@ -402,7 +417,7 @@ public class MediPi extends Application {
                     makeFatalErrorMessage("Device certificate is not correct for this device", null);
                     return;
                 }
-                
+
             } else {
                 // for all other non Linux OS systems 
                 String ip;
@@ -432,7 +447,7 @@ public class MediPi extends Application {
                     // Using the Mac address unlock the JKS keystore for the device
                     try {
                         String ksf = MediPiProperties.getInstance().getProperties().getProperty(MEDIPIDEVICECERTLOCATION);
-                        
+
                         KeyStore keyStore = KeyStore.getInstance("jks");
                         try (FileInputStream fis = new FileInputStream(ksf)) {
                             //the MAC address used to unlock the JKS must be lowercase
@@ -446,7 +461,7 @@ public class MediPi extends Application {
                         makeFatalErrorMessage("Device certificate is not correct for this device", null);
                         return;
                     }
-                    
+
                 } catch (Exception e) {
                     makeFatalErrorMessage("Can't find Mac Address for the machine, therefore unable to check device certificate", null);
                     return;
@@ -460,9 +475,9 @@ public class MediPi extends Application {
                 patientForename.setId("mainwindow-title-microbannerupper");
                 nhsNumber.setId("mainwindow-title-microbannerlower");
                 dob.setId("mainwindow-title-microbannerlower");
-                
+
                 setPatientMicroBanner(patient);
-                
+
             } catch (Exception e) {
                 makeFatalErrorMessage("Patient Name issue: ", e);
                 return;
@@ -473,7 +488,7 @@ public class MediPi extends Application {
             microPatientBannerVBox.setAlignment(Pos.CENTER);
             HBox patientNameHBox = new HBox(patientSurname, new Label(","), patientForename);
             patientNameHBox.setAlignment(Pos.CENTER);
-            HBox patientOtherHBox = new HBox(new Label("Born "), dob, new Label("  NHS No."), nhsNumber);
+            HBox patientOtherHBox = new HBox(new Label("D.O.B "), dob, new Label("  NHS No."), nhsNumber);
             patientOtherHBox.setAlignment(Pos.CENTER);
             microPatientBannerVBox.getChildren().addAll(
                     patientNameHBox,
@@ -486,7 +501,16 @@ public class MediPi extends Application {
             title.setId("mainwindow-title");
             title.setAlignment(Pos.CENTER);
             title.setOnMouseClicked((MouseEvent event) -> {
-                MediPiMessageBox.getInstance().makeMessage("MediPi Version: " + getVersion());
+                Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+                alert.setTitle(getVersion());
+                alert.setHeaderText("Would you like to lock MediPi?");
+                if (debugMode) {
+                    alert.getDialogPane().setContent(stdoutText);
+                }
+                Optional<ButtonType> result = alert.showAndWait();
+                if (result.get() == ButtonType.OK) {
+                    mediPiWindow.lock();
+                }
             });
             // add the NHS logo
             ImageView iw = new ImageView("/org/medipi/logo.png");
@@ -519,17 +543,29 @@ public class MediPi extends Application {
             titleBP.add(title, 1, 0);
             titleBP.add(microPatientBannerVBox, 2, 0);
             titleBP.add(off, 3, 0);
-            HBox connLabel = new HBox();
-
+            VBox connectionLEDs = new VBox();
+            connectionLEDs.setAlignment(Pos.CENTER_RIGHT);
+            HBox vpnConn = new HBox();
             //Create elements and  structure for the lower banner
-            LED led = new LED();
-            connLabel.setAlignment(Pos.CENTER_RIGHT);
-            connLabel.setSpacing(10);
-            connLabel.getChildren().addAll(
-                    new Label("Connection"),
-                    led
+            LED vpnled = new LED();
+            vpnConn.setAlignment(Pos.CENTER_RIGHT);
+            vpnConn.setSpacing(10);
+            vpnConn.setId("lowerbannerled");
+            vpnConn.getChildren().addAll(
+                    new Label("VPN Connection"),
+                    vpnled
             );
-            
+            HBox wifiConn = new HBox();
+            //Create elements and  structure for the lower banner
+            LED wifiled = new LED();
+            wifiConn.setAlignment(Pos.CENTER_RIGHT);
+            wifiConn.setSpacing(10);
+            wifiConn.setId("lowerbannerled");
+            wifiConn.getChildren().addAll(
+                    new Label("WIFI Connection"),
+                    wifiled
+            );
+
             BorderPane lowerBanner = new BorderPane();
             lowerBanner.setPadding(new Insets(0, 5, 0, 5));
             lowerBanner.setMinSize(800, 40);
@@ -539,66 +575,8 @@ public class MediPi extends Application {
             dc.setMaxHeight(40);
             dc.setId("lowerbanner");
             lowerBanner.setLeft(dc);
-            alertBannerMessage.setAlignment(Pos.TOP_LEFT);
-            alertBannerMessage.setWrapText(true);
-            alertBannerMessage.setPrefWidth(400);
-            alertBannerMessage.setId("lowerbanner-scroll");
-            alertBannerMessage.setMinHeight(40);
-            
-            ScrollPane alertSP = new ScrollPane();
-            alertSP.setMaxWidth(400);
-            alertSP.setMinWidth(400);
-            alertSP.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-            alertSP.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-            alertSP.setPannable(false);
-            alertSP.setContent(alertBannerMessage);
-            alertSP.setStyle("-fx-background-color: transparent;");
-            // Provides the animated scrolling behavior for the text
-            TranslateTransition transTransition = new TranslateTransition();
-            transTransition.setDuration(new Duration(7500));
-            transTransition.setNode(alertBannerMessage);
-            transTransition.setToY(-40);
-            transTransition.setFromY(0);
-            transTransition.setInterpolator(Interpolator.LINEAR);
-            transTransition.setCycleCount(Timeline.INDEFINITE);
-            
-            lowerBanner.setCenter(alertSP);
-            
-            alertBannerMap.addListener(new MapChangeListener() {
-                @Override
-                public void onChanged(MapChangeListener.Change change) {
-                    ObservableMap om = change.getMap();
-                    StringBuilder sb = new StringBuilder();
-                    om.forEach((k, v) -> {
-                        sb.append("- ")
-                                .append(v.toString())
-                                .append("\n");
-                    });
-                    Platform.runLater(() -> {
-                        alertBannerMessage.setText(sb.toString());
-                        alertBannerMessage.setTextFill(Color.RED);
-                        double alertMessageHeight = 0;
-                        switch (om.size()) {
-                            case 0:
-                            case 1:
-                            case 2:
-                                transTransition.jumpTo(Duration.ZERO);
-                                transTransition.stop();
-                                transTransition.setToY(-40);
-                                alertMessageHeight = 40;
-                                break;
-                            default:
-                                alertMessageHeight = (om.size() * 20);
-                                alertBannerMessage.setMinHeight(alertMessageHeight + 40);
-                                System.out.println("height" + alertBannerMessage.getHeight() + "," + alertBannerMessage.getMinHeight() + "," + alertBannerMessage.getMaxHeight() + "," + alertBannerMessage.getPrefHeight());
-                                System.out.println(alertMessageHeight);
-                                transTransition.setToY(-alertMessageHeight);
-                                transTransition.play();
-                                break;
-                        }
-                    });
-                }
-            });
+
+            lowerBanner.setCenter(AlertBanner.getInstance().getAlertBanner());
 
             // Check Synchronisation status of MediPi time server
             String messageDir = properties.getProperty(MEDIPITIMESYNCSERVERDIRECTORY);
@@ -620,29 +598,67 @@ public class MediPi extends Application {
                     public void changed(ObservableValue<? extends Number> observableValue, Number oldValue,
                             Number newValue) {
                         switch (newValue.intValue()) {
-                            case -1:
-                                led.blink(Color.RED, Color.GREY, 1000);
+                            case VPNFAILED:
+                                vpnled.blink(Color.RED, Color.GREY, 1000);
                                 break;
-                            case 0:
-                                led.ledOn(Color.GREY);
+                            case VPNNOTCONNECTED:
+                                vpnled.ledOn(Color.GREY);
                                 break;
-                            case 1:
-//                                led.ledOn(Color.ORANGE);
-                                led.blink(Color.GREEN, Color.GREY, 250);
+                            case VPNCONNECTING:
+                                vpnled.blink(Color.GREEN, Color.GREY, 250);
                                 break;
-                            case 2:
-                                led.ledOn(Color.LIGHTGREEN);
+                            case VPNRESTARTING:
+                                vpnled.blink(Color.ORANGE, Color.GREY, 250);
+                                break;
+                            case VPNCONNECTED:
+                                vpnled.ledOn(Color.GREEN);
                                 break;
                             default:
                                 break;
                         }
                     }
                 });
-                vpnm.setConnectionIndicator(vpnConnectionIndicatorProperty);
-                connLabel.setId("lowerbanner");
-                lowerBanner.setRight(connLabel);
+                vpnm.setVPNConnectionIndicator(vpnConnectionIndicatorProperty);
+                connectionLEDs.getChildren().add(
+                        vpnConn
+                );
+
+            }
+            //WIFI connection indicator
+            try {
+                String time = getProperties().getProperty(MEDIPIWIFIMONITORREFRESHPERIOD);
+                if (time == null || time.trim().length() == 0) {
+                    time = "10";
+                }
+                Integer wifiRefresh = Integer.parseInt(time);
+                WIFIConnectionMonitor wifiConnectionMonitor = new WIFIConnectionMonitor(this);
+                wifiConnectionIndicatorProperty = wifiConnectionMonitor.getWIFIProperty();
+                wifiConnectionIndicatorProperty.addListener(new ChangeListener<Number>() {
+                    @Override
+                    public void changed(ObservableValue<? extends Number> observableValue, Number oldValue,
+                            Number newValue) {
+                        switch (newValue.intValue()) {
+                            case WIFINOTCONNECTED:
+                                wifiled.blink(Color.RED, Color.GREY, 1000);
+                                break;
+                            case WIFICONNECTED:
+                                wifiled.ledOn(Color.GREEN);
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                });
+                connectionLEDs.getChildren().add(
+                        wifiConn
+                );
+                WIFIMONITORSERVICE.scheduleAtFixedRate(wifiConnectionMonitor, (long) 0, (long) wifiRefresh, TimeUnit.SECONDS);
+            } catch (Exception nfe) {
+                makeFatalErrorMessage("Unable to start the wifi monitor service: " + nfe.getLocalizedMessage(), null);
+                return;
             }
 
+            lowerBanner.setRight(connectionLEDs);
             // Set up the Dashboard view
             TilePane dashTile;
             dashTile = new TilePane();
@@ -677,18 +693,18 @@ public class MediPi extends Application {
                 makeFatalErrorMessage("Authentication cannot be loaded - " + e.getMessage(), null);
                 return;
             }
-            
+
             root.getChildren().add(mainWindow);
 
             // Load CSS properties - see considerations/todo in main text above
-            String cssfile = properties.getProperty(CSS);
+            cssfile = properties.getProperty(CSS);
             if (cssfile == null || cssfile.trim().length() == 0) {
                 makeFatalErrorMessage("No CSS file defined in " + CSS, null);
                 return;
             } else {
                 scene.getStylesheets().add("file:///" + cssfile);
             }
-            
+
             primaryStage.setTitle(MEDIPINAME + " " + VERSION + "-" + VERSIONNAME);
             //show the screen
             if (fatalError) {
@@ -741,37 +757,50 @@ public class MediPi extends Application {
                     System.exit(0);
                 });
             });
+            boolean downloadUpdates = false;
+            // what should MediPi do when exitting?
+            String downloadUpdatesString = properties.getProperty(MEDIPIDOWNLOADABLEDOWNLOADUPDATES);
+            if (downloadUpdatesString == null || downloadUpdatesString.trim().length() == 0 || downloadUpdatesString.toLowerCase().startsWith("n")) {
+                downloadUpdates = false;
+            } else {
+                downloadUpdates = true;
+            }
 
+            if (downloadUpdates) {
+                // add a ahndler for harware updates from MediPI Concentrator
+                dhm.addHandler("HARDWAREUPDATE", new HardwareHandler(properties));
+            }
+
+            if (dhm.hasHandlers()) {
+                // Start the downloadable timer. This wakes up every definable period (default set to 30s) 
+                // and performs functions to send restful messages to retreive the downloadable entities - Hardware and Patient Messages
+                try {
+                    String time = getProperties().getProperty(MEDIPIDOWNLOADPOLLPERIOD);
+                    if (time == null || time.trim().length() == 0) {
+                        time = "30";
+                    }
+                    Integer incomingMessageCheckPeriod = Integer.parseInt(time);
+                    PollDownloads pim = new PollDownloads(this);
+                    POLLSERVICE.scheduleAtFixedRate(pim, (long) 1, (long) incomingMessageCheckPeriod, TimeUnit.SECONDS);
+                } catch (Exception nfe) {
+                    makeFatalErrorMessage("Unable to start the download service - make sure that " + MEDIPIDOWNLOADPOLLPERIOD + " property is set correctly", null);
+                    return;
+                }
+            }
+            //set debug mode
+            if (debugMode) {
+                System.setOut(ps);
+                System.setErr(ps);
+
+            }
             // splash screen
             final SplashScreen splash = SplashScreen.getSplashScreen();
 
             //Close splashscreen
             if (splash != null) {
-                if (getDebugMode() == MediPi.DEBUG) {
-                    System.out.println("Closing splashscreen...");
-                }
+                System.out.println("Closing splashscreen...");
                 splash.close();
             }
-            // add a ahndler for harware updates from MediPI Concentrator
-            dhm.addHandler("HARDWAREUPDATE", new HardwareHandler(properties));
-
-            // Start the downloadable timer. This wakes up every definable period (default set to 30s) 
-            // and performs functions to send restful messages to retreive the downloadable entities - Hardware and Patient Messages
-            try {
-                String time = getProperties().getProperty(MEDIPIDOWNLOADPOLLPERIOD);
-                if (time == null || time.trim().length() == 0) {
-                    time = "30";
-                }
-                Integer incomingMessageCheckPeriod = Integer.parseInt(time);
-                ScheduledThreadPoolExecutor timer = new ScheduledThreadPoolExecutor(TIMER_THREAD_POOL_SIZE);
-                PollDownloads pim = new PollDownloads(this);
-                timer.scheduleAtFixedRate(pim, (long) 1, (long) incomingMessageCheckPeriod, TimeUnit.SECONDS);
-            } catch (Exception nfe) {
-                makeFatalErrorMessage("Unable to start the download service - make sure that " + MEDIPIDOWNLOADPOLLPERIOD + " property is set correctly", null);
-                return;
-            }
-
-//            scene.removeEventHandler(KeyEvent.KEY_PRESSED, modeHandler);
         } catch (Exception e) {
             makeFatalErrorMessage("A fatal and fundamental error occurred at bootup", e);
             return;
@@ -787,7 +816,7 @@ public class MediPi extends Application {
     public void setPatientMicroBanner(PatientDetailsDO patient) throws Exception {
         patientSurname.setText(patient.getSurname().toUpperCase());
         patientForename.setText(patient.getForename());
-        nhsNumber.setText(patient.getNhsNumber());
+        nhsNumber.setText(patient.formatNHSNumber(patient.getNhsNumber()));
         dob.setText(patient.formatDOB(patient.getDob()));
     }
 
@@ -795,14 +824,28 @@ public class MediPi extends Application {
      * Method to close the JavaFX application
      */
     public void exit() {
-        if (closeLinuxOS) {
-            executeCommand("sudo shutdown -h now");
-        } else {
-            Platform.runLater(() -> {
-                System.exit(0);
-            });
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "", ButtonType.YES, ButtonType.NO);
+        alert.setTitle("MediPi Exit");
+        alert.setHeaderText(null);
+        alert.getDialogPane().getStylesheets().add("file:///" + getCssfile());
+        alert.getDialogPane().setMaxSize(600, 300);
+        alert.getDialogPane().setId("message-box");
+        Text text = new Text("Are you sure you want to close MediPi?");
+        text.setWrappingWidth(600);
+        alert.getDialogPane().setContent(text);
+
+        Optional<ButtonType> result = alert.showAndWait();
+        if (result.get() == ButtonType.YES) {
+            POLLSERVICE.shutdownNow();
+            WIFIMONITORSERVICE.shutdownNow();
+            if (closeLinuxOS) {
+                executeCommand("sudo shutdown -h now");
+            } else {
+                Platform.runLater(() -> {
+                    System.exit(0);
+                });
+            }
         }
-        
     }
 
     /**
@@ -813,27 +856,27 @@ public class MediPi extends Application {
      * @return
      */
     public String executeCommand(String command) {
-        
+
         StringBuffer output = new StringBuffer();
-        
+
         Process p;
         try {
             p = Runtime.getRuntime().exec(command);
             p.waitFor();
             BufferedReader reader
                     = new BufferedReader(new InputStreamReader(p.getInputStream()));
-            
+
             String line = "";
             while ((line = reader.readLine()) != null) {
                 output.append(line + "\n");
             }
-            
+
         } catch (Exception e) {
             e.printStackTrace();
         }
-        
+
         return output.toString();
-        
+
     }
 
     /**
@@ -972,12 +1015,4 @@ public class MediPi extends Application {
         }
     }
 
-    /**
-     * Method to allow access to the lower banner from other classes
-     *
-     * @return
-     */
-    public ObservableMap getLowerBannerAlert() {
-        return alertBannerMap;
-    }
 }

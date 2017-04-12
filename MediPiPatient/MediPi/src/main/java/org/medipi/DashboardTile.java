@@ -18,10 +18,12 @@ package org.medipi;
 import java.util.ArrayList;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.ObjectProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Background;
@@ -51,7 +53,7 @@ public class DashboardTile {
     BorderPane component = new BorderPane();
     StackPane content = new StackPane();
     ImageView backgroundImage;
-    ImageView foregroundImage = null;
+    ImageView foregroundImage = new ImageView();
     ArrayList<Label[]> labels = new ArrayList<>();
 
     /**
@@ -69,7 +71,7 @@ public class DashboardTile {
         component.setPrefSize(190, 170);
 
         component.setOnMouseClicked((MouseEvent event) -> {
-            elem.callDeviceWindow(null);
+            elem.callDeviceWindow();
         });
         // add a background image to the component 
         backgroundImage = elem.getImage();
@@ -139,10 +141,10 @@ public class DashboardTile {
      * @param bp BooleanProperty to dynamically control whether the Image is
      * visible
      */
-    public void addOverlay(ImageView image, BooleanProperty bp) {
-        foregroundImage = image;
-        foregroundImage.setFitHeight(120);
-        foregroundImage.setFitWidth(120);
+    public void addOverlay(ObjectProperty<Image> image, BooleanProperty bp) {
+        foregroundImage.imageProperty().bind(image);
+        foregroundImage.setFitHeight(80);
+        foregroundImage.setFitWidth(80);
         if (bp.getValue()) {
             foregroundImage.setVisible(true);
         } else {
@@ -152,8 +154,11 @@ public class DashboardTile {
         bp.addListener((ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) -> {
             if (newValue) {
                 foregroundImage.setVisible(true);
+                foregroundImage.setStyle("-fx-opacity:0.1;");
+                backgroundImage.setStyle("-fx-opacity:1.0;");
             } else {
                 foregroundImage.setVisible(false);
+                backgroundImage.setStyle("-fx-opacity:1.0;");
             }
         });
     }

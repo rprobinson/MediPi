@@ -53,7 +53,7 @@ public class BeurerBF480 extends Scale {
     private static final String MAKE = "Beurer";
     private static final String MODEL = "BF-480";
     private static final String DISPLAYNAME = "Beurer BF-480 Scales";
-    private static final String STARTBUTTONTEXT = "Start ...";
+    private static final String STARTBUTTONTEXT = "Start";
     // The number of increments of the progress bar - a value of 0 removes the progBar
     private static final Double PROGBARRESOLUTION = 64D;
     private String user;
@@ -245,7 +245,8 @@ public class BeurerBF480 extends Scale {
             // Disabling Button control
             downloadButton.disableProperty().bind(task.runningProperty());
             progressIndicator.visibleProperty().bind(task.runningProperty());
-            button3.disableProperty().bind(Bindings.when(task.runningProperty().and(this.isSchedule)).then(true).otherwise(false));
+            button3.disableProperty().bind(Bindings.when(task.runningProperty().and(this.isThisElementPartOfAScheduleExecution)).then(true).otherwise(false));
+            button1.disableProperty().bind(Bindings.when(task.runningProperty().and(this.isThisElementPartOfAScheduleExecution)).then(true).otherwise(false));
             //Last measurement taken large display
             weightHBox.visibleProperty().bind(Bindings.when(task.valueProperty().isEqualTo("SUCCESS")).then(true).otherwise(false));
             new Thread(task).start();
@@ -280,7 +281,7 @@ public class BeurerBF480 extends Scale {
      * @return displayName of device
      */
     @Override
-    public String getDisplayName() {
+    public String getSpecificDeviceDisplayName() {
         return DISPLAYNAME;
     }
 }

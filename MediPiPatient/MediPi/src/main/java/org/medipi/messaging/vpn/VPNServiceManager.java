@@ -16,6 +16,7 @@
 package org.medipi.messaging.vpn;
 
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import javafx.beans.property.IntegerProperty;
@@ -35,7 +36,11 @@ import org.medipi.MediPiProperties;
  */
 public class VPNServiceManager {
 
-    ConcurrentHashMap<UUID, Instant> currentConnections = new ConcurrentHashMap<>();
+    // Connection commands
+    public static final int OPEN = 1;
+    public static final int CLOSE = 0;
+
+    HashMap<UUID, Instant> currentConnections = new HashMap<>();
     private static final String VPNKEEPALIVEPERIOD = "medipi.vpn.keepaliveperiod";
     VPNConnectionManager manager = null;
     private static final String CONFIGFILELOCATION = "medipi.vpn.configlocation";
@@ -80,89 +85,103 @@ public class VPNServiceManager {
         return VPNManagerHolder.INSTANCE;
     }
 
-    public synchronized void closeConnection(UUID uuid) {
+    public synchronized void VPNConnection(int command, UUID uuid) throws Exception {
+        if (command == OPEN) {
+            openConnection(uuid);
+        } else if (command == CLOSE) {
+            closeConnection(uuid);
+        }
+
+    }
+
+    private void closeConnection(UUID uuid) {
         try {
-            currentConnections.remove(uuid);
-            System.out.println("removed: " + uuid + " size = " + currentConnections.size());
-            if (currentConnections.isEmpty() && VPNConnectionManager.hasTunnel()) {
-                reset();
-//                System.out.println("alive "+t.isAlive());
-                if (task == null || task.isDone()) {
-                    keepAliveClock();
+            //if there is still > 1 connections open dont close 
+            if (currentConnections.size() == 1) {
+                try {
+                    manager.down();
+                    System.out.println("VPN connection shutdown");
+                    currentConnections.remove(uuid);
+                    System.out.println("removed: " + uuid + " size = " + currentConnections.size());
+                } catch (Exception ex) {
+                    System.out.println("Manager failed to close VPN connection: " + ex.getLocalizedMessage());
                 }
+            } else {
+                currentConnections.remove(uuid);
+                System.out.println("removed: " + uuid + " size = " + currentConnections.size());
             }
         } catch (Exception ex) {
             //do nothing as there is no vpn to close
         }
     }
 
-    public synchronized void openConnection(UUID uuid) throws Exception {
+    private void openConnection(UUID uuid) throws Exception {
+        // when makes a new connection up method returns true
+        manager.up();
+        // any failures in "up" method" throw exception
         currentConnections.put(uuid, Instant.now());
         System.out.println("added: " + uuid + " size = " + currentConnections.size());
-        manager.up();
     }
 
-    private void keepAliveClock() {
-        task = new Task<String>() {
-            @Override
-            protected String call() throws Exception {
-                String operationStatus = "Unknown error";
-                while (expireTime > System.currentTimeMillis() || expirePeriod == 0) {
-                    if (stopTimer) {
-                        break;
-                    }
-                    try {
-                        System.out.println("sleep");
-                        Thread.sleep(1000);
-                    } catch (InterruptedException ex) {
-                        System.out.println("VPN Timer Sleep interrupted " + ex.getLocalizedMessage());
-                    }
-                }
-                stopTimer = false;
-                try {
-                    System.out.println("shutdown");
-                    manager.down();
-                } catch (Exception ex) {
-                    System.out.println("Manager failed to close VPN connection: " + ex.getLocalizedMessage());
-                }
-                return operationStatus;
-            }
-
-            // the measure of completion and success is returning "SUCCESS"
-            // all other outcomes indicate failure and pipe the failure
-            // reason given from the device to the error message box
-            @Override
-            protected void succeeded() {
-                super.succeeded();
-            }
-
-            @Override
-            protected void scheduled() {
-                super.scheduled();
-            }
-
-            @Override
-            protected void failed() {
-                super.failed();
-            }
-
-            @Override
-            protected void cancelled() {
-                super.failed();
-            }
-        };
-
-        new Thread(task).start();
-    }
-
+//    private void keepAliveClock() {
+//        task = new Task<String>() {
+//            @Override
+//            protected String call() throws Exception {
+//                String operationStatus = "Unknown error";
+//                while (expireTime > System.currentTimeMillis() || expirePeriod == 0) {
+//                    if (stopTimer) {
+//                        break;
+//                    }
+//                    try {
+//                        System.out.println("sleep");
+//                        Thread.sleep(1000);
+//                    } catch (InterruptedException ex) {
+//                        System.out.println("VPN Timer Sleep interrupted " + ex.getLocalizedMessage());
+//                    }
+//                }
+//                stopTimer = false;
+//                try {
+//                    System.out.println("shutdown");
+//                    manager.down();
+//                } catch (Exception ex) {
+//                    System.out.println("Manager failed to close VPN connection: " + ex.getLocalizedMessage());
+//                }
+//                return operationStatus;
+//            }
+//
+//            // the measure of completion and success is returning "SUCCESS"
+//            // all other outcomes indicate failure and pipe the failure
+//            // reason given from the device to the error message box
+//            @Override
+//            protected void succeeded() {
+//                super.succeeded();
+//            }
+//
+//            @Override
+//            protected void scheduled() {
+//                super.scheduled();
+//            }
+//
+//            @Override
+//            protected void failed() {
+//                super.failed();
+//            }
+//
+//            @Override
+//            protected void cancelled() {
+//                super.failed();
+//            }
+//        };
+//
+//        new Thread(task).start();
+//    }
     /**
      * A method to reset the timer to the original timeout period as defined by
      * the timeout configuration
      */
-    public void reset() {
-        expireTime = System.currentTimeMillis() + expirePeriod;
-    }
-
+//    public void reset() {
+//        expireTime = System.currentTimeMillis() + expirePeriod;
+//    }
     /**
      * A method to stop the timer without closing the connection as this is
      * expected to be handled by the Pipelining queue which has the
@@ -172,8 +191,8 @@ public class VPNServiceManager {
         stopTimer = true;
     }
 
-    public void setConnectionIndicator(IntegerProperty connectionIndicator) {
-        IntegerProperty hasTunnel = manager.getTunnelProperty();
+    public void setVPNConnectionIndicator(IntegerProperty connectionIndicator) {
+        IntegerProperty hasTunnel = manager.getVPNTunnelProperty();
         connectionIndicator.bind(hasTunnel);
     }
 

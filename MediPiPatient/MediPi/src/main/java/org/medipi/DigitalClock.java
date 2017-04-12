@@ -27,9 +27,9 @@ import javafx.util.Duration;
 
 /**
  * Creates a digital clock display as a simple label. Format of the clock
- * display is day, date month hh:mm a, where: hh Hour in am/pm (1-12) mm Minute in hour ss
- * Second in minute a Am/pm marker Time is the system time for the local
- * timezone.
+ * display is day, date month hh:mm a, where: hh Hour in am/pm (1-12) mm Minute
+ * in hour ss Second in minute a Am/pm marker Time is the system time for the
+ * local timezone.
  */
 class DigitalClock extends Label {
 
@@ -45,7 +45,11 @@ class DigitalClock extends Label {
                     public void handle(ActionEvent actionEvent) {
                         Calendar time = Calendar.getInstance();
                         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("EEE d MMM, h:mm a");
-                        setText(simpleDateFormat.format(time.getTime()));
+                        if (AlertBanner.getInstance().hasAlert("timeserver")) {
+                            setText("Xxx XX Xxx, XX:XX XX");
+                        } else {
+                            setText(simpleDateFormat.format(time.getTime()));
+                        }
                     }
                 }
                 ),

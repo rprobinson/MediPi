@@ -45,7 +45,7 @@ public class Roller extends Label {
         minus.setMaxSize(width, height / 2);
         minus.setMinSize(width, height / 2);
         minus.setId("button-plusminus");
-        this.setId("resultstext");
+        this.setId("resultstextroller");
         this.setAlignment(Pos.CENTER);
         this.setMaxSize(width, height);
         this.setMinSize(width, height);

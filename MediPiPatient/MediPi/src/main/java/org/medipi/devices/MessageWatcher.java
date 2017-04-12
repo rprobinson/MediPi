@@ -33,6 +33,7 @@ import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
+import org.medipi.AlertBanner;
 import org.medipi.MediPi;
 import org.medipi.MediPiMessageBox;
 
@@ -48,10 +49,10 @@ public class MessageWatcher extends Thread {
     private final WatchService watcher;
     private final Map<WatchKey, Path> keys;
     private boolean trace = false;
-    private final Messenger messenger;
+    private final MessageReceiver messageReceiver;
     private final MediPi medipi;
     private final Path dir;
-    ObservableMap<String, String> alertBanner;
+    private AlertBanner alertBanner = AlertBanner.getInstance();
 
     @SuppressWarnings("unchecked")
     static <T> WatchEvent<T> cast(WatchEvent<?> event) {
@@ -61,13 +62,12 @@ public class MessageWatcher extends Thread {
     /**
      * Creates a WatchService and registers the given directory
      */
-    MessageWatcher(Path d, Messenger m, MediPi medipi) throws IOException {
+    MessageWatcher(Path d, MessageReceiver mr, MediPi medipi) throws IOException {
         dir = d;
-        messenger = m;
+        messageReceiver = mr;
         this.medipi = medipi;
         this.watcher = FileSystems.getDefault().newWatchService();
         this.keys = new HashMap<>();
-        alertBanner = medipi.getLowerBannerAlert();
         register();
 
         // enable trace after initial registration
@@ -99,7 +99,7 @@ public class MessageWatcher extends Thread {
             try {
                 key = watcher.take();
             } catch (InterruptedException x) {
-                messenger.callFailure("Messenger - failed to instantiate key", x);
+                messageReceiver.callFailure("Messenger - failed to instantiate key", x);
                 return;
             }
 
@@ -134,11 +134,10 @@ public class MessageWatcher extends Thread {
                         items.add(m);
                     }
                     Platform.runLater(() -> {
-                        messenger.setItems(items);
+                        messageReceiver.setMessageList(items);
                         if (event.kind().name().equals("ENTRY_CREATE")) {
-                            messenger.getAlertBooleanProperty().set(true);
-                            medipi.timeSync.set(false);
-                            alertBanner.put("messagewatcher", "A new Clinician's notification has arrived");
+                            messageReceiver.getAlertBooleanProperty().set(true);
+                            alertBanner.addAlert("messagewatcher", "A new Clinician's notification has arrived");
                             MediPiMessageBox.getInstance().makeMessage("A new clinician's message has arrived");
                         }
                     });
@@ -153,7 +152,7 @@ public class MessageWatcher extends Thread {
 
                 // all directories are inaccessible
                 if (keys.isEmpty()) {
-                    messenger.callFailure("Messenger - Directories are inaccessible", null);
+                    messageReceiver.callFailure("Messenger - Directories are inaccessible", null);
                     break;
                 }
             }

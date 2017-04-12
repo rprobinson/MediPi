@@ -26,6 +26,7 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -59,8 +60,8 @@ import org.medipi.model.DeviceDataDO;
 @SuppressWarnings("restriction")
 public abstract class BloodPressure extends Device {
 
-    private final String DEVICE_TYPE = "Blood Pressure";
-    private final static String PROFILEID = "urn:nhs-en:profile:BloodPressure";
+    private final String GENERIC_DEVICE_NAME = "Blood Pressure";
+    private String profileId = "urn:nhs-en:profile:BloodPressure";
     private VBox meterWindow;
 
     private Label lastSystolDB;
@@ -72,11 +73,15 @@ public abstract class BloodPressure extends Device {
     private Label measurementTimeTF;
     private Label measurementTimeLabel;
 
+    protected String measurementContext = null;
+
     protected Button downloadButton;
     protected static String initialButtonText;
     protected static ImageView initialGraphic = null;
 
     private ArrayList<ArrayList<String>> deviceData = new ArrayList<>();
+    private Instant schedStartTime = null;
+    private Instant schedExpireTime = null;
     private final StringProperty resultsSummary = new SimpleStringProperty();
     private DeviceTimestampChecker deviceTimestampChecker;
     protected IntegerProperty systol = new SimpleIntegerProperty(0);
@@ -125,6 +130,18 @@ public abstract class BloodPressure extends Device {
     public String init() throws Exception {
 
         String uniqueDeviceName = getClassTokenName();
+        measurementContext = MediPiProperties.getInstance().getProperties().getProperty(MediPi.ELEMENTNAMESPACESTEM + uniqueDeviceName + ".measurementcontext");
+        if (measurementContext != null) {
+            final StringBuilder pid = new StringBuilder(measurementContext.length());
+
+            for (final String word : measurementContext.split(" ")) {
+                if (!word.isEmpty()) {
+                    pid.append(word.substring(0, 1).toUpperCase());
+                    pid.append(word.substring(1).toLowerCase());
+                }
+            }
+            profileId = profileId + pid.toString();
+        }
         separator = medipi.getDataSeparator();
         ImageView iw = medipi.utils.getImageView("medipi.images.arrow", 20, 20);
         iw.setRotate(90);
@@ -265,6 +282,12 @@ public abstract class BloodPressure extends Device {
                 .then("")
                 .otherwise("measured at")
         );
+        window.visibleProperty().addListener((ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) -> {
+            if (newValue) {
+                guide.reset();
+
+            }
+        });
         // bind the button disable to the time sync indicator
         downloadButton.disableProperty().bind(medipi.timeSync.not());
         // This class is used to deny access to recording data if time has not been synchronised
@@ -284,18 +307,22 @@ public abstract class BloodPressure extends Device {
     }
 
     /**
-     * method to get the generic Type of the device
+     * method to get the generic device name of the device
      *
-     * @return generic type of device e.g. Blood Pressure
+     * @return generic device name e.g. Blood Pressure
      */
     @Override
-    public String getType() {
-        return DEVICE_TYPE;
+    public String getGenericDeviceDisplayName() {
+        if (measurementContext != null) {
+            return GENERIC_DEVICE_NAME + " (" + measurementContext + ")";
+        } else {
+            return GENERIC_DEVICE_NAME;
+        }
     }
 
     @Override
     public String getProfileId() {
-        return PROFILEID;
+        return profileId;
     }
 
     // reset the device
@@ -309,6 +336,8 @@ public abstract class BloodPressure extends Device {
         heartrate.set(0);
         lastMeasurementTime.set("");
         resultsSummary.setValue("");
+        schedStartTime = null;
+        schedExpireTime = null;
     }
 
     /**
@@ -327,11 +356,11 @@ public abstract class BloodPressure extends Device {
         }
         sb.append("metadata->make->").append(getMake()).append("\n");
         sb.append("metadata->model->").append(getModel()).append("\n");
-        sb.append("metadata->displayname->").append(getDisplayName()).append("\n");
+        sb.append("metadata->displayname->").append(getSpecificDeviceDisplayName()).append("\n");
         sb.append("metadata->datadelimiter->").append(medipi.getDataSeparator()).append("\n");
-        if (scheduler != null) {
-            sb.append("metadata->scheduleeffectivedate->").append(Utilities.ISO8601FORMATDATEMILLI_UTC.format(scheduler.getCurrentScheduledEventTime())).append("\n");
-            sb.append("metadata->scheduleexpirydate->").append(Utilities.ISO8601FORMATDATEMILLI_UTC.format(scheduler.getNextScheduledEventTime())).append("\n");
+        if (medipi.getScheduler() != null) {
+            sb.append("metadata->scheduleeffectivedate->").append(Utilities.ISO8601FORMATDATEMILLI_UTC.format(schedStartTime)).append("\n");
+            sb.append("metadata->scheduleexpirydate->").append(Utilities.ISO8601FORMATDATEMILLI_UTC.format(schedExpireTime)).append("\n");
         }
         sb.append("metadata->columns->");
         for (String string : columns) {
@@ -363,7 +392,7 @@ public abstract class BloodPressure extends Device {
             sb.replace(sb.length() - separator.length(), sb.length(), "\n");
         }
 
-        payload.setProfileId(PROFILEID);
+        payload.setProfileId(profileId);
         payload.setPayload(sb.toString());
         return payload;
     }
@@ -376,7 +405,7 @@ public abstract class BloodPressure extends Device {
     @Override
     public BorderPane getDashboardTile() throws Exception {
         DashboardTile dashComponent = new DashboardTile(this, showTile);
-        dashComponent.addTitle(getType());
+        dashComponent.addTitle(getGenericDeviceDisplayName());
         dashComponent.addOverlay(lastSystolDB, "mmHg");
         dashComponent.addOverlay(lastDiastolDB, "mmHg");
         dashComponent.addOverlay(lastPulseDB, "BPM");
@@ -387,8 +416,11 @@ public abstract class BloodPressure extends Device {
     @Override
     public void setData(ArrayList<ArrayList<String>> data) {
         data = deviceTimestampChecker.checkTimestamp(data);
-        if (data.isEmpty()) {
-            MediPiMessageBox.getInstance().makeMessage("No data is available from " + getDisplayName());
+        String dataCheckMessage = null;
+        if ((dataCheckMessage = deviceTimestampChecker.getMessages()) != null) {
+            MediPiMessageBox.getInstance().makeMessage(getSpecificDeviceDisplayName() + "\n" + dataCheckMessage);
+        }
+        if (data == null || data.isEmpty()) {
         } else {
             for (ArrayList<String> a : data) {
                 Instant i = Instant.parse(a.get(0));
@@ -399,6 +431,11 @@ public abstract class BloodPressure extends Device {
                 hasData.set(true);
             }
             deviceData = data;
+            Scheduler scheduler = null;
+            if ((scheduler = medipi.getScheduler()) != null) {
+                schedStartTime = scheduler.getCurrentScheduleStartTime();
+                schedExpireTime = scheduler.getCurrentScheduleExpiryTime();
+            }
         }
     }
 
@@ -418,10 +455,9 @@ public abstract class BloodPressure extends Device {
             this.diastol.set(diastol);
             this.heartrate.set(heartrate);
             this.lastMeasurementTime.set(Utilities.DISPLAY_DEVICE_FORMAT_LOCALTIME.format(time));
-            resultsSummary.set(
-                    getType() + " - "
+            resultsSummary.set(getGenericDeviceDisplayName() + " - "
                     + this.systol.getValue().toString()
-                    + "mmHg/"
+                    + "/"
                     + this.diastol.getValue().toString()
                     + "mmHg "
                     + this.heartrate.getValue().toString()

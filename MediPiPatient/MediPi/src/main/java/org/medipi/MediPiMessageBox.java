@@ -21,6 +21,9 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.TextArea;
+import javafx.scene.text.Text;
 import javafx.util.Callback;
 import org.medipi.logging.MediPiLogger;
 
@@ -60,7 +63,7 @@ public class MediPiMessageBox {
     }
 
     /**
-     * Method for displaying an error messagebox to the screen. 
+     * Method for displaying an error messagebox to the screen.
      *
      * @param message String message
      * @param except exception which this message arose from - null if not
@@ -72,26 +75,22 @@ public class MediPiMessageBox {
             if (except == null) {
                 uniqueString = message;
             } else {
-                uniqueString = message + except.getMessage();
+                uniqueString = message + except.getLocalizedMessage();
             }
             String debugString = getDebugString(except);
 
             MediPiLogger.getInstance().log(MediPiMessageBox.class.getName() + ".makeErrorMessage", "MediPi informed the user that: " + message + " " + except);
-            if (medipi.getDebugMode() == MediPi.DEBUG) {
-                if (except != null) {
-                    except.printStackTrace();
-                }
+            if (except != null) {
+                except.printStackTrace();
             }
 
-            if (medipi.getDebugMode() == MediPi.ERRORSUPPRESSING) {
-                System.out.println("Error - " + message + debugString);
-            } else if (Platform.isFxApplicationThread()) {
+            if (Platform.isFxApplicationThread()) {
                 AlertBox ab = new AlertBox();
-                ab.showAlertBox(uniqueString, message, debugString, liveMessages);
+                ab.showAlertBox(uniqueString, message, debugString, liveMessages, medipi);
             } else {
                 Platform.runLater(() -> {
                     AlertBox ab = new AlertBox();
-                    ab.showAlertBox(uniqueString, message, debugString, liveMessages);
+                    ab.showAlertBox(uniqueString, message, debugString, liveMessages, medipi);
                 });
             }
         } catch (Exception ex) {
@@ -101,6 +100,7 @@ public class MediPiMessageBox {
 
     /**
      * Method to make a general information message
+     *
      * @param message String representation of the message to be displayed
      */
     public void makeMessage(String message) {
@@ -108,15 +108,13 @@ public class MediPiMessageBox {
             String uniqueString = message;
 
             MediPiLogger.getInstance().log(MediPiMessageBox.class.getName() + ".makeMessage", "MediPi informed the user that: " + message);
-            if (medipi.getDebugMode() == MediPi.ERRORSUPPRESSING) {
-                System.out.println("Message - " + message);
-            } else if (Platform.isFxApplicationThread()) {
+            if (Platform.isFxApplicationThread()) {
                 AlertBox ab = new AlertBox();
-                ab.showMessageBox(uniqueString, message, liveMessages);
+                ab.showMessageBox(uniqueString, message, liveMessages, medipi);
             } else {
                 Platform.runLater(() -> {
                     AlertBox ab = new AlertBox();
-                    ab.showMessageBox(uniqueString, message, liveMessages);
+                    ab.showMessageBox(uniqueString, message, liveMessages, medipi);
                 });
             }
         } catch (Exception ex) {
@@ -127,12 +125,8 @@ public class MediPiMessageBox {
     private String getDebugString(Exception ex) {
         if (ex == null) {
             return "";
-        } else if (medipi.getDebugMode() == MediPi.DEBUG) {
-            return "\n" + ex.toString();
-
         } else {
-            return "";
-
+            return "\n" + ex.toString();
         }
     }
 
@@ -144,14 +138,22 @@ public class MediPiMessageBox {
 
 class AlertBox {
 
-    public void showAlertBox(String uniqueString, String message, String debugString, HashMap<String, Alert> liveMessages) {
+    public void showAlertBox(String uniqueString, String message, String debugString, HashMap<String, Alert> liveMessages, MediPi medipi) {
         Alert a = liveMessages.get(uniqueString);
         if (a == null) {
             a = new Alert(AlertType.ERROR);
+            a.getDialogPane().getStylesheets().add("file:///" + medipi.getCssfile());
+            a.getDialogPane().setId("message-box");
+            a.setHeaderText(null);
+            a.getDialogPane().setMaxSize(600, 300);
+            TextArea text = new TextArea("Error - " + message + debugString);
+            text.setMaxWidth(400);
+            text.setWrapText(true);
+            text.setEditable(false);
+            a.getDialogPane().setContent(text);
             a.setTitle("Error dialog");
-            a.setContentText("Error - " + message + debugString);
-            a.getDialogPane().getChildren().stream().filter(node -> node instanceof Label)
-                    .forEach(node -> ((Label) node).setPrefHeight(200));
+//            a.setContentText("Error - " + message + debugString);
+//            a.getDialogPane().getChildren().stream().filter(node -> node instanceof Label).forEach(node -> ((Label) node).setPrefHeight(300));
             liveMessages.put(uniqueString, a);
             a.setResultConverter(new Callback<ButtonType, ButtonType>() {
                 @Override
@@ -168,13 +170,20 @@ class AlertBox {
         }
     }
 
-    public void showMessageBox(String uniqueString, String message, HashMap<String, Alert> liveMessages) {
+    public void showMessageBox(String uniqueString, String message, HashMap<String, Alert> liveMessages, MediPi medipi) {
         Alert a = liveMessages.get(uniqueString);
         if (a == null) {
             a = new Alert(AlertType.INFORMATION);
-            a.getDialogPane().getChildren().stream().filter(node -> node instanceof Label).forEach(node -> ((Label) node).setPrefHeight(200));
+            a.getDialogPane().getStylesheets().add("file:///" + medipi.getCssfile());
+            a.getDialogPane().setId("message-box");
+            a.setHeaderText(null);
+            a.getDialogPane().setMaxSize(600, 300);
+            Text text = new Text(message);
+            text.setWrappingWidth(600);
+            a.getDialogPane().setContent(text);
+//           a.getDialogPane().getChildren().stream().filter(node -> node instanceof Label).forEach(node -> ((Label) node).setPrefHeight(300));
             a.setTitle("Message dialog");
-            a.setContentText(message);
+//            a.setContentText(message);
             liveMessages.put(uniqueString, a);
             a.setResultConverter(new Callback<ButtonType, ButtonType>() {
                 @Override

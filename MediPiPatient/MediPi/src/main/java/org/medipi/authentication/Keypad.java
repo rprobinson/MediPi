@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.Optional;
+import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.geometry.Pos;
@@ -41,6 +42,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.TilePane;
 import javafx.scene.layout.VBox;
+import javafx.scene.text.Text;
 import org.medipi.MediPiProperties;
 
 /**
@@ -114,7 +116,12 @@ public class Keypad implements AuthenticationInterface {
         for (String s : buttonList) {
 
             Button numBut = new Button(s);
-            numBut.setId("keypad-button");
+            try {
+                Integer.parseInt(numBut.getText());
+                numBut.setId("keypad-button-large");
+            } catch (NumberFormatException nfe) {
+                numBut.setId("keypad-button");
+            }
             numBut.setPrefSize(keypadWidth / 3, keypadWidth / 3);
             numBut.setOnMousePressed((MouseEvent event) -> {
                 if (!numBut.getText().toLowerCase().startsWith("cancel")
@@ -131,6 +138,7 @@ public class Keypad implements AuthenticationInterface {
                     passDigits[currentInputDigit] = num;
                     if (!configMode) {
                         if (currentInputDigit == passcodeLength - 1) {
+                            disableDigits.set(true);
                             if (loadPatientJKS(passDigits)) {
                                 mediPiWindow.unlock();
                                 clearDisplay();
@@ -145,9 +153,10 @@ public class Keypad implements AuthenticationInterface {
                         if (loadAdminJKS(passDigits)) {
                             Alert alert = new Alert(AlertType.CONFIRMATION);
                             alert.setTitle("Configuration Mode");
-                            alert.setHeaderText("MediPi Configuration Dialog");
-                            alert.setContentText("Would you like to reboot into Configuration Mode?");
-
+                            alert.setHeaderText(null);
+                            Text text = new Text("Would you like to reboot into Administration Mode?\nACCESS TO THE ADMINISTRATION MODE IS FOR AUTHORISED USERS ONLY.\nAny unauthorised user must click the 'CANCEL' button");
+                            text.setWrappingWidth(600);
+                            alert.getDialogPane().setContent(text);
                             Optional<ButtonType> result = alert.showAndWait();
                             if (result.get() == ButtonType.OK) {
                                 System.out.println("Config Unlock");

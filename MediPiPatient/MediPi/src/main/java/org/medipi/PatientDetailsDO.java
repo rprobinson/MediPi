@@ -16,7 +16,10 @@
 package org.medipi;
 
 import java.io.Serializable;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import org.medipi.utilities.Utilities;
@@ -172,10 +175,10 @@ public class PatientDetailsDO implements Serializable {
         boolean isChars = name.matches("^[A-Za-z]+$");
         boolean isRightLength = name.length() <= 35 && name.length() >= 2;
         if (!isChars) {
-            throw new Exception(" The forename/surname field must be characters.");
+            throw new Exception(" The forename/surname fields must contain only characters.");
         }
         if (!isRightLength) {
-            throw new Exception(" The forename/surname field must be 2 or more,but less than 35 characters long.", null);
+            throw new Exception(" The forename/surname fields must be 2 or more,but fewer than 35 characters long.", null);
         }
 
     }
@@ -183,10 +186,16 @@ public class PatientDetailsDO implements Serializable {
     public String formatDOB(String preformat) throws Exception {
         try {
             LocalDate dobld = LocalDate.parse(preformat, DateTimeFormatter.BASIC_ISO_DATE);
+            if(dobld.isAfter(LocalDate.now())){
+                throw new Exception("The DOB is in the future");
+            }
             return dobld.format(Utilities.DISPLAY_DOB_FORMAT);
         } catch (DateTimeParseException e) {
-            throw new Exception(" Patient Date of Birth (" + preformat + ") in wrong format.");
+            throw new Exception(e.getLocalizedMessage());
         }
+    }
+        public String formatNHSNumber(String preformat) throws Exception {
+        return preformat.substring(0,3).concat("-").concat(preformat.substring(3,6)).concat("-").concat(preformat.substring(6,10));
     }
 
 }
