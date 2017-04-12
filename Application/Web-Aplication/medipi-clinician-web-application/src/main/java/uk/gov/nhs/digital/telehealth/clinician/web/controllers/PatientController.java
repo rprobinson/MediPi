@@ -22,6 +22,7 @@ import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +39,7 @@ import org.springframework.web.servlet.ModelAndView;
 import uk.gov.nhs.digital.telehealth.clinician.service.domain.Measurement;
 import uk.gov.nhs.digital.telehealth.clinician.service.domain.Patient;
 import uk.gov.nhs.digital.telehealth.clinician.service.domain.RecordingDeviceAttribute;
+import uk.gov.nhs.digital.telehealth.clinician.service.entities.Clinician;
 import uk.gov.nhs.digital.telehealth.clinician.service.url.mappings.ServiceURLMappings;
 import uk.gov.nhs.digital.telehealth.clinician.web.constants.WebConstants;
 import uk.gov.nhs.digital.telehealth.clinician.web.domain.BloodPressureDeviceAttributes;
@@ -88,7 +90,8 @@ public class PatientController extends BaseController {
 	@ResponseBody
 	public List<Patient> getPatients(final HttpServletRequest request) throws DefaultWrappedException {
 		final HttpEntity<?> entity = HttpUtil.getEntityWithHeaders(WebConstants.Operations.Patient.READ_ALL, null);
-		return this.restTemplate.exchange(this.clinicianServiceURL + ServiceURLMappings.PatientServiceController.CONTROLLER_MAPPING + ServiceURLMappings.PatientServiceController.GET_ALL_PATIENTS, HttpMethod.GET, entity, List.class).getBody();
+		Clinician clinician = getClinicianFromSecurityContext();
+		return this.restTemplate.exchange(this.clinicianServiceURL + ServiceURLMappings.PatientServiceController.CONTROLLER_MAPPING + ServiceURLMappings.PatientServiceController.GET_PATIENTS_BY_GROUP + clinician.getPatientGroup().getPatientGroupId(), HttpMethod.GET, entity, List.class).getBody();
 	}
 
 	@SuppressWarnings("unchecked")
@@ -96,8 +99,13 @@ public class PatientController extends BaseController {
 	@ResponseBody
 	public ModelAndView getPatient(@PathVariable final String patientUUID, final ModelAndView modelAndView, final HttpServletRequest request) throws DefaultWrappedException, IOException {
 		LOGGER.debug("Get patient details for patient id:<" + patientUUID + ">.");
+		Clinician clinician = getClinicianFromSecurityContext();
 		final HttpEntity<?> entity = HttpUtil.getEntityWithHeaders(WebConstants.Operations.Patient.READ, null);
 		final Patient patient = this.restTemplate.exchange(this.clinicianServiceURL + ServiceURLMappings.PatientServiceController.CONTROLLER_MAPPING + ServiceURLMappings.PatientServiceController.GET_PATIENT + patientUUID, HttpMethod.GET, entity, Patient.class).getBody();
+		if(!StringUtils.equals(clinician.getPatientGroup().getPatientGroupId(), patient.getPatientGroupId())) {
+			LOGGER.warn("The " + clinician + " tried to access " + patient + " details from other group.");
+			throw new DefaultWrappedException("You are not authorized to access the patient details.");
+		}
 		modelAndView.addObject("patient", patient);
 
 		final List<RecordingDeviceAttribute> similarDeviceAttributes = this.restTemplate.exchange(this.clinicianServiceURL + ServiceURLMappings.PatientServiceController.CONTROLLER_MAPPING + ServiceURLMappings.PatientServiceController.GET_PATIENT_ATTRIBUTES + patientUUID + "/" + similarPlotAttributes, HttpMethod.GET, entity, List.class).getBody();

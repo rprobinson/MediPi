@@ -132,7 +132,7 @@ var measurement = {
 
     updateRecentMeasuremnts: function (systolicData, diastolicData, includeObject) {
     	var measurementIndicatorClass;
-    	$("#" + includeObject.recentMeasurementDateId).html(systolicData != null ? systolicData.dataTime.getStringDate_DDMMYYYY_From_Timestamp() : "- - -");
+    	$("#" + includeObject.recentMeasurementDateId).html(systolicData != null ? systolicData.dataTime.getStringDate_DDMMYYYY_HHmm_From_Timestamp() : "- - -");
     	if(systolicData != null && diastolicData != null) {
     		var bloodPressureMeasurements = "<u>" + systolicData.value + "</u><br/>" + diastolicData.value;
     		$("#" + includeObject.recentMeasurementValueId).html(bloodPressureMeasurements);

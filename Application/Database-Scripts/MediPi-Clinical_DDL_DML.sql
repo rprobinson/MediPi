@@ -19,7 +19,7 @@ CREATE TABLE attribute_threshold (
     threshold_high_value character varying(100) NOT NULL,
     effective_date timestamp without time zone NOT NULL
 );
-CREATE SEQUENCE attribute_threshold_attribute_threshold_id_seq START WITH 921 INCREMENT BY 1 NO MINVALUE NO MAXVALUE CACHE 1;
+CREATE SEQUENCE attribute_threshold_attribute_threshold_id_seq START WITH 1 INCREMENT BY 1 NO MINVALUE NO MAXVALUE CACHE 1;
 
 CREATE TABLE patient (
     patient_uuid character varying(100) NOT NULL,
@@ -64,9 +64,31 @@ CREATE SEQUENCE recording_device_data_data_id_seq START WITH 1 INCREMENT BY 1 NO
 CREATE TABLE recording_device_type (
     type_id integer NOT NULL,
     type character varying(100) NOT NULL,
-    subtype character varying(100) NOT NULL
+    make character varying(100),
+    model character varying(100),
+    display_name character varying(100) NOT NULL
 );
 CREATE SEQUENCE recording_device_type_type_id_seq START WITH 1 INCREMENT BY 1 NO MINVALUE NO MAXVALUE CACHE 1;
+
+CREATE TABLE clinician_details (
+    clinician_uuid VARCHAR(100) NOT NULL,
+    clinician_username VARCHAR(100) NOT NULL,
+    password VARCHAR(100) NOT NULL,
+    first_name VARCHAR(100) NOT NULL,
+    last_name VARCHAR(100) NOT NULL,
+    patient_group_uuid VARCHAR(100) NOT NULL,
+    CONSTRAINT "clinician_details_pk" PRIMARY KEY ("clinician_uuid")
+);
+
+CREATE TABLE clinician_role (
+  clinician_role_id SERIAL,
+  clinician_uuid varchar(100) NOT NULL,
+  role varchar(45) NOT NULL,
+  PRIMARY KEY (clinician_role_id),
+  CONSTRAINT unique_clinician_uuid_role UNIQUE (role,clinician_uuid),
+  CONSTRAINT fk_clinician_id FOREIGN KEY (clinician_uuid) REFERENCES clinician_details (clinician_uuid));
+
+CREATE INDEX fk_clinician_details_idx ON clinician_role(clinician_uuid);
 ------------------------------------------------------------------------TABLE DEFINITION:END------------------------------------------------------------------------
 
 ------------------------------------------------------------------------SEQUNCES LINK:START------------------------------------------------------------------------
@@ -111,6 +133,7 @@ insert into recording_device_attribute (attribute_id, type_id, attribute_name, a
 insert into recording_device_attribute (attribute_id, type_id, attribute_name, attribute_units, attribute_type) values ('19','8','Devices','','VARCHAR');
 insert into recording_device_attribute (attribute_id, type_id, attribute_name, attribute_units, attribute_type) values ('20','3','temperature','°C','VARCHAR');
 
+insert into patient_group (patient_group_uuid, patient_group_name) values ('8f243308-6026-4093-b548-5ec2144e1f35', 'Clinical Group A');
 insert into patient_group (patient_group_uuid, patient_group_name) values ('8f243308-6026-4093-b548-5ec2144e1f36', 'Clinical Group B');
 
 insert into patient_details (patient_uuid, nhs_number, first_name, last_name, dob) values ('5fc71393-0516-4474-9445-f6ddd0154717','3776294126','Caitlyn','Murray','1932-06-08 00:00:00');
@@ -1373,6 +1396,12 @@ insert into recording_device_data (data_id, attribute_id, data_value, patient_uu
 insert into recording_device_data (data_id, attribute_id, data_value, patient_uuid, data_value_time, downloaded_time, schedule_effective_time, schedule_expiry_time, alert_status) values (974,10,'82','e50cb7e4-9d0c-4125-82ae-59a9f358cef8','2016-08-02 03:51:52','2016-08-02 04:03:52','2016-07-01 00:00:00','2016-08-26 00:00:00','IN_THRESHOLD');
 insert into recording_device_data (data_id, attribute_id, data_value, patient_uuid, data_value_time, downloaded_time, schedule_effective_time, schedule_expiry_time, alert_status) values (975,11,'53','e50cb7e4-9d0c-4125-82ae-59a9f358cef8','2016-08-02 10:57:07','2016-08-02 11:09:07','2016-07-01 00:00:00','2018-08-24 00:00:00','IN_THRESHOLD');
 insert into recording_device_data (data_id, attribute_id, data_value, patient_uuid, data_value_time, downloaded_time, schedule_effective_time, schedule_expiry_time, alert_status) values (976,20,'37','e50cb7e4-9d0c-4125-82ae-59a9f358cef8','2016-08-02 18:02:22','2016-08-02 18:14:22','2016-07-01 00:00:00','2018-08-24 00:00:00','IN_THRESHOLD');
+
+INSERT INTO clinician_details (clinician_uuid, clinician_username, password, first_name, last_name, patient_group_uuid) VALUES ('c6b1441c-11d0-46cd-a961-c89bceddb898', 'sjames', '$2a$10$Sc9vTbgCXEytWzgd69XU/.jXrZ42zg9bd42r2Hf/dBgS2mXTQ92X6', 'Sid', 'James', '8f243308-6026-4093-b548-5ec2144e1f36');
+INSERT INTO clinician_details (clinician_uuid, clinician_username, password, first_name, last_name, patient_group_uuid) VALUES ('c6b1441c-11d0-46cd-a961-c89bceddb899', 'twood', '$2a$10$Sc9vTbgCXEytWzgd69XU/.jXrZ42zg9bd42r2Hf/dBgS2mXTQ92X6', 'Tom', 'Wood', '8f243308-6026-4093-b548-5ec2144e1f35');
+
+INSERT INTO clinician_role (clinician_uuid, role) VALUES ('c6b1441c-11d0-46cd-a961-c89bceddb898', 'ROLE_ADMIN');
+INSERT INTO clinician_role (clinician_uuid, role) VALUES ('c6b1441c-11d0-46cd-a961-c89bceddb899', 'ROLE_ADMIN');
 ------------------------------------------------------------------------TEST DATA:END------------------------------------------------------------------------
 
 ------------------------------------------------------------------------DATA:END------------------------------------------------------------------------
@@ -1395,4 +1424,5 @@ ALTER TABLE ONLY attribute_threshold ADD CONSTRAINT recording_device_attribute_a
 ALTER TABLE ONLY recording_device_data ADD CONSTRAINT recording_device_attribute_recording_device_data_fk FOREIGN KEY (attribute_id) REFERENCES recording_device_attribute(attribute_id);
 ALTER TABLE ONLY alert ADD CONSTRAINT recording_device_data_alert_fk FOREIGN KEY (data_id) REFERENCES recording_device_data(data_id);
 ALTER TABLE ONLY recording_device_attribute ADD CONSTRAINT recording_device_type_recording_device_attribute_fk FOREIGN KEY (type_id) REFERENCES recording_device_type(type_id);
+ALTER TABLE ONLY clinician_details ADD CONSTRAINT "patient_group_clinician_details_fk" FOREIGN KEY ("patient_group_uuid") REFERENCES patient_group ("patient_group_uuid");
 ------------------------------------------------------------------------CONSTRAINT:END------------------------------------------------------------------------

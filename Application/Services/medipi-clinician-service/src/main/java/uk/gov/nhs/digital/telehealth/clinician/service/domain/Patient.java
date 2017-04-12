@@ -29,6 +29,7 @@ public class Patient {
 	private String lastName;
 	private Timestamp dateOfBirth;
 	private PatientStatus patientStatus;
+	private String patientGroupId;
 
 	public Patient() {
 		setPatientStatus(PatientStatus.INCOMPLETE_SCHEDULE);
@@ -96,6 +97,14 @@ public class Patient {
 		}
 	}
 
+	public String getPatientGroupId() {
+		return patientGroupId;
+	}
+
+	public void setPatientGroupId(final String patientGroupId) {
+		this.patientGroupId = patientGroupId;
+	}
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -128,6 +137,6 @@ public class Patient {
 
 	@Override
 	public String toString() {
-		return "Patient [patientUUID=" + patientUUID + ", firstName=" + firstName + ", lastName=" + lastName + ", patientStatus=" + patientStatus + "]";
+		return "Patient [patientUUID=" + patientUUID + ", firstName=" + firstName + ", lastName=" + lastName + ", patientStatus=" + patientStatus + ", patientGroupId=" + patientGroupId + "]";
 	}
 }

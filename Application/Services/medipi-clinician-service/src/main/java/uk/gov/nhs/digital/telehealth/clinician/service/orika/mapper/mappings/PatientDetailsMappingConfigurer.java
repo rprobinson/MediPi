@@ -17,7 +17,9 @@
  */
 package uk.gov.nhs.digital.telehealth.clinician.service.orika.mapper.mappings;
 
+import ma.glasnost.orika.CustomMapper;
 import ma.glasnost.orika.MapperFactory;
+import ma.glasnost.orika.MappingContext;
 
 import org.springframework.stereotype.Component;
 
@@ -36,6 +38,16 @@ public class PatientDetailsMappingConfigurer implements MappingConfigurer {
 		factory.classMap(Patient.class, PatientMaster.class).byDefault().register();
 
 		//@formatter:off
+
+		factory.classMap(PatientMaster.class, Patient.class).customize(new CustomMapper<PatientMaster, Patient>() {
+			@Override
+			public void mapAtoB(final PatientMaster patientMaster, final Patient patient, final MappingContext context) {
+				if(!patientMaster.getPatientGroups().isEmpty()) {
+					patient.setPatientGroupId(patientMaster.getPatientGroups().get(0).getPatientGroupId());
+				}
+			}
+		}).byDefault().register();
+
 		factory.classMap(RecordingDeviceDataMaster.class, Measurement.class)
 		.byDefault()
 		.field("dataValueTime", "dataTime")

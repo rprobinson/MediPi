@@ -15,16 +15,14 @@
  * limitations under the License.
  *
  */
-package uk.gov.nhs.digital.telehealth.clinician.service.dao.impl;
+package uk.gov.nhs.digital.telehealth.clinician.web.db;
 
-import java.util.List;
+import org.springframework.data.repository.CrudRepository;
+import org.springframework.stereotype.Repository;
 
-import uk.gov.nhs.digital.telehealth.clinician.service.entities.PatientMaster;
+import uk.gov.nhs.digital.telehealth.clinician.service.entities.Clinician;
 
-import com.dev.ops.common.dao.generic.GenericDAO;
-
-public interface PatientDAO extends GenericDAO<PatientMaster> {
-	List<PatientMaster> fetchAllPatients();
-
-	List<PatientMaster> fetchPatientsByPatientGroupId(String patientGroupId);
+@Repository
+public interface ClinicianRepository extends CrudRepository<Clinician, String> {
+	public Clinician findByUserName(String username);
 }

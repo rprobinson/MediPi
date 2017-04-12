@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>1.2.0.RELEASE</version>
+		<version>1.2.2.RELEASE</version>
 		<relativePath /> <!-- lookup parent from repository -->
 	</parent>
 
@@ -69,7 +69,16 @@
 				</exclusion>
 			</exclusions>
 		</dependency>
-		<!-- <dependency> <groupId>org.springframework.boot</groupId> <artifactId>spring-boot-starter-security</artifactId> </dependency> -->
+
+		 <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
 		<!-- Spring boot dependencies: END -->
 
 		<!-- Third party dependencies: START -->
@@ -117,6 +126,15 @@
 			<version>${powermock.version}</version>
 			<scope>test</scope>
 		</dependency>
+
+        <!-- PostgreSQL -->
+
+		<dependency>
+			<groupId>postgresql</groupId>
+			<artifactId>postgresql</artifactId>
+			<version>9.1-901.jdbc4</version>
+			<scope>runtime</scope>
+		</dependency>
 		<!-- Third party dependencies: END -->
 
 		<!-- common dependencies: START -->
@@ -147,12 +165,8 @@
 			<classifier>${domain-classifier}</classifier>
 			<exclusions>
 				<exclusion>
-					<artifactId>spring-boot-starter-data-jpa</artifactId>
-					<groupId>org.springframework.boot</groupId>
-				</exclusion>
-				<exclusion>
-					<artifactId>MediPiClinicalSB</artifactId>
-					<groupId>org.medipi.clinical</groupId>
+					<artifactId>*</artifactId>
+					<groupId>*</groupId>
 				</exclusion>
 			</exclusions>
 		</dependency>

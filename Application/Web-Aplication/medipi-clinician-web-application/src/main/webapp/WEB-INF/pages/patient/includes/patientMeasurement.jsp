@@ -14,6 +14,7 @@
 			</div>
 			<div class="col-sm-2">
 				<form name="${param.canvasId}-attributeThreshold" id="${param.canvasId}-attributeThreshold" action="/clinician/attributeThreshold/" method="POST" onsubmit="return submitAttributeThreshold('${param.canvasId}')">
+					<input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
 					<input type="hidden" name="patientUUID" value="${param.patientUUID}">
 					<input type="hidden" name="attributeId" value="${param.attributeId}">
 					<table class="measurement-attribute">

@@ -11,3 +11,7 @@ function showActiveMenu(linkName) {
 	}
 	$(linkName).addClass("active");
 }
+
+$(document).on('click', '#logout', function() {
+	$("#logoutForm").submit();
+});

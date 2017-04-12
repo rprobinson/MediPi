@@ -24,7 +24,11 @@ import java.util.List;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
@@ -34,7 +38,8 @@ import javax.persistence.Table;
 @Entity
 @Table(name = "patient_details")
 @NamedQueries({
-	@NamedQuery(name = "PatientMaster.fetchAllPatients", query = "SELECT patientMaster FROM PatientMaster patientMaster ORDER BY lastName DESC")
+	@NamedQuery(name = "PatientMaster.fetchAllPatients", query = "SELECT patientMaster FROM PatientMaster patientMaster ORDER BY lastName DESC"),
+	@NamedQuery(name = "PatientMaster.fetchPatientsByPatientGroupId", query = "SELECT patientMaster FROM PatientMaster patientMaster inner join patientMaster.patientGroups patientGroup where patientGroup.patientGroupId = :patientGroupId ORDER BY patientMaster.lastName DESC")
 })
 //@formatter:on
 public class PatientMaster {
@@ -61,9 +66,14 @@ public class PatientMaster {
 	@OneToMany(mappedBy = "patient", cascade = {CascadeType.ALL})
 	private List<AttributeThresholdMaster> attributeThresholds;
 
+	@ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+	@JoinTable(name = "patient", joinColumns = {@JoinColumn(name = "patient_uuid", nullable = false, updatable = false)}, inverseJoinColumns = {@JoinColumn(name = "patient_group_uuid", nullable = false, updatable = false)})
+	private List<PatientGroupMaster> patientGroups;
+
 	public PatientMaster() {
 		recordingDeviceDataList = new ArrayList<RecordingDeviceDataMaster>();
 		attributeThresholds = new ArrayList<AttributeThresholdMaster>();
+		patientGroups = new ArrayList<PatientGroupMaster>();
 	}
 
 	public PatientMaster(final String patientUUID, final String nhsNumber, final String firstName, final String lastName, final Timestamp dateOfBirth) {
@@ -121,6 +131,14 @@ public class PatientMaster {
 
 	public void addRecordingDeviceData(final RecordingDeviceDataMaster recordingDeviceData) {
 		this.recordingDeviceDataList.add(recordingDeviceData);
+	}
+
+	public List<PatientGroupMaster> getPatientGroups() {
+		return patientGroups;
+	}
+
+	public void addPatientGroups(final PatientGroupMaster patientGroup) {
+		this.patientGroups.add(patientGroup);
 	}
 
 	@Override
