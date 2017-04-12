@@ -24,7 +24,7 @@ import java.util.Properties;
  * variables have a default value but can be overridden using the getters and
  * setters
  *
- * @author riro
+ * @author rick@robinsonhq.com
  */
 public class CertificateDefinitions {
 
