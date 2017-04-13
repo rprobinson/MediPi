@@ -98,3 +98,31 @@ DashboardTile - The tile can be configured to be visible or not and the backgrou
 - Transmitter - addition of a summary of the data recorded by the devices (if present otherwise the device name is displayed)
 - Questionnaire updated to display only the enumerated question currently being asked in order to save space and help understanding. Addition of red/green flag status to show outcome of questionnaire
 - Restructured the generic device and concrete device classes to properly delineate responsibility and allow for addition of bluetooth devices
+
+
+Changes since MediPi_v1.0.13
+- bug fixes
+- Ability to configure MediPi Patient to exclude responses/messages functionality
+- Addition of WiFi monitor LED
+- Ability to lock MediPi Patient software, requiring patient PIN to be input
+- All screens including pop-up messages are controlled using CSS
+- Addition of confirmation on close of MediPi
+- Patient Details are now stored in a json file c.f. medipi.properties and can be updated from the Settings tab
+- Addition of login functionality for admin to allow access to Settings functionality - on Raspberry Pi this allows boot to full desktop for managing wifi access and BT pairing
+- Creation of a authentication class to not require PIN input for booting in admin mode
+- Update of Blood Pressure to allow 2 mode of measurement: Standing and Sitting
+- Updated Schedule to be called Readings
+- Updated Readings to allow back and forwards navigation through devices to be recorded
+- Guide is reset to first screen whenever navigated away from
+- Update Questionnaire to transmit full questions and answers in a json format to allow display on the clinical front end
+- Creation of new Responses screen to show status of each submitted device data against the thresholds set on the clinical front end. An overall status icon is displayed on the tile to show if the full submission indicates any issues
+- Addition weight in stones ofr display purposes only
+- Update of schedule/Readings class to use a json file c.f. previous text format file. This allows better read/write to file and ability for other Elements to request and understand the schedule
+- Settings now allows the management of: Patient Details, Addition/exclusion of elements in the readings/schedule, reset of time/mode for those devices that require it, bluetooth MAC address maintenance
+- Thermometer class has improved manual input rollers
+- Transmitter will inform patient if any of data from the scheduled items has not been populated
+- Ability to stop data requests from physiological devices
+- TimestampChecker extended to only take latest data value if required
+- improvements to understandability of alert messages to patient
+- addition of connection timeout to MediPi Concentrator
+
