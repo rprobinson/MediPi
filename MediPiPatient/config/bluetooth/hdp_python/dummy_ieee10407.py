@@ -91,7 +91,7 @@ def parse_message(msg):
                 
                 
 		sys.stdout.write('DATA:')
-                sys.stdout.write(cc.zfill(2)+year.zfill(2)+'-'+month.zfill(2)+'-'+day.zfill(2)+'T'+hour.zfill(2)+':'+minute.zfill(2)+':'+seconds.zfill(2)+'.'+thousanths.zfill(3)+'Z')
+                sys.stdout.write(cc.zfill(2)+year.zfill(2)+'-'+month.zfill(2)+'-'+day.zfill(2)+' '+hour.zfill(2)+':'+minute.zfill(2)+':'+seconds.zfill(2)+'.'+thousanths.zfill(3))
                 sys.stdout.write('^')
                 sys.stdout.write('%d' % int(msg[45]))
                 sys.stdout.write('^')
