@@ -53,6 +53,10 @@
 	-fx-font-size:16;
 	-fx-alignment: center;
 }
+#lowerbannerled{
+	-fx-font-size:14;
+	-fx-alignment: center-right;
+}
 #lowerbanner-bold{
 	-fx-font-size:16;
 	-fx-font-weight: bold;
@@ -67,11 +71,28 @@
 #background-colour{
 	-fx-background-color: lightblue;
 }
-#element-title{
+#message-window{
+	-fx-background-color: lightblue;
+	-fx-effect: dropshadow( three-pass-box , rgba(0,0,0,0.4) , 5, 0.0 , 5 , 5 );
+	-fx-background-radius:10;
+	-fx-border-radius:10;
+	-fx-border-color:black;
+	-fx-border-width:2.0px;
+}#message-box{
+	-fx-effect: dropshadow( three-pass-box , rgba(0,0,0,0.4) , 5, 0.0 , 5 , 5 );
+	-fx-background-radius:10;
+	-fx-border-radius:10;
+	-fx-border-color:black;
+	-fx-border-width:2.0px;
+    -fx-font: 18px Tahoma;
+}#element-title{
 	-fx-font-size:18;
 	-fx-padding: 10 0 0 10;
 	-fx-font-weight: bold;
 	-fx-alignment: center;
+}
+#element-text {
+    -fx-font: 20px Tahoma;
 }
 /*-------------------------------------
 Keypad 
@@ -83,6 +104,15 @@ Keypad
 	-fx-background-color: white;
 	-fx-background-radius:10;
 	-fx-font-size:15;
+	-fx-alignment:center;
+	-fx-padding: 5 5 5 5;
+}	
+#keypad-button-large{
+	-fx-hgap:5;
+	-fx-vgap:5;
+	-fx-background-color: white;
+	-fx-background-radius:10;
+	-fx-font-size:30;
 	-fx-alignment:center;
 	-fx-padding: 5 5 5 5;
 }	
@@ -119,6 +149,11 @@ Device Screens
 	-fx-font-weight: bold;
 	-fx-alignment:center;
 }
+#resultstextroller{
+    -fx-font: 60px Tahoma;
+	-fx-font-weight: bold;
+	-fx-alignment:center;
+}
 #resultsunits{
 	-fx-text-fill:black;
     -fx-font-weight: bold;
@@ -136,6 +171,9 @@ Device Screens
 }
 #scrollpane{
 	-fx-background-color: lightblue;
+}
+#responsestabletext{
+	-fx-font-size:16px;
 }
 /* Messenger element main boxes*/
 #messenger-messageList{
@@ -189,6 +227,10 @@ Miscellaneous
 -fx-background-radius:10;
 }
 /* controls the back button on each device screen where applicable*/
+#button-response{
+-fx-font-size:18px;
+-fx-background-radius:10;
+}
 #button-back{
 -fx-font-size:20px;
 -fx-background-radius:10;
@@ -228,8 +270,10 @@ Miscellaneous
 -fx-background-radius:10;
 }
 #button-plusminus{
--fx-font-size:15px;
--fx-background-radius:10;
+	-fx-background-radius:10;
+	-fx-font-size:30;
+	-fx-alignment:center;
+	-fx-padding: 5 5 5 5;
 }
 /*-------------------------------------
 Guide
@@ -287,4 +331,7 @@ Messenger
 #messenger-text {
     -fx-font: 20px Tahoma;
 }
-
+#responses-table {
+    -fx-font: 15px Tahoma;
+	-fx-alignment:center;
+}

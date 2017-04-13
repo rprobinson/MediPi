@@ -1,22 +1,28 @@
 BEGIN VERSION
-version 1.1 21/11/2016
+version 2.1 15/02/2017
 END VERSION
 
 # Questions are parsed in 2 parts: name, text
 BEGIN QUESTIONS
-Question1 Are you feeling more breathless than usual today?
+Question1 Are you waking in the night finding it difficult to breathe?
 Question2 Are you using more pillows to sleep?
-Question3 Are your ankles more swollen than usual?
+Question3 Are you feeling more breathless than usual today?
+Question4 Do you feel more bloated in the abdomen before eating?
+Question5 Are you coughing up frothy sputum?
+Question6 Are your ankles more swollen than usual?
 END QUESTIONS
 
 # Responses are parsed in 3 parts: name, Red flag status, text
 BEGIN RESPONSES
-Response1 false Good, if you become concerned about your symptoms please contact your nurse or GP for advice
-Response2 true Take your water tablets as advised. Please contact your nurse or GP for further advice 
+Response1 false Good, please take your medication as prescribed, if you are concerned about your symptoms please contact your nurse or GP for advice
+Response2 true Please take your emergency water tablets as prescribed if you have them or contact your heart failure nurse/GP for more advice
 END RESPONSES
 
 BEGIN QUESTIONNAIRE
 Rule1 IF Question1 TRUE Response2 FALSE Rule2
 Rule2 IF Question2 TRUE Response2 FALSE Rule3
-Rule3 IF Question3 TRUE Response2 FALSE Response1
+Rule3 IF Question3 TRUE Response2 FALSE Rule4
+Rule4 IF Question4 TRUE Response2 FALSE Rule5
+Rule5 IF Question5 TRUE Response2 FALSE Rule6
+Rule6 IF Question6 TRUE Response2 FALSE Response1
 END QUESTIONNAIRE

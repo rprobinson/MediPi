@@ -1,1 +1,1 @@
-31 Dec 02:48:26 ntpdate[6712]: adjust time server 109.74.195.175 offset -0.099220 sec
+28 Jan 10:57:15 ntpdate[32673]: adjust time server 139.162.250.196 offset 0.001364 sec
