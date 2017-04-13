@@ -1,0 +1,8 @@
+
+MediPi Clinical
+Changes since MediPiClinical_v1.0.2-PILOT-20170103-1
+- Improvements to ChangeOverTime Threshold Test
+- Improvements to Questionnaire test to enable display on the clinical front end the full "conversation" of questionas and answers
+- Addition of the ability to alert for situations where the threshold has been calculated as "postive" and "cannot calculate"
+- Addition of extra fields in alert to support representation of output on MediPi Patient results screen
+- Creation of RelativeInclusiveHighTest - a threshold test to measure if an incoming data point has exceeded a "value + buffer" boundary
