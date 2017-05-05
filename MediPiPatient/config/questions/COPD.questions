@@ -5,7 +5,7 @@ END VERSION
 # Questions are parsed in 2 parts: name, text
 BEGIN QUESTIONS
 Question1 Are you feeling more breathless or coughing more than usual today?
-Question2 Is your cough or breathlessness much worse than usual?
+Question2 Increase your bronchodilator as advised by your key worker. Is your cough or breathlessness much worse than usual?
 Question3 Has your cough or breathlessness  been worse for more than a day?
 Question4 Have you found it more difficult to undertake your normal routine?
 Question5 Are you coughing up sputum?

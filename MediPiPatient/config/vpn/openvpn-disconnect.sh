@@ -12,12 +12,12 @@ if [ -n "$pid" ]; then
 	#
 	# Then hang around until it has shut itself down
 	#
-	while [ -n "$pid" ]; do
-		pid=`ps aux | grep openvpn | grep "$vpn_user" | cut -c10-14`
-	done
+#	while [ -n "$pid" ]; do
+#		pid=`ps aux | grep openvpn | grep "$vpn_user" | cut -c10-14`
+#	done
 	#
 	# Try to do without this, but put it in just in case we absolutely need
 	# to make sure that the openvpn process is stopped before we let this
 	# process exit
-#	sleep 1;
+	sleep 1;
 fi
