@@ -146,12 +146,10 @@ var measurement = {
 	        	measurementIndicatorClass = "red";
 	        }*/
 
-    		if(systolicData.alertStatus.isEmpty() || diastolicData.alertStatus.isEmpty() || systolicData.alertStatus == "CANNOT_CALCULATE" || diastolicData.alertStatus == "CANNOT_CALCULATE") {
-	        	$("#" + includeObject.recentMeasurementValueId).attr("class", "amber");
+    		if(systolicData.alertStatus == "OUT_OF_THRESHOLD" || diastolicData.alertStatus == "OUT_OF_THRESHOLD"){
+	        	$("#" + includeObject.recentMeasurementValueId).attr("class", "red");
 	        } else if(systolicData.alertStatus == "IN_THRESHOLD" && diastolicData.alertStatus == "IN_THRESHOLD") {
 	        	$("#" + includeObject.recentMeasurementValueId).attr("class", "green");
-	        } else if(systolicData.alertStatus == "OUT_OF_THRESHOLD" && diastolicData.alertStatus == "OUT_OF_THRESHOLD"){
-	        	$("#" + includeObject.recentMeasurementValueId).attr("class", "red");
 	        } else {
 	        	$("#" + includeObject.recentMeasurementValueId).attr("class", "amber");
 	        }
