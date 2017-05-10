@@ -55,21 +55,21 @@ public class LoggingInterceptor {
 	public void logMethodStart(final JoinPoint joinPoint) {
 		String contextInfo = getContextInfo();
 		String methodSignature = getMethodSignature(joinPoint).toString();
-		LOGGER.info(LoggingUtil.getMessageDescription(LoggingPoint.START.toString(), new Object[] {contextInfo, methodSignature}));
+		LOGGER.debug(LoggingUtil.getMessageDescription(LoggingPoint.START.toString(), new Object[] {contextInfo, methodSignature}));
 	}
 
 	@AfterReturning("execution(* uk.gov.nhs.digital.telehealth..*.*(..)) && !execution(* com.dev.ops.common.orika..*.*(..)) && !execution(* uk.gov.nhs.digital.telehealth.clinician.web.configurations..*.*(..)) && !execution(* uk.gov.nhs.digital.telehealth.clinician.web.interceptors.ContextInfoInterceptor..*(..))")
 	public void logMethodEnd(final JoinPoint joinPoint) {
 		String contextInfo = getContextInfo();
 		String methodSignature = getMethodSignature(joinPoint).toString();
-		LOGGER.info(LoggingUtil.getMessageDescription(LoggingPoint.END.toString(), new Object[] {contextInfo, methodSignature}));
+		LOGGER.debug(LoggingUtil.getMessageDescription(LoggingPoint.END.toString(), new Object[] {contextInfo, methodSignature}));
 	}
 
 	@AfterThrowing("execution(* uk.gov.nhs.digital.telehealth..*.*(..)) && !execution(* com.dev.ops.common.orika..*.*(..)) && !execution(* uk.gov.nhs.digital.telehealth.clinician.web.configurations..*.*(..)) && !execution(* uk.gov.nhs.digital.telehealth.clinician.web.interceptors.ContextInfoInterceptor..*(..))")
 	public void logMethodException(final JoinPoint joinPoint) {
 		String contextInfo = getContextInfo();
 		String methodSignature = getMethodSignature(joinPoint).toString();
-		LOGGER.info(LoggingUtil.getMessageDescription(LoggingPoint.ERROR.toString(), new Object[] {contextInfo, methodSignature}));
+		LOGGER.debug(LoggingUtil.getMessageDescription(LoggingPoint.ERROR.toString(), new Object[] {contextInfo, methodSignature}));
 	}
 
 	public Object logTimeMethod(final ProceedingJoinPoint joinPoint) throws Throwable {
