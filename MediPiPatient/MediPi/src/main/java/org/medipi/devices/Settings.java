@@ -471,7 +471,7 @@ public class Settings extends Element {
             public void changed(final ObservableValue<? extends String> observableValue, final String oldValue,
                     final String newValue) {
                 String value = newValue.replace("-", "");
-                boolean isHex = value.matches("[0-9A-F]+");
+                boolean isHex = value.matches("[0-9A-Fa-f]+");
                 if (value.length() == 12 && isHex) {
                     save.setDisable(false);
                 } else {

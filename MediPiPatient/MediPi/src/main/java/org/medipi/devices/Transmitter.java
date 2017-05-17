@@ -351,7 +351,7 @@ public abstract class Transmitter extends Element {
                                             ObjectOutput out = null;
                                             try {
                                                 out = new ObjectOutputStream(bos);
-                                                out.writeObject(devicesPayload);
+                                                out.writeObject(encryptedMessage);
                                                 contentInBytes = bos.toByteArray();
                                             } finally {
                                                 try {

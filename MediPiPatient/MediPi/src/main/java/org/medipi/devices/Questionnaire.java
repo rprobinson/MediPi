@@ -175,9 +175,21 @@ public class Questionnaire extends Device {
         }
         loadRules(questionSet);
         startButton.setOnAction((ActionEvent t) -> {
-            if (confirmReset()) {
+            if (startButton.getText().equals("Start Questionnaire")) {
+                if (confirmReset()) {
+                    resetDevice();
+                    startButton.setText("Cancel");
+                    startButton.setGraphic(medipi.utils.getImageView("medipi.images.cancel", 20, 20));
+                    execute(firstRuleName);
+                }
+            } else if (confirmReset()) {
+                if (isThisElementPartOfAScheduleExecution.get()) {
+                    button1.setDisable(false);
+                    button3.setDisable(false);
+                }
+                startButton.setText("Start Questionnaire");
+                startButton.setGraphic(medipi.utils.getImageView("medipi.images.play", 20, 20));
                 resetDevice();
-                execute(firstRuleName);
             }
         });
         setButton2(startButton);
@@ -456,7 +468,7 @@ public class Questionnaire extends Device {
      * @throws java.lang.Exception
      */
     @Override
-    public DeviceDataDO getData() throws Exception{
+    public DeviceDataDO getData() throws Exception {
         DeviceDataDO payload = new DeviceDataDO(UUID.randomUUID().toString());
         StringBuilder sb = new StringBuilder();
         //Add MetaData
@@ -537,10 +549,10 @@ public class Questionnaire extends Device {
         throw new UnsupportedOperationException("This method is not used as the class has no extensions");
     }
 
-    private String getJSON(QuestionnaireDO data) throws JsonProcessingException{
-            ObjectMapper mapper = new ObjectMapper();
-            return mapper.writeValueAsString(data);
-        
+    private String getJSON(QuestionnaireDO data) throws JsonProcessingException {
+        ObjectMapper mapper = new ObjectMapper();
+        return mapper.writeValueAsString(data);
+
     }
 
 }

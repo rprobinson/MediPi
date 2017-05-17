@@ -169,8 +169,8 @@ public abstract class Oximeter extends Device {
         resultsVBox.setPrefWidth(200);
         resultsVBox.setId("resultsbox");
         resultsVBox.getChildren().addAll(
-                pulseRateHbox,
                 spO2RateHbox,
+                pulseRateHbox,
                 measurementTimeLabel,
                 measurementTimeTF
         );
@@ -330,11 +330,11 @@ public abstract class Oximeter extends Device {
     @Override
     public void setData(ArrayList<ArrayList<String>> data) {
         boolean batteryMessage = false;
-            if (data == null ||data.isEmpty()) {
-                // This is a work round for the battery replacement in Nonin 9560 finger Oximeter
-                batteryMessage = true;
-            }
-            data = deviceTimestampChecker.checkTimestamp(data);
+        if (data == null || data.isEmpty()) {
+            // This is a work round for the battery replacement in Nonin 9560 finger Oximeter
+            batteryMessage = true;
+        }
+        data = deviceTimestampChecker.checkTimestamp(data);
         String dataCheckMessage = null;
         if ((dataCheckMessage = deviceTimestampChecker.getMessages()) != null) {
             if (batteryMessage) {

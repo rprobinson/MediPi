@@ -121,7 +121,7 @@ public class MediPi extends Application {
     // MediPi version Number
     private static final String MEDIPINAME = "MediPi Telehealth";
     private static final String VERSION = "MediPi_v1.0.15";
-    private static final String VERSIONNAME = "PILOT-20170403-1";
+    private static final String VERSIONNAME = "PILOT-20170517-1";
 
     // Set the MediPi Log directory
     private static final String LOG = "medipi.log";
@@ -497,15 +497,18 @@ public class MediPi extends Application {
             );
 
             // Start to create the screen
-            Label title = new Label(MEDIPINAME);
+            Label title = new Label("MediPi Telehealth");
             title.setId("mainwindow-title");
+            title.setWrapText(true);
             title.setAlignment(Pos.CENTER);
             title.setOnMouseClicked((MouseEvent event) -> {
                 Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
                 alert.setTitle(getVersion());
-                alert.setHeaderText("Would you like to lock MediPi?");
+                alert.setHeaderText("Version: "+getVersion());
                 if (debugMode) {
                     alert.getDialogPane().setContent(stdoutText);
+                }else{
+                    alert.getDialogPane().setContentText("Would you like to lock MediPi?");                    
                 }
                 Optional<ButtonType> result = alert.showAndWait();
                 if (result.get() == ButtonType.OK) {
@@ -524,9 +527,9 @@ public class MediPi extends Application {
             mainWindow.setAlignment(Pos.TOP_CENTER);
             GridPane titleBP = new GridPane();
             ColumnConstraints col1 = new ColumnConstraints();
-            col1.setPercentWidth(8);
+            col1.setPercentWidth(28);
             ColumnConstraints col2 = new ColumnConstraints();
-            col2.setPercentWidth(40);
+            col2.setPercentWidth(20);
             col2.setHalignment(HPos.CENTER);
             ColumnConstraints col3 = new ColumnConstraints();
             col3.setPercentWidth(45);

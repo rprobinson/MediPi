@@ -70,7 +70,7 @@ public class Keypad implements AuthenticationInterface {
 
     private static final String MEDIPIPATIENTCERTLOCATION = "medipi.patient.cert.location";
     private static final String MEDIPIADMINCERTLOCATION = "medipi.admin.cert.location";
-    private static final int ADMINEXITCODE = 55; // dunno what number this should be?? Does it matter?
+    private static final int ADMINEXITCODE = 0; // dunno what number this should be?? Does it matter?
     VBox mainWindow = new VBox();
     String[] buttonList = new String[]{"1", "2", "3", "4", "5", "6", "7", "8", "9", "Admin", "0", "Cancel"};
     ArrayList<Label> output = new ArrayList<>();
