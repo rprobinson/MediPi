@@ -1,7 +1,7 @@
 # MediPi Concentrator Telehealth System
 
 
-##Software
+## Software
 This is an implementation of a Telehealth host/concentrator system (It is intended to be used in with the MediPi Patient implementation which is published in this GitHub repository). It has been developed to be flexible and extensible.
 
 The project is written using Java Spring Boot, Hibernate, Postgres Database
@@ -25,13 +25,13 @@ The Concentrator uses an instance of Postgres (v9.4.8). The data is stored in an
 
 The published SQL dump of the database gives the structure and some data examples. Note this is a pg_dump file and will require to be restored from the command line using pg_restore
 
-![Database Structure Document](https://github.com/rprobinson/MediPi/files/487667/Database_view.pdf)
+[ConcentratorSchemaDiagram.pdf](https://github.com/rprobinson/MediPi/files/1050717/ConcentratorSchemaDiagram.pdf)
 
 
 ## Certificates and PKI
 The certs for the concentrator are published here (and are intended to work out-of-the-box) as java key stores and should allow testing of the concentrator and patient software. **The certs are for testing purposes and not suitable for use in any other circumstance.**
 
-####Instructions to update configuration files
+#### Instructions to update configuration files
 1. Copy config directory to an external location e.g. C:\MediPiConcentrator\ (for windows machine) or /home/{user}/MediPiConcentrator (Linux based)
 2. Open command prompt which is capable of executing .sh file. (Git bash if you are on windows. Terminal on linux installation is capable of executing sh files)
 3. Go to config directory location on command prompt e.g. C:\MediPiConcentrator\config or /home/{user}/MediPiConcentrator/config
@@ -39,7 +39,7 @@ The certs for the concentrator are published here (and are intended to work out-
 
 The user name and password will need to be udated for the postgres DB.
 
-##Licence
+## Licence
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this code except in compliance with the License.
@@ -53,17 +53,17 @@ The user name and password will need to be udated for the postgres DB.
  See the License for the specific language governing permissions and
  limitations under the License.
 
-##Warranty 
+## Warranty 
 Under construction... from the Apache 2 licence:
 
 Unless required by applicable law or agreed to in writing, Licensor provides the Work (and each Contributor provides its Contributions) on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied, including, without limitation, any warranties or conditions of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A PARTICULAR PURPOSE. You are solely responsible for determining the appropriateness of using or redistributing the Work and assume any risks associated with Your exercise of permissions under this License.
 
-##Liability
+## Liability
 Under construction... from the Apache 2 licence:
 
 In no event and under no legal theory, whether in tort (including negligence), contract, or otherwise, unless required by applicable law (such as deliberate and grossly negligent acts) or agreed to in writing, shall any Contributor be liable to You for damages, including any direct, indirect, special, incidental, or consequential damages of any character arising as a result of this License or out of the use or inability to use the Work (including but not limited to damages for loss of goodwill, work stoppage, computer failure or malfunction, or any and all other commercial damages or losses), even if such Contributor has been advised of the possibility of such damages.
 
-#Quick Start Guide
+# Quick Start Guide
 
 1. Refer the section `Instructions to update configuration files` in this document above to update the configurations files.
 
