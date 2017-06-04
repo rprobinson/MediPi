@@ -24,8 +24,7 @@ The mock clinical system uses an instance of Postgres (v9.4.8). The data is stor
 
 The published SQL dump of the database gives the structure and some data examples. Note this is a pg_dump file and will require to be restored from the command line using pg_restore
 
-![Database Structure Document](https://github.com/rprobinson/MediPi/files/487667/Database_view.pdf)
-
+[ClinicalSchemaDiagram.pdf](https://github.com/rprobinson/MediPi/files/1050716/ClinicalSchemaDiagram.pdf)
 
 ## Certificates and PKI
 The certs for the clicical system are published here (and are intended to work out-of-the-box) as java key stores and should allow testing of the clinical system and patient software. **The certs are for testing purposes and not suitable for use in any other circumstance.**
