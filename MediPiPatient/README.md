@@ -1,6 +1,6 @@
 # MediPi Patient Unit Software and Hardware
 
-![Element image](https://cloud.githubusercontent.com/assets/13271321/21643558/db154e44-d280-11e6-926a-a02b39d35cca.JPG)
+![2017-02-07-220414_800x480_scrot](https://cloud.githubusercontent.com/assets/13271321/26764192/608f2504-495a-11e7-983c-ca7cf0ad8f09.png)
 
 ## Software
 This is an implementation of a Telehealth patient/client system (It is intended to be used in with the MediPi Concentrator server implementation which is published alongside this GitHub account). It has been developed to be flexible and extensible.
