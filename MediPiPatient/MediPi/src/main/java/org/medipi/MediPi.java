@@ -78,6 +78,7 @@ import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import org.apache.commons.io.output.TeeOutputStream;
+import org.medipi.authentication.UnlockConsumer;
 import org.medipi.devices.Device;
 import org.medipi.devices.Scheduler;
 import org.medipi.downloadable.handlers.DownloadableHandlerManager;
@@ -116,12 +117,12 @@ import org.medipi.utilities.Utilities;
  *
  * @author rick@robinsonhq.com
  */
-public class MediPi extends Application {
+public class MediPi extends Application implements UnlockConsumer {
 
     // MediPi version Number
     private static final String MEDIPINAME = "MediPi Telehealth";
     private static final String VERSION = "MediPi_v1.0.15";
-    private static final String VERSIONNAME = "PILOT-20170517-1";
+    private static final String VERSIONNAME = "PILOT-20170530-1";
 
     // Set the MediPi Log directory
     private static final String LOG = "medipi.log";
@@ -191,6 +192,7 @@ public class MediPi extends Application {
     private final Label dob = new Label();
     private Scheduler scheduler = null;
     private String cssfile = null;
+    private BooleanProperty unlocked = new SimpleBooleanProperty(false);
     /**
      * When set on the debug mode will send all std and err output to the
      * version screen accessed by tapping the MediPi Telehealth banner label
@@ -496,6 +498,7 @@ public class MediPi extends Application {
                     patientOtherHBox
             );
 
+            patientOtherHBox.visibleProperty().bind(unlocked);
             // Start to create the screen
             Label title = new Label("MediPi Telehealth");
             title.setId("mainwindow-title");
@@ -504,11 +507,11 @@ public class MediPi extends Application {
             title.setOnMouseClicked((MouseEvent event) -> {
                 Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
                 alert.setTitle(getVersion());
-                alert.setHeaderText("Version: "+getVersion());
+                alert.setHeaderText("Version: " + getVersion());
                 if (debugMode) {
                     alert.getDialogPane().setContent(stdoutText);
-                }else{
-                    alert.getDialogPane().setContentText("Would you like to lock MediPi?");                    
+                } else {
+                    alert.getDialogPane().setContentText("Would you like to lock MediPi?");
                 }
                 Optional<ButtonType> result = alert.showAndWait();
                 if (result.get() == ButtonType.OK) {
@@ -720,6 +723,9 @@ public class MediPi extends Application {
             primaryStage.setMinHeight(screenheight);
             primaryStage.show();
 
+            // register this class as an implementor of the locked/unlocked interface 
+            // in order to hide the NHS NUmber and DOB when not authenticated
+            mediPiWindow.registerForAuthenticationCallback(this);
             // Basic structure is now created and ready to display any errors that
             // occur when sub elements are called
             // loop through all the element class tokens defined in the properties file and instantiate
@@ -1016,6 +1022,16 @@ public class MediPi extends Application {
                 d.resetDevice();
             }
         }
+    }
+
+    @Override
+    public void unlocked() {
+        unlocked.set(true);
+    }
+
+    @Override
+    public void locked() {
+        unlocked.set(false);
     }
 
 }

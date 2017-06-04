@@ -10,4 +10,5 @@ fi
 sed -i -e 's|${config-directory-location}|'${configDirectory}'|g' ${configDirectory}/MediPi.properties
 sed -i -e 's|${config-directory-location}|'${configDirectory}'|g' ${configDirectory}/MediPi.admin.properties
 sed -i -e 's|${config-directory-location}|'${configDirectory}'|g' ${configDirectory}/guides/*.guide
+sed -i -e 's|${config-directory-location}|'${configDirectory}'|g' ${configDirectory}/vpn/OpenVPN.sh
 

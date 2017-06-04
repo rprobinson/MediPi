@@ -1,1 +1,1 @@
-[{"uuid":"58fd06e3-6d6a-4b1f-addd-fe668e4a28e0","medipiDeviceName":"Oximeter","btFriendlyName":"Nonin 9560 Finger Pulse Oximeter","btProtocolId":"0x1101","url":"btspp://001C05015555:1;authenticate=false;encrypt=false;master=false"},{"uuid":"f22f137a-36bb-4da1-bf3e-9c0b6c45a999","medipiDeviceName":"Scale","btFriendlyName":"Marsden M-430 Scales","btProtocolId":"0x1101","url":"btspp://0007800F5094:1;authenticate=false;encrypt=false;master=false"}]
+[]

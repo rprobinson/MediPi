@@ -1,9 +1,9 @@
-/home/riro/MediPi_v1.0.15/guides/images/omron-708-bt-standing.jpg STANDING: Instructions for the use of the Omron 708-BT Bluetooth Blood Pressure Meter WHILST STANDING
-/home/riro/MediPi_v1.0.15/guides/images/Omron_slider.jpg 1. Ensure user id slider on the Omron blood pressure meter is set to USER A
-/home/riro/MediPi_v1.0.15/guides/images/taking_blood_pressure.jpg 2. Whilst STANDING, Put cuff on upper arm as directed by your clinician
-/home/riro/MediPi_v1.0.15/guides/images/Omron_IO.jpg 3. Press O/I start button and the cuff will start to inflate automatically
-/home/riro/MediPi_v1.0.15/guides/images/Omron_screen.jpg 4. Once the readings have been taken and are displayed on the screen, remove cuff.
-/home/riro/MediPi_v1.0.15/guides/images/StartButton.png 5. Press start on MediPi patient device
-/home/riro/MediPi_v1.0.15/guides/images/Omron_upload.jpg 6. Press upload button on Omron blood pressure meter. (If Omron screen is off press either of the memory arrow buttons before pressing upload).
-/home/riro/MediPi_v1.0.15/guides/images/Omron_result.png 7. Your readings will be displayed on the MediPi patient user device 
-/home/riro/MediPi_v1.0.15/guides/images/next.png 8. Press ‘next’/’back’
+${config-directory-location}/guides/images/omron-708-bt-standing.jpg STANDING: Instructions for the use of the Omron 708-BT Bluetooth Blood Pressure Meter WHILST STANDING
+${config-directory-location}/guides/images/Omron_slider.jpg 1. Ensure user id slider on the Omron blood pressure meter is set to USER A
+${config-directory-location}/guides/images/taking_blood_pressure.jpg 2. Whilst STANDING, Put cuff on upper arm as directed by your clinician
+${config-directory-location}/guides/images/Omron_IO.jpg 3. Press O/I start button and the cuff will start to inflate automatically
+${config-directory-location}/guides/images/Omron_screen.jpg 4. Once the readings have been taken and are displayed on the screen, remove cuff.
+${config-directory-location}/guides/images/StartButton.png 5. Press start on MediPi patient device
+${config-directory-location}/guides/images/Omron_upload.jpg 6. Press upload button on Omron blood pressure meter. (If Omron screen is off press either of the memory arrow buttons before pressing upload).
+${config-directory-location}/guides/images/Omron_result.png 7. Your readings will be displayed on the MediPi patient user device 
+${config-directory-location}/guides/images/next.png 8. Press ‘next’/’back’

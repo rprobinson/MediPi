@@ -3,7 +3,6 @@
 --
 
 SET statement_timeout = 0;
-SET lock_timeout = 0;
 SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SET check_function_bodies = false;
@@ -44,7 +43,7 @@ CREATE TABLE alert (
 );
 
 
-ALTER TABLE alert OWNER TO postgres;
+ALTER TABLE public.alert OWNER TO postgres;
 
 --
 -- Name: alert_alert_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
@@ -58,7 +57,7 @@ CREATE SEQUENCE alert_alert_id_seq
     CACHE 1;
 
 
-ALTER TABLE alert_alert_id_seq OWNER TO postgres;
+ALTER TABLE public.alert_alert_id_seq OWNER TO postgres;
 
 --
 -- Name: alert_alert_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
@@ -82,7 +81,7 @@ CREATE TABLE attribute_threshold (
 );
 
 
-ALTER TABLE attribute_threshold OWNER TO postgres;
+ALTER TABLE public.attribute_threshold OWNER TO postgres;
 
 --
 -- Name: attribute_threshold_attribute_threshold_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
@@ -96,13 +95,63 @@ CREATE SEQUENCE attribute_threshold_attribute_threshold_id_seq
     CACHE 1;
 
 
-ALTER TABLE attribute_threshold_attribute_threshold_id_seq OWNER TO postgres;
+ALTER TABLE public.attribute_threshold_attribute_threshold_id_seq OWNER TO postgres;
 
 --
 -- Name: attribute_threshold_attribute_threshold_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
 
 ALTER SEQUENCE attribute_threshold_attribute_threshold_id_seq OWNED BY attribute_threshold.attribute_threshold_id;
+
+
+--
+-- Name: clinician_details; Type: TABLE; Schema: public; Owner: medipi_admin; Tablespace: 
+--
+
+CREATE TABLE clinician_details (
+    clinician_uuid character varying(100) NOT NULL,
+    clinician_username character varying(100) NOT NULL,
+    password character varying(100) NOT NULL,
+    first_name character varying(100) NOT NULL,
+    last_name character varying(100) NOT NULL,
+    patient_group_uuid character varying(100) NOT NULL
+);
+
+
+ALTER TABLE public.clinician_details OWNER TO medipi_admin;
+
+--
+-- Name: clinician_role; Type: TABLE; Schema: public; Owner: medipi_admin; Tablespace: 
+--
+
+CREATE TABLE clinician_role (
+    clinician_role_id integer NOT NULL,
+    clinician_uuid character varying(100) NOT NULL,
+    role character varying(45) NOT NULL
+);
+
+
+ALTER TABLE public.clinician_role OWNER TO medipi_admin;
+
+--
+-- Name: clinician_role_clinician_role_id_seq; Type: SEQUENCE; Schema: public; Owner: medipi_admin
+--
+
+CREATE SEQUENCE clinician_role_clinician_role_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.clinician_role_clinician_role_id_seq OWNER TO medipi_admin;
+
+--
+-- Name: clinician_role_clinician_role_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: medipi_admin
+--
+
+ALTER SEQUENCE clinician_role_clinician_role_id_seq OWNED BY clinician_role.clinician_role_id;
 
 
 --
@@ -115,7 +164,7 @@ CREATE TABLE patient (
 );
 
 
-ALTER TABLE patient OWNER TO postgres;
+ALTER TABLE public.patient OWNER TO postgres;
 
 --
 -- Name: patient_details; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
@@ -130,7 +179,7 @@ CREATE TABLE patient_details (
 );
 
 
-ALTER TABLE patient_details OWNER TO postgres;
+ALTER TABLE public.patient_details OWNER TO postgres;
 
 --
 -- Name: patient_group; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
@@ -142,7 +191,7 @@ CREATE TABLE patient_group (
 );
 
 
-ALTER TABLE patient_group OWNER TO postgres;
+ALTER TABLE public.patient_group OWNER TO postgres;
 
 --
 -- Name: recording_device_attribute; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
@@ -157,7 +206,7 @@ CREATE TABLE recording_device_attribute (
 );
 
 
-ALTER TABLE recording_device_attribute OWNER TO postgres;
+ALTER TABLE public.recording_device_attribute OWNER TO postgres;
 
 --
 -- Name: recording_device_attribute_attribute_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
@@ -171,7 +220,7 @@ CREATE SEQUENCE recording_device_attribute_attribute_id_seq
     CACHE 1;
 
 
-ALTER TABLE recording_device_attribute_attribute_id_seq OWNER TO postgres;
+ALTER TABLE public.recording_device_attribute_attribute_id_seq OWNER TO postgres;
 
 --
 -- Name: recording_device_attribute_attribute_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
@@ -197,7 +246,7 @@ CREATE TABLE recording_device_data (
 );
 
 
-ALTER TABLE recording_device_data OWNER TO postgres;
+ALTER TABLE public.recording_device_data OWNER TO postgres;
 
 --
 -- Name: recording_device_data_data_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
@@ -211,7 +260,7 @@ CREATE SEQUENCE recording_device_data_data_id_seq
     CACHE 1;
 
 
-ALTER TABLE recording_device_data_data_id_seq OWNER TO postgres;
+ALTER TABLE public.recording_device_data_data_id_seq OWNER TO postgres;
 
 --
 -- Name: recording_device_data_data_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
@@ -233,7 +282,7 @@ CREATE TABLE recording_device_type (
 );
 
 
-ALTER TABLE recording_device_type OWNER TO postgres;
+ALTER TABLE public.recording_device_type OWNER TO postgres;
 
 --
 -- Name: recording_device_type_type_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
@@ -247,7 +296,7 @@ CREATE SEQUENCE recording_device_type_type_id_seq
     CACHE 1;
 
 
-ALTER TABLE recording_device_type_type_id_seq OWNER TO postgres;
+ALTER TABLE public.recording_device_type_type_id_seq OWNER TO postgres;
 
 --
 -- Name: recording_device_type_type_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
@@ -268,6 +317,13 @@ ALTER TABLE ONLY alert ALTER COLUMN alert_id SET DEFAULT nextval('alert_alert_id
 --
 
 ALTER TABLE ONLY attribute_threshold ALTER COLUMN attribute_threshold_id SET DEFAULT nextval('attribute_threshold_attribute_threshold_id_seq'::regclass);
+
+
+--
+-- Name: clinician_role_id; Type: DEFAULT; Schema: public; Owner: medipi_admin
+--
+
+ALTER TABLE ONLY clinician_role ALTER COLUMN clinician_role_id SET DEFAULT nextval('clinician_role_clinician_role_id_seq'::regclass);
 
 
 --
@@ -316,6 +372,22 @@ ALTER TABLE ONLY attribute_threshold
 
 
 --
+-- Name: clinician_details_pk; Type: CONSTRAINT; Schema: public; Owner: medipi_admin; Tablespace: 
+--
+
+ALTER TABLE ONLY clinician_details
+    ADD CONSTRAINT clinician_details_pk PRIMARY KEY (clinician_uuid);
+
+
+--
+-- Name: clinician_role_pkey; Type: CONSTRAINT; Schema: public; Owner: medipi_admin; Tablespace: 
+--
+
+ALTER TABLE ONLY clinician_role
+    ADD CONSTRAINT clinician_role_pkey PRIMARY KEY (clinician_role_id);
+
+
+--
 -- Name: data_id; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace: 
 --
 
@@ -356,6 +428,29 @@ ALTER TABLE ONLY recording_device_type
 
 
 --
+-- Name: unique_clinician_uuid_role; Type: CONSTRAINT; Schema: public; Owner: medipi_admin; Tablespace: 
+--
+
+ALTER TABLE ONLY clinician_role
+    ADD CONSTRAINT unique_clinician_uuid_role UNIQUE (role, clinician_uuid);
+
+
+--
+-- Name: fk_clinician_details_idx; Type: INDEX; Schema: public; Owner: medipi_admin; Tablespace: 
+--
+
+CREATE INDEX fk_clinician_details_idx ON clinician_role USING btree (clinician_uuid);
+
+
+--
+-- Name: fk_clinician_id; Type: FK CONSTRAINT; Schema: public; Owner: medipi_admin
+--
+
+ALTER TABLE ONLY clinician_role
+    ADD CONSTRAINT fk_clinician_id FOREIGN KEY (clinician_uuid) REFERENCES clinician_details(clinician_uuid);
+
+
+--
 -- Name: patient_alert_fk; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -369,6 +464,14 @@ ALTER TABLE ONLY alert
 
 ALTER TABLE ONLY attribute_threshold
     ADD CONSTRAINT patient_attribute_threshold_fk FOREIGN KEY (patient_uuid) REFERENCES patient(patient_uuid);
+
+
+--
+-- Name: patient_group_clinician_details_fk; Type: FK CONSTRAINT; Schema: public; Owner: medipi_admin
+--
+
+ALTER TABLE ONLY clinician_details
+    ADD CONSTRAINT patient_group_clinician_details_fk FOREIGN KEY (patient_group_uuid) REFERENCES patient_group(patient_group_uuid);
 
 
 --

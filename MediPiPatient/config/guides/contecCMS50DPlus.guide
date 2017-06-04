@@ -1,7 +1,7 @@
-/home/riro/MediPi_v1.0.15/images/cms50d.jpg Instructions for the use of the Contec CMS50D+ Finger Oximeter
-/home/riro/MediPi_v1.0.15/guides/images/ContecCMS50DPlus_USB_Insert.jpg Insert the cream USB cable into any USB port on MediPi
-/home/riro/MediPi_v1.0.15/guides/images/ContecCMS50DPlus_USB_Insert2.jpg Insert the other end of the USB cable into the Contec CMS50D+ Finger Oximeter
-/home/riro/MediPi_v1.0.15/guides/images/ContecCMS50DPlus_InsertFinger.jpg Insert middle finger into the finger Oximeter fully
-/home/riro/MediPi_v1.0.15/guides/images/ContecCMS50DPlus_TurnOn.jpg With the other hand press the white button until the version number appears and immediately release
-/home/riro/MediPi_v1.0.15/guides/images/Default.jpg Press the Record button and relax for the period of measurement
-/home/riro/MediPi_v1.0.15/guides/images/Default.jpg Press the Stop button to finish the measurement
+${config-directory-location}/images/cms50d.jpg Instructions for the use of the Contec CMS50D+ Finger Oximeter
+${config-directory-location}/guides/images/ContecCMS50DPlus_USB_Insert.jpg Insert the cream USB cable into any USB port on MediPi
+${config-directory-location}/guides/images/ContecCMS50DPlus_USB_Insert2.jpg Insert the other end of the USB cable into the Contec CMS50D+ Finger Oximeter
+${config-directory-location}/guides/images/ContecCMS50DPlus_InsertFinger.jpg Insert middle finger into the finger Oximeter fully
+${config-directory-location}/guides/images/ContecCMS50DPlus_TurnOn.jpg With the other hand press the white button until the version number appears and immediately release
+${config-directory-location}/guides/images/Default.jpg Press the Record button and relax for the period of measurement
+${config-directory-location}/guides/images/Default.jpg Press the Stop button to finish the measurement

@@ -1,5 +1,5 @@
 BEGIN VERSION
-version 2.1 15/02/2017
+version 2.2 04/05/2017
 END VERSION
 
 # Questions are parsed in 2 parts: name, text
@@ -14,8 +14,8 @@ END QUESTIONS
 
 # Responses are parsed in 3 parts: name, Red flag status, text
 BEGIN RESPONSES
-Response1 false Good, please take your medication as prescribed, if you are concerned about your symptoms please contact your nurse or GP for advice
-Response2 true Please take your emergency water tablets as prescribed if you have them or contact your heart failure nurse/GP for more advice
+Response1 false Good, if you are concerned about your symptoms please contact your nurse or GP for advice
+Response2 true If you are concerned about your symptoms please contact your nurse or GP for advice
 END RESPONSES
 
 BEGIN QUESTIONNAIRE
