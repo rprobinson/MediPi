@@ -27,6 +27,8 @@ The mock-clinical system has been developed as part of the pilot to allow clinic
 
 [Link to the MediPi Clinical README](https://github.com/rprobinson/MediPi/blob/master/Clinician/README.md)
 ![Element image](https://cloud.githubusercontent.com/assets/13271321/26763948/18472116-4955-11e7-8cec-1907cf66233e.png)
+![questionnairegraph](https://cloud.githubusercontent.com/assets/13271321/26765477/b84deed2-4974-11e7-9072-c5bc3865ce28.png)
+![spo2graph](https://cloud.githubusercontent.com/assets/13271321/26765478/bceba3da-4974-11e7-8706-8d6bc2daebe0.png)
 
 ### MediPi Transport Tools/Security
 MediPi Patient and Concentrator exchange data using secure 2-way SSL/ Mutually Authenticated messaging and the concentrator exposes APIs to Clinical systems using the same. Additionally, data is exchanged using data objects which have been encrypted and signed using JSON Web encryption objects and JSON Web Signing objects. We have published a common library opf tools for this purpose.
