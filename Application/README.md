@@ -1,7 +1,7 @@
 # MediPi Clinician Application
 
 
-##Software
+## Software
 This is an implementation of a Clinician application (It is intended to be used in with the MediPi Patient and Medipi Concentrator implementation which is published alongside this GitHub repository). It has been developed to be flexible and extensible.
 
 This project started as a demonstration of a general telehealth system but with clinical involvement from a Hertfordshire Community NHS Trust, it has been developed into a Heart Failure implementation.
@@ -33,7 +33,7 @@ For testing, you can create a new postgres database with name 'Clinical' and exe
 ![Database Structure Document](https://github.com/rprobinson/MediPi/files/487667/Database_view.pdf)
 
 
-##Licence
+## Licence
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this code except in compliance with the License.
@@ -47,17 +47,17 @@ For testing, you can create a new postgres database with name 'Clinical' and exe
  See the License for the specific language governing permissions and
  limitations under the License.
 
-##Warranty 
+## Warranty 
 Under construction... from the Apache 2 licence:
 
 Unless required by applicable law or agreed to in writing, Licensor provides the Work (and each Contributor provides its Contributions) on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied, including, without limitation, any warranties or conditions of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A PARTICULAR PURPOSE. You are solely responsible for determining the appropriateness of using or redistributing the Work and assume any risks associated with Your exercise of permissions under this License.
 
-##Liability
+## Liability
 Under construction... from the Apache 2 licence:
 
 In no event and under no legal theory, whether in tort (including negligence), contract, or otherwise, unless required by applicable law (such as deliberate and grossly negligent acts) or agreed to in writing, shall any Contributor be liable to You for damages, including any direct, indirect, special, incidental, or consequential damages of any character arising as a result of this License or out of the use or inability to use the Work (including but not limited to damages for loss of goodwill, work stoppage, computer failure or malfunction, or any and all other commercial damages or losses), even if such Contributor has been advised of the possibility of such damages.
 
-#Quick Start Guide
+# Quick Start Guide
 
 1. Build the required service jar and application war using maven build. Navigate to `{medipi-repo-directory}/MediPi/Application` in the cloned repository and execute `mvn clean install`
 
