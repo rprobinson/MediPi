@@ -90,7 +90,7 @@ public abstract class GenericDAOImpl<T> implements GenericDAO<T> {
     @Override
     public T findByPrimaryKey(final Object id) {
         final T object = this.getEntityManager().find(this.type, id);
-        logger.log(id.getClass().getName() + ".info", "Find entity by primary key:<" + id + ">");
+//Removed to Reduce Logs size        logger.log(id.getClass().getName() + ".info", "Find entity by primary key:<" + id + ">");
         return object;
     }
 }
