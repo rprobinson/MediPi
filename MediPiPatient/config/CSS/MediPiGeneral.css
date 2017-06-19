@@ -286,7 +286,7 @@ Guide
     -fx-font: 20px Tahoma;
 }
 #guide-text {
-    -fx-font: 20px Tahoma;
+    -fx-font: 18px Tahoma;
 	-fx-background-color: lightblue;
 }
 #guide-colour {
@@ -311,7 +311,10 @@ Schedule
 	-fx-font-weight: bold;
 }
 #schedule-text {
-    -fx-font: 20px Tahoma;
+    -fx-font: 18px Tahoma;
+}
+#scheduler-schedulelist {
+    -fx-font: 15px Tahoma;
 }
 #schedule-component{
 	-fx-background-color: white;

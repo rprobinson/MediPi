@@ -119,6 +119,8 @@ var measurement = {
 	        	$("#" + includeObject.recentMeasurementValueId).attr("class", "green");
 	        } else if(recentMeasurement.alertStatus == "OUT_OF_THRESHOLD"){
 	        	$("#" + includeObject.recentMeasurementValueId).attr("class", "red");
+	        } else if(recentMeasurement.alertStatus == "EXPIRED_MEASUREMENT"){
+	        	$("#" + includeObject.recentMeasurementValueId).attr("class", "grey");
 	        } else {
 	        	$("#" + includeObject.recentMeasurementValueId).attr("class", "amber");
 	        }

@@ -78,7 +78,7 @@ public class RequestDataServiceController {
             throw new InternalServerError500Exception("Invalid Unix epoch representation of date since last synchronisation");
         }
         Date lastDownloadDate = new Date(lastDownloadEpochMillis);
-        logger.log(PatientUploadServiceController.class.getName(), new Date().toString() + " new data requested from Patient Group: " + patientGroupUuid + " since the last download at: " + new ISO8601DateFormat().format(lastDownloadDate));
+//Removed to Reduce Logs size        logger.log(PatientUploadServiceController.class.getName(), new Date().toString() + " new data requested from Patient Group: " + patientGroupUuid + " since the last download at: " + new ISO8601DateFormat().format(lastDownloadDate));
         return this.requestDataService.getData(patientGroupUuid, lastDownloadDate);
     }
 }

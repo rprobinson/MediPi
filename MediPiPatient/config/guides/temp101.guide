@@ -1,3 +1,3 @@
-/home/riro/MediPi_v1.0.15/images/Braun-Thermoscan.jpg Instructions for the use of the Therm 101 Thermometer
-/home/riro/MediPi_v1.0.15/guides/images/temp101_input_result.png 1. Input the temperature as indicated on the thermometer using the “+” and “-“ buttons
-/home/riro/MediPi_v1.0.15/guides/images/temp101_back_confirm.png 2. On attempting to exit the screen you will be asked to confirm that the temperature which you input is correct
+${config-directory-location}/images/Braun-Thermoscan.jpg Instructions for the use of the Therm 101 Thermometer
+${config-directory-location}/guides/images/temp101_input_result.png 1. Input the temperature as indicated on the thermometer using the “+” and “-“ buttons
+${config-directory-location}/guides/images/temp101_back_confirm.png 2. On attempting to exit the screen you will be asked to confirm that the temperature which you input is correct

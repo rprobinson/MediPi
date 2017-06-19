@@ -1,10 +1,10 @@
-/home/riro/MediPi_v1.0.15/images/Braun-Thermoscan.jpg Instructions for the use of the Braun Pro 6000 Thermoscan Thermometer
-/home/riro/MediPi_v1.0.15/guides/images/Braun-1.png Remove the Braun thermoscan thermometer from cradle by gripping it at the base and pivoting up. Thermometer will turn on automatically. Probe cover icon will flash on display indicating a new probe cover is needed.
-/home/riro/MediPi_v1.0.15/guides/images/Braun-2.png Attach new probe cover by pushing probe tip straight into box, then pulling thermometer out.
-/home/riro/MediPi_v1.0.15/guides/images/Braun-3.png Wait for the ready indication. When the ring around ‘measure’ button turns green, thermometer will beep once and three lines on display indicate thermometer is ready.
-/home/riro/MediPi_v1.0.15/guides/images/Braun-4.png Place probe snugly in ear canal and direct toward opposite temple. Keep thermometer probe steady in the ear canal.
-/home/riro/MediPi_v1.0.15/guides/images/Braun-5.png Press and release ‘measure’ button. The thermometer will beep once, running dashes will appear on the display then the green ‘ExacTemp’ light will flash, indicating consistent probe position.
-/home/riro/MediPi_v1.0.15/guides/images/Braun-6.png Temperature measurement: a long beep and steady green ‘ExacTemp’ light will signal the end of the measuring process. The temperature will show on the display.
-/home/riro/MediPi_v1.0.15/guides/images/Braun-7.png Remove used probe cover by pressing Probe Cover Ejector button
-/home/riro/MediPi_v1.0.15/guides/images/temp101_input_result.png 1. Input the temperature as indicated on the thermometer using the “+” and “-“ buttons
-/home/riro/MediPi_v1.0.15/guides/images/temp101_back_confirm.png 2. On attempting to exit the screen you will be asked to confirm that the temperature which you input is correct
+${config-directory-location}/images/Braun-Thermoscan.jpg Instructions for the use of the Braun Pro 6000 Thermoscan Thermometer
+${config-directory-location}/guides/images/Braun-1.png Remove the Braun thermoscan thermometer from cradle by gripping it at the base and pivoting up. Thermometer will turn on automatically. Probe cover icon will flash on display indicating a new probe cover is needed.
+${config-directory-location}/guides/images/Braun-2.png Attach new probe cover by pushing probe tip straight into box, then pulling thermometer out.
+${config-directory-location}/guides/images/Braun-3.png Wait for the ready indication. When the ring around ‘measure’ button turns green, thermometer will beep once and three lines on display indicate thermometer is ready.
+${config-directory-location}/guides/images/Braun-4.png Place probe snugly in ear canal and direct toward opposite temple. Keep thermometer probe steady in the ear canal.
+${config-directory-location}/guides/images/Braun-5.png Press and release ‘measure’ button. The thermometer will beep once, running dashes will appear on the display then the green ‘ExacTemp’ light will flash, indicating consistent probe position.
+${config-directory-location}/guides/images/Braun-6.png Temperature measurement: a long beep and steady green ‘ExacTemp’ light will signal the end of the measuring process. The temperature will show on the display.
+${config-directory-location}/guides/images/Braun-7.png Remove used probe cover by pressing Probe Cover Ejector button
+${config-directory-location}/guides/images/temp101_input_result.png Input the temperature as indicated on the thermometer using the “+” and “-“ buttons
+${config-directory-location}/guides/images/temp101_back_confirm.png On attempting to exit the screen you will be asked to confirm that the temperature which you input is correct

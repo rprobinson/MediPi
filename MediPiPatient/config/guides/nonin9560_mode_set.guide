@@ -1,4 +1,4 @@
-/home/riro/MediPi_v1.0.15/images/nonin9560.jpg Instructions for setting the mode on the Nonin 9560 Pulse Oximeter. (The Nonin 9560 Pulse Oximeter must be paired and its Serial Port MAC must be registered)
-/home/riro/MediPi_v1.0.15/guides/images/nonin9560_off.png 1. Make sure that the device is off
-/home/riro/MediPi_v1.0.15/guides/images/nonin9560_linesFlashing.jpg 2. Insert finger into the Nonin 9560 Finger Pulse Oximeter and wait for the two flashing lines on the oximeter to disappear
-/home/riro/MediPi_v1.0.15/guides/images/nonin9560_PressSetMode.png 3. Press 'Set Mode' button and after a short while MediPi will inform you that the pulse oximeter has been sucessfully synchronised. Press OK, remove the oximeter and retake reading.
+${config-directory-location}/images/nonin9560.jpg Instructions for setting the mode on the Nonin 9560 Pulse Oximeter. (The Nonin 9560 Pulse Oximeter must be paired and its Serial Port MAC must be registered)
+${config-directory-location}/guides/images/nonin9560_off.png 1. Make sure that the device is off
+${config-directory-location}/guides/images/nonin9560_linesFlashing.jpg 2. Insert finger into the Nonin 9560 Finger Pulse Oximeter and wait for the two flashing lines on the oximeter to disappear
+${config-directory-location}/guides/images/nonin9560_PressSetMode.png 3. Press 'Set Mode' button and after a short while MediPi will inform you that the pulse oximeter has been sucessfully synchronised. Press OK, remove the oximeter and retake reading.

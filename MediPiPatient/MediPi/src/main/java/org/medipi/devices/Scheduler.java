@@ -130,7 +130,7 @@ public class Scheduler extends Device {
 
     private final Text schedRepeatText = new Text();
     private final Text schedPressRunText = new Text();
-    private final Text schedInfoText = new Text("* You may run and submit readings at any time");
+    private final Text schedInfoText = new Text("* You may run and submit readings at any time, but these will only be reviewed by your clinician at the agreed date/time");
     private final Text schedNextText = new Text();
     private Button runScheduleNowButton;
     //This is the most recent schedule
@@ -511,7 +511,7 @@ public class Scheduler extends Device {
                     currentScheduleStartTime = futureScheduleStartTime;
                     currentScheduleExpiryTime = futureScheduleExpiryTime;
                     runScheduleNowButton.setDisable(true);
-                    schedNextText.setText("* Readings due next at " + Utilities.DISPLAY_SCHEDULE_FORMAT_LOCALTIME.format(currentScheduleStartTime));
+                    schedNextText.setText("* Readings due next from " + Utilities.DISPLAY_SCHEDULE_FORMAT_LOCALTIME.format(currentScheduleStartTime));
                     Platform.runLater(() -> {
                         MediPiMessageBox.getInstance().makeErrorMessage("The first Reading Schedule currently loaded in is in the future: " + futureDate.toString() + " - Schedules cannot be taken until this time", null);
                     });
@@ -534,7 +534,7 @@ public class Scheduler extends Device {
                     alertBooleanProperty.set(false);
                     Platform.runLater(() -> {
                         alertBanner.removeAlert(getClassTokenName());
-                        schedNextText.setText("* Readings due next at " + Utilities.DISPLAY_SCHEDULE_FORMAT_LOCALTIME.format(currentScheduleExpiryTime));
+                        schedNextText.setText("* Readings due next from " + Utilities.DISPLAY_SCHEDULE_FORMAT_LOCALTIME.format(currentScheduleExpiryTime));
                         schedPressRunText.setText("");
                     });
                 } else {
@@ -544,7 +544,7 @@ public class Scheduler extends Device {
                         @Override
                         public void run() {
                             alertBanner.addAlert(getClassTokenName(), "You have new Readings to take");
-                            schedNextText.setText("* Your latest Readings were due at " + Utilities.DISPLAY_SCHEDULE_FORMAT_LOCALTIME.format(currentScheduleStartTime));
+                            schedNextText.setText("* Your latest Readings were due on " + Utilities.DISPLAY_SCHEDULE_FORMAT_LOCALTIME.format(currentScheduleStartTime));
                             schedPressRunText.setText("* Please press 'Take Readings Now'");
                         }
                     });

@@ -228,6 +228,7 @@ overflow-y: auto;
 .measurement-attribute .red{background-color: rgb(196,0,0);font-size: 50px; color: #FFFFFF;}
 .measurement-attribute .green{background-color: rgb(54,130,21);font-size: 50px; color: #FFFFFF;}
 .measurement-attribute .amber{background-color: rgb(255,191,0);font-size: 50px; color: #000000;}
+.measurement-attribute .grey{background-color: rgb(197,197,205);font-size: 50px; color: #000000;}
 .measurement-attribute th, .measurement-attribute td {border:1px solid #000;text-align: center; width:50%;padding:5px 7px;}
 .measurement-attribute th {font-size: 13px;}
 .measurement-attribute td {font-size: 40px;}

@@ -1,6 +1,6 @@
-/home/riro/MediPi_v1.0.15/images/bm55.jpg Instructions for the use of the Beurer BM55 Blood Pressure Monitor. Before following this guide make sure you have taken a measurement to download.
-/home/riro/MediPi_v1.0.15/images/bm55.jpg Only the latest measurement will be displayed although all results on the meter will be transmitted.
-/home/riro/MediPi_v1.0.15/guides/images/BeurerBM55_USBInsert.jpg Insert the white USB cable into any USB port on MediPi
-/home/riro/MediPi_v1.0.15/guides/images/BeurerBM55_USBInsert2.jpg Insert the other end of the USB cable into the Beurer BM55 Blood Pressure Monitor
-/home/riro/MediPi_v1.0.15/guides/images/BeurerBM55_Start.jpg Before the screen on the Blood pressure meter goes blank and whilst it is displaying "PC" press the Download button on MediPi
-/home/riro/MediPi_v1.0.15/guides/images/BeurerBM55_End.jpg When the download is complete the blood pressure meter screen will show a square shape - see Image.
+${config-directory-location}/images/bm55.jpg Instructions for the use of the Beurer BM55 Blood Pressure Monitor. Before following this guide make sure you have taken a measurement to download.
+${config-directory-location}/images/bm55.jpg Only the latest measurement will be displayed although all results on the meter will be transmitted.
+${config-directory-location}/guides/images/BeurerBM55_USBInsert.jpg Insert the white USB cable into any USB port on MediPi
+${config-directory-location}/guides/images/BeurerBM55_USBInsert2.jpg Insert the other end of the USB cable into the Beurer BM55 Blood Pressure Monitor
+${config-directory-location}/guides/images/BeurerBM55_Start.jpg Before the screen on the Blood pressure meter goes blank and whilst it is displaying "PC" press the Download button on MediPi
+${config-directory-location}/guides/images/BeurerBM55_End.jpg When the download is complete the blood pressure meter screen will show a square shape - see Image.

@@ -38,6 +38,8 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
 	@Autowired
 	private UserDetailsService userDetailsService;
+        @Autowired
+        LoginSuccess successHandler;
 
 	@Autowired
 	public void configAuthentication(final AuthenticationManagerBuilder auth) throws Exception {
@@ -51,7 +53,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 		.antMatchers("/clinician/**").access("hasRole('ROLE_ADMIN')")
 		.anyRequest().permitAll()
 		.and()
-			.formLogin().loginPage("/login")
+			.formLogin().loginPage("/login").successHandler(successHandler)
 			.usernameParameter("username").passwordParameter("password")
 		.and()
 			.logout().logoutSuccessUrl("/login?logout")

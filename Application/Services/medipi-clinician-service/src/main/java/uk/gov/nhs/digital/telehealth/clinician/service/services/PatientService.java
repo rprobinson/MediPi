@@ -53,101 +53,106 @@ import com.dev.ops.exceptions.impl.DefaultWrappedException;
 @Component
 public class PatientService {
 
-	@Autowired
-	private MapperFacade mapperFacade;
+    @Autowired
+    private MapperFacade mapperFacade;
 
-	@Autowired
-	@Qualifier("patientsDAO")
-	private PatientDAO patientDAO;
+    @Autowired
+    @Qualifier("patientsDAO")
+    private PatientDAO patientDAO;
 
-	@Autowired
-	@Qualifier("recordingDevicesDataDAO")
-	private RecordingDeviceDataDAO recordingDeviceDataDAO;
+    @Autowired
+    @Qualifier("recordingDevicesDataDAO")
+    private RecordingDeviceDataDAO recordingDeviceDataDAO;
 
-	@Autowired
-	@Qualifier("attributeThresholdsDAO")
-	private AttributeThresholdDAO attributeThresholdDAO;
+    @Autowired
+    @Qualifier("attributeThresholdsDAO")
+    private AttributeThresholdDAO attributeThresholdDAO;
 
-	@Autowired
-	private ThresholdTestFactory thresholdTestFactory;
+    @Autowired
+    private ThresholdTestFactory thresholdTestFactory;
 
-	@Value("#{'${medipi.patient.required.device.attributes}'.split(',')}")
-	private List<String> requiredDeviceAttributes;
+    @Value("#{'${medipi.patient.required.device.attributes}'.split(',')}")
+    private List<String> requiredDeviceAttributes;
 
-	private static final Logger LOGGER = LogManager.getLogger(PatientService.class);
+    private static final Logger LOGGER = LogManager.getLogger(PatientService.class);
 
-	@Transactional(rollbackFor = {Exception.class})
-	public Patient getPatientDetails(final String patientUUID) throws DefaultWrappedException {
-		final PatientMaster patientMaster = this.patientDAO.findByPrimaryKey(patientUUID, ContextThreadLocal.get());
-		Patient patientDetails = null;
-		if(null != patientMaster) {
-			patientDetails = this.mapperFacade.map(patientMaster, Patient.class);
-		} else {
-			throw new DefaultWrappedException("PATIENT_WITH_ID_NOT_FOUND_EXCEPTION", null, new Object[] {patientUUID});
-		}
-		return patientDetails;
-	}
+    @Transactional(rollbackFor = {Exception.class})
+    public Patient getPatientDetails(final String patientUUID) throws DefaultWrappedException {
+        final PatientMaster patientMaster = this.patientDAO.findByPrimaryKey(patientUUID, ContextThreadLocal.get());
+        Patient patientDetails = null;
+        if (null != patientMaster) {
+            patientDetails = this.mapperFacade.map(patientMaster, Patient.class);
+        } else {
+            throw new DefaultWrappedException("PATIENT_WITH_ID_NOT_FOUND_EXCEPTION", null, new Object[]{patientUUID});
+        }
+        return patientDetails;
+    }
 
-	@Transactional(rollbackFor = {Exception.class})
-	public List<Patient> getAllPatients() throws DefaultWrappedException {
-		final List<PatientMaster> patientMasters = this.patientDAO.fetchAllPatients();
-		final List<Patient> patients = setPatientStatus(patientMasters);
-		return patients;
-	}
+    @Transactional(rollbackFor = {Exception.class})
+    public List<Patient> getAllPatients() throws DefaultWrappedException {
+        final List<PatientMaster> patientMasters = this.patientDAO.fetchAllPatients();
+        final List<Patient> patients = setPatientStatus(patientMasters);
+        return patients;
+    }
 
-	@Transactional(rollbackFor = {Exception.class})
-	public List<Patient> getPatientsByGroup(final String patientGroupId) throws DefaultWrappedException {
-		final List<PatientMaster> patientMasters = this.patientDAO.fetchPatientsByPatientGroupId(patientGroupId);
-		final List<Patient> patients = setPatientStatus(patientMasters);
-		return patients;
-	}
+    @Transactional(rollbackFor = {Exception.class})
+    public List<Patient> getPatientsByGroup(final String patientGroupId) throws DefaultWrappedException {
+        final List<PatientMaster> patientMasters = this.patientDAO.fetchPatientsByPatientGroupId(patientGroupId);
+        final List<Patient> patients = setPatientStatus(patientMasters);
+        return patients;
+    }
 
-	private List<Patient> setPatientStatus(final List<PatientMaster> patientMasters) {
-		final List<Patient> patients = new ArrayList<Patient>();
-		for(final PatientMaster patientMaster : patientMasters) {
-			final Patient patient = this.mapperFacade.map(patientMaster, Patient.class);
-			List<DataValueEntity> patientMeasurements = recordingDeviceDataDAO.fetchRecentMeasurementsSQL(patient.getPatientUUID());
+    private List<Patient> setPatientStatus(final List<PatientMaster> patientMasters) {
+        final List<Patient> patients = new ArrayList<Patient>();
+        for (final PatientMaster patientMaster : patientMasters) {
+            final Patient patient = this.mapperFacade.map(patientMaster, Patient.class);
+            List<DataValueEntity> patientMeasurements = recordingDeviceDataDAO.fetchRecentMeasurementsSQL(patient.getPatientUUID());
 
-			//Clone the required attributes so that we can compare whether all the required attributes has data against it
-			List<String> requiredAttributes = new ArrayList<String>(requiredDeviceAttributes);
+            //Clone the required attributes so that we can compare whether all the required attributes has data against it
+            List<String> requiredAttributes = new ArrayList<String>(requiredDeviceAttributes);
 
-			//Set the default status as incomplete schedule
-			PatientStatus patientStatus = PatientStatus.INCOMPLETE_SCHEDULE;
+            //Set the default status as null
+            PatientStatus patientStatus = null;
 
-			for(DataValueEntity patientMeasurement : patientMeasurements) {
-				//Check the alert status and scheduled expiry date only if they are listed as required/mandatory attributes.
-				if(requiredAttributes.contains(patientMeasurement.getAttributeName())) {
-					requiredAttributes.remove(patientMeasurement.getAttributeName());
+            for (DataValueEntity patientMeasurement : patientMeasurements) {
+                //Check the alert status and scheduled expiry date only if they are listed as required/mandatory attributes.
+                if (requiredAttributes.contains(patientMeasurement.getAttributeName())) {
 
-					//break if the patient did not submit the data after the last expiry schedule time
-					if(patientMeasurement.getScheduleExpiryTime().before(TimestampUtil.getCurentTimestamp())) {
-						break;
-					} else if(patientMeasurement.getAlertStatus() != null && PatientStatus.valueOf(patientMeasurement.getAlertStatus()) == PatientStatus.OUT_OF_THRESHOLD) {
-						//if the alert status is out of threshold for any single required attribute then set patient status as OUT_OF_THRESHOLD and break. No need to check the data for next attribute
-						patientStatus = PatientStatus.OUT_OF_THRESHOLD;
-						break;
-					} else if(patientMeasurement.getAlertStatus() != null && PatientStatus.valueOf(patientMeasurement.getAlertStatus()) == PatientStatus.CANNOT_CALCULATE) {
-						//if the alert status is out of threshold for any single required attribute then set patient status as OUT_OF_THRESHOLD and break. No need to check the data for next attribute
-						patientStatus = PatientStatus.CANNOT_CALCULATE;
-						break;
-					}
-				}
-			}
+                    //update status if the patient did not submit the data after the last expiry schedule time
+                    if (patientMeasurement.getScheduleExpiryTime().before(TimestampUtil.getCurentTimestamp())) {
+                        if (patientStatus == null || patientStatus.ordinal() < PatientStatus.INCOMPLETE_SCHEDULE.ordinal()) {
+                            patientStatus = PatientStatus.INCOMPLETE_SCHEDULE;
+                        }
+                    } else if (patientMeasurement.getAlertStatus() != null && PatientStatus.valueOf(patientMeasurement.getAlertStatus()) == PatientStatus.OUT_OF_THRESHOLD) {
+                        //if the alert status is out of threshold for any single required attribute then set patient status as OUT_OF_THRESHOLD and break. No need to check the data for next attribute
+                        if (patientStatus == null || patientStatus.ordinal() < PatientStatus.OUT_OF_THRESHOLD.ordinal()) {
+                            patientStatus = PatientStatus.OUT_OF_THRESHOLD;
+                        }
+                    } else if (patientMeasurement.getAlertStatus() != null && PatientStatus.valueOf(patientMeasurement.getAlertStatus()) == PatientStatus.CANNOT_CALCULATE) {
+                        if (patientStatus == null || patientStatus.ordinal() < PatientStatus.CANNOT_CALCULATE.ordinal()) {
+                            patientStatus = PatientStatus.CANNOT_CALCULATE;
+                        }
+                    } else if (patientMeasurement.getAlertStatus() != null && PatientStatus.valueOf(patientMeasurement.getAlertStatus()) == PatientStatus.IN_THRESHOLD) {
+                        if (patientStatus == null || patientStatus.ordinal() < PatientStatus.IN_THRESHOLD.ordinal()) {
+                            patientStatus = PatientStatus.IN_THRESHOLD;
+                        }
+                    }
+                }
+            }
+            // if no status has been detected default to incomplete
+            if (patientStatus == null) {
+                patientStatus = PatientStatus.INCOMPLETE_SCHEDULE;
+            }
+            patient.setPatientStatus(patientStatus);
+            patients.add(patient);
+        }
+        return patients;
+    }
 
-			if(requiredAttributes.isEmpty()) {
-				patientStatus = PatientStatus.IN_THRESHOLD;
-			}
-
-			patient.setPatientStatus(patientStatus);
-			patients.add(patient);
-		}
-		return patients;
-	}
-
-	@SuppressWarnings({"unchecked", "rawtypes"})
-	@Transactional(rollbackFor = {Exception.class})
-	public List<DataValue> getPatientsRecentMeasurements(final String patientUUID) {
-		/*
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    @Transactional(rollbackFor = {Exception.class})
+    public List<DataValue> getPatientsRecentMeasurements(final String patientUUID) {
+        /*
 		 * As per the conversation with Richard on 11/07/2016 below are the 2 options suggested for fetching the recent data readings
 		 *
 		 * 1. To work with hibernate hql we can have JOINs only on the pre-defined tables/entities. We can't have joins with derived tables
@@ -161,17 +166,16 @@ public class PatientService {
 		 * which is the latest entry and I think it would be dodgy to have 2 differing ways of deriving the last value.
 		 *
 		 * In case if we want to go with option 1 then just uncomment below 2 lines and comment last 2 lines.
-		 */
+         */
 
-		/*List<RecordingDeviceDataMaster> recordingDeviceDataList = recordingDeviceDataDAO.fetchRecentMeasurementsHQL(patientUUID, contextInfo);
+ /*List<RecordingDeviceDataMaster> recordingDeviceDataList = recordingDeviceDataDAO.fetchRecentMeasurementsHQL(patientUUID, contextInfo);
 		return this.mapperFacade.map(recordingDeviceDataList, (Class<List<DataValue>>) (Class) List.class);*/
+        List<DataValueEntity> recordingDeviceDataList = recordingDeviceDataDAO.fetchRecentMeasurementsSQL(patientUUID);
+        return this.mapperFacade.map(recordingDeviceDataList, (Class<List<DataValue>>) (Class) List.class);
+    }
 
-		List<DataValueEntity> recordingDeviceDataList = recordingDeviceDataDAO.fetchRecentMeasurementsSQL(patientUUID);
-		return this.mapperFacade.map(recordingDeviceDataList, (Class<List<DataValue>>) (Class) List.class);
-	}
-
-	public List<Measurement> getPatientMeasurements(final String patientUUID, final Integer attributeId) throws Exception {
-		/*List<AttributeThresholdMaster> attributeThresholdMasterList = attributeThresholdDAO.fetchPatientAttributeThresholds(patientUUID, attributeId);
+    public List<Measurement> getPatientMeasurements(final String patientUUID, final Integer attributeId) throws Exception {
+        /*List<AttributeThresholdMaster> attributeThresholdMasterList = attributeThresholdDAO.fetchPatientAttributeThresholds(patientUUID, attributeId);
 		List<AttributeThreshold> attributeThresholds = new ArrayList<AttributeThreshold>();
 		for(AttributeThresholdMaster attributeThresholdMaster : attributeThresholdMasterList) {
 			AttributeThreshold attributeThreshold = this.mapperFacade.map(attributeThresholdMaster, AttributeThreshold.class);
@@ -181,32 +185,43 @@ public class PatientService {
 			attributeThresholds.add(attributeThreshold);
 		}*/
 
-		List<RecordingDeviceDataMaster> patientData = recordingDeviceDataDAO.fetchPatientMeasurementsByAttribute(patientUUID, attributeId);
-		List<Measurement> measurements = new ArrayList<Measurement>();
-		for(RecordingDeviceDataMaster data : patientData) {
-			Measurement measurement = this.mapperFacade.map(data, Measurement.class);
-			AttributeThresholdMaster attributeThresholdMaster = attributeThresholdDAO.findEffectiveAttributeThreshold(data.getRecordingDeviceAttribute().getAttributeId(), patientUUID, data.getDataValueTime());
+        List<RecordingDeviceDataMaster> patientData = recordingDeviceDataDAO.fetchPatientMeasurementsByAttribute(patientUUID, attributeId);
+        int numberOfRecords = patientData.size();
+        int counter = 0;
+        List<Measurement> measurements = new ArrayList<Measurement>();
+        for (RecordingDeviceDataMaster data : patientData) {
+            Measurement measurement = this.mapperFacade.map(data, Measurement.class);
+            AttributeThresholdMaster attributeThresholdMaster = attributeThresholdDAO.findEffectiveAttributeThreshold(data.getRecordingDeviceAttribute().getAttributeId(), patientUUID, data.getDataValueTime());
 
-			if(attributeThresholdMaster != null) {
-				AttributeThresholdTest thresholdTest = thresholdTestFactory.getInstance(attributeThresholdMaster.getThresholdType());
-				List<Double> thresholds = thresholdTest.getThreshold(data.getRecordingDeviceAttribute().getAttributeId(), patientUUID, data.getDataValueTime(), data.getDataValue());
-				if(thresholds != null && (thresholds.get(0) == null || thresholds.get(1) == null)) {
-					LOGGER.debug("AttributeThresholdMaster:<thresholdLowValue=" + attributeThresholdMaster.getThresholdLowValue() + " thresholdHighValue: " + attributeThresholdMaster.getThresholdHighValue() + "> thresholds:<" + thresholds + ">");
-				}
-				measurement.setMinMaxValues(thresholds);
-			}
-			measurements.add(measurement);
-		}
-		return measurements;
-	}
+            if (attributeThresholdMaster != null) {
+                AttributeThresholdTest thresholdTest = thresholdTestFactory.getInstance(attributeThresholdMaster.getThresholdType());
+                List<Double> thresholds = thresholdTest.getThreshold(data.getRecordingDeviceAttribute().getAttributeId(), patientUUID, data.getDataValueTime(), data.getDataValue());
+                if (thresholds != null && (thresholds.get(0) == null || thresholds.get(1) == null)) {
+                    LOGGER.debug("AttributeThresholdMaster:<thresholdLowValue=" + attributeThresholdMaster.getThresholdLowValue() + " thresholdHighValue: " + attributeThresholdMaster.getThresholdHighValue() + "> thresholds:<" + thresholds + ">");
+                }
+                measurement.setMinMaxValues(thresholds);
+            }
+            //Check if this is the last measurement
+            if(counter == numberOfRecords - 1) {
+                if(TimestampUtil.getCurentTimestamp().after(data.getScheduleExpiryTime())) {
+                    measurement.setAlertStatus("EXPIRED_MEASUREMENT");
+                } else if(TimestampUtil.getCurentTimestamp().before(data.getScheduleEffectiveTime())) {
+                    measurement.setAlertStatus("FUTURE_MEASUREMENT");
+                }
+            }
+            measurements.add(measurement);
+            counter ++;
+        }
+        return measurements;
+    }
 
-	@Transactional(rollbackFor = {Exception.class})
-	public List<RecordingDeviceAttribute> getPatientAttributesWithDevices(final String patientUUID, final List<String> attributeNames) {
-		List<RecordingDeviceAttribute> recordingDeviceAttributes = new ArrayList<RecordingDeviceAttribute>();
-		List<RecordingDeviceAttributeMaster> patientAttributesWithData = recordingDeviceDataDAO.fetchPatientAttributesHavingData(patientUUID, attributeNames);
-		for(RecordingDeviceAttributeMaster patientAttribute : patientAttributesWithData) {
-			recordingDeviceAttributes.add(mapperFacade.map(patientAttribute, RecordingDeviceAttribute.class));
-		}
-		return recordingDeviceAttributes;
-	}
+    @Transactional(rollbackFor = {Exception.class})
+    public List<RecordingDeviceAttribute> getPatientAttributesWithDevices(final String patientUUID, final List<String> attributeNames) {
+        List<RecordingDeviceAttribute> recordingDeviceAttributes = new ArrayList<RecordingDeviceAttribute>();
+        List<RecordingDeviceAttributeMaster> patientAttributesWithData = recordingDeviceDataDAO.fetchPatientAttributesHavingData(patientUUID, attributeNames);
+        for (RecordingDeviceAttributeMaster patientAttribute : patientAttributesWithData) {
+            recordingDeviceAttributes.add(mapperFacade.map(patientAttribute, RecordingDeviceAttribute.class));
+        }
+        return recordingDeviceAttributes;
+    }
 }

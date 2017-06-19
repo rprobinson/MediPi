@@ -1,7 +1,7 @@
-/home/riro/MediPi_v1.0.15/images/M430.jpg Instructions for the use of the Marsden M430 Bluetooth Scale
-/home/riro/MediPi_v1.0.15/guides/images/StartButton.png 1. Make sure scales are on solid, level ground then press ‘start’ button on MediPi to commence reading.
-/home/riro/MediPi_v1.0.15/guides/images/marsden_turn_on_scales.png 2. The on-screen message will tell you to turn on the scales if necessary.
-/home/riro/MediPi_v1.0.15/guides/images/marsden_turn_stand_on_scales.png 3. Turn on the Marsden scales and wait until prompted to stand on the scales by MediPi. (The device must be started without any load and the display must read 0.0kg)
-/home/riro/MediPi_v1.0.15/guides/images/marsden_scales_beep.png 4. Stand on scales until the scales make a ‘beep’. The screen will show your weight.
-/home/riro/MediPi_v1.0.15/guides/images/next.png 5. Step off the scales and press ‘next’/’back’ on MediPi.
-/home/riro/MediPi_v1.0.15/guides/images/marsden_turn_off.png 6. The scales should switch themselves off automatically after a short period.
+${config-directory-location}/images/M430.jpg Instructions for the use of the Marsden M430 Bluetooth Scale
+${config-directory-location}/guides/images/StartButton.png 1. Make sure scales are on solid, level ground then press ‘start’ button on MediPi to commence reading.
+${config-directory-location}/guides/images/marsden_turn_on_scales.png 2. The on-screen message will tell you to turn on the scales if necessary.
+${config-directory-location}/guides/images/marsden_turn_stand_on_scales.png 3. Turn on the Marsden scales and wait until prompted to stand on the scales by MediPi. (The device must be started without any load and the display must read 0.0kg)
+${config-directory-location}/guides/images/marsden_scales_beep.png 4. Stand on scales until the scales make a ‘beep’. The screen will show your weight.
+${config-directory-location}/guides/images/next.png 5. Step off the scales and press ‘next’/’back’ on MediPi.
+${config-directory-location}/guides/images/marsden_turn_off.png 6. The scales should switch themselves off automatically after a short period.
