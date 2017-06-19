@@ -1,4 +1,4 @@
-------------------------------------------------------------------------TABLE DEFINITION:START------------------------------------------------------------------------
+﻿------------------------------------------------------------------------TABLE DEFINITION:START------------------------------------------------------------------------
 CREATE TABLE alert (
     alert_id bigint NOT NULL,
     patient_uuid character varying(100) NOT NULL,
@@ -106,12 +106,12 @@ SELECT pg_catalog.setval('recording_device_type_type_id_seq', 1, false);
 ------------------------------------------------------------------------SEQUNCES LINK:END------------------------------------------------------------------------
 
 ------------------------------------------------------------------------DATA:START------------------------------------------------------------------------
-insert into recording_device_type (type_id, type, subtype) values ('3','Thermometer','Omron MC-341E');
-insert into recording_device_type (type_id, type, subtype) values ('4','Oximeter','Contec:CMS50D+');
-insert into recording_device_type (type_id, type, subtype) values ('5','DiagnosticScale','Beurer:BF-480');
-insert into recording_device_type (type_id, type, subtype) values ('6','BloodPressure','Beurer:BM-55');
-insert into recording_device_type (type_id, type, subtype) values ('7','Questionnaire','Heart Questionnaire');
-insert into recording_device_type (type_id, type, subtype) values ('8','Scheduler','Scheduler');
+insert into recording_device_type (type_id, type, display_name) values ('3','Thermometer','Omron MC-341E');
+insert into recording_device_type (type_id, type, display_name) values ('4','Oximeter','Contec:CMS50D+');
+insert into recording_device_type (type_id, type, display_name) values ('5','DiagnosticScale','Beurer:BF-480');
+insert into recording_device_type (type_id, type, display_name) values ('6','BloodPressure','Beurer:BM-55');
+insert into recording_device_type (type_id, type, display_name) values ('7','Questionnaire','Heart Questionnaire');
+insert into recording_device_type (type_id, type, display_name) values ('8','Scheduler','Scheduler');
 
 insert into recording_device_attribute (attribute_id, type_id, attribute_name, attribute_units, attribute_type) values ('3','4','spo2','%','VARCHAR');
 insert into recording_device_attribute (attribute_id, type_id, attribute_name, attribute_units, attribute_type) values ('1','4','pulse','BPM','VARCHAR');
