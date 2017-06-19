@@ -186,6 +186,8 @@ public class PatientService {
 		}*/
 
         List<RecordingDeviceDataMaster> patientData = recordingDeviceDataDAO.fetchPatientMeasurementsByAttribute(patientUUID, attributeId);
+        int numberOfRecords = patientData.size();
+        int counter = 0;
         List<Measurement> measurements = new ArrayList<Measurement>();
         for (RecordingDeviceDataMaster data : patientData) {
             Measurement measurement = this.mapperFacade.map(data, Measurement.class);
@@ -199,7 +201,16 @@ public class PatientService {
                 }
                 measurement.setMinMaxValues(thresholds);
             }
+            //Check if this is the last measurement
+            if(counter == numberOfRecords - 1) {
+                if(TimestampUtil.getCurentTimestamp().after(data.getScheduleExpiryTime())) {
+                    measurement.setAlertStatus("EXPIRED_MEASUREMENT");
+                } else if(TimestampUtil.getCurentTimestamp().before(data.getScheduleEffectiveTime())) {
+                    measurement.setAlertStatus("FUTURE_MEASUREMENT");
+                }
+            }
             measurements.add(measurement);
+            counter ++;
         }
         return measurements;
     }
