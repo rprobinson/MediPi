@@ -83,7 +83,7 @@ public class PatientDeviceValidationService {
         final Hardware hardware = this.hardwareDAO.findByPrimaryKey(hardware_name);
         if (hardware != null) {
             // Device has been found on DB
-            logger.log(PatientDeviceValidationService.class.getName() + ".dbinfo", "deviceId: " + hardware_name + " found in Hardware Table");
+//Removed to Reduce Logs size            logger.log(PatientDeviceValidationService.class.getName() + ".dbinfo", "deviceId: " + hardware_name + " found in Hardware Table");
             //Check that there is a patient registered to the device
             if (hardware.getPatientUuid() == null || hardware.getPatientUuid().getPatientUuid().trim().length() == 0) {
                 //No patient is associated with this device
@@ -119,7 +119,7 @@ public class PatientDeviceValidationService {
                 }
             } else if (patientUuid.toLowerCase().trim().equals(hardware.getPatientUuid().getPatientUuid().toLowerCase())) {
                 //Patient has been registered with the device
-                logger.log(PatientDeviceValidationService.class.getName() + ".dbinfo", "patientUuid: " + patientUuid + "found in Patient Table and matched to deviceId: " + hardware_name);
+//Removed to Reduce Logs size               logger.log(PatientDeviceValidationService.class.getName() + ".dbinfo", "patientUuid: " + patientUuid + "found in Patient Table and matched to deviceId: " + hardware_name);
                 deviceAndPatientVerified = true;
             } else {
                 //if the device is registered to another patient

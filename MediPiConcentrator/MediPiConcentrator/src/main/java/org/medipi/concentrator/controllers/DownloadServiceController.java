@@ -67,7 +67,7 @@ public class DownloadServiceController {
     @RequestMapping(value = "/{hardwareName}/{patientUuid}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     public ResponseEntity<List<DownloadableDO>> getDownloadableList(@PathVariable("hardwareName") String hardwareName, @PathVariable("patientUuid") String patientUuid) {
-        logger.log(DownloadServiceController.class.getName(), new Date().toString() + " get DownloadableList called by patientUuid: " + patientUuid + " using hardwareName: " + hardwareName);
+//Removed to Reduce Logs size        logger.log(DownloadServiceController.class.getName(), new Date().toString() + " get DownloadableList called by patientUuid: " + patientUuid + " using hardwareName: " + hardwareName);
         return this.downloadableListService.getDownloadableList(hardwareName, patientUuid);
     }
 
