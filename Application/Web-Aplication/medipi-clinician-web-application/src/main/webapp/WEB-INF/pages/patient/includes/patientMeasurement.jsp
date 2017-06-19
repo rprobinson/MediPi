@@ -25,20 +25,10 @@
 							<td colspan="2" id="${param.recentMeasurementValueId}"></td>
 						</tr>
 
-						<c:choose>
-						    <c:when test="${param.attributeName == 'weight'}">
-							    <tr>
-									<th scope="col">Dry Weight (kg)</th>
-									<th scope="col">Additional Weight (kg)</th>
-								</tr>
-						    </c:when>
-						    <c:otherwise>
 						        <tr>
 									<th scope="col">Min</th>
 									<th scope="col">Max</th>
 								</tr>
-						    </c:otherwise>
-						</c:choose>
 
 						<c:if test="">
 
