@@ -150,6 +150,8 @@ var measurement = {
 	        	$("#" + includeObject.recentMeasurementValueId).attr("class", "red");
 	        } else if(systolicData.alertStatus == "IN_THRESHOLD" && diastolicData.alertStatus == "IN_THRESHOLD") {
 	        	$("#" + includeObject.recentMeasurementValueId).attr("class", "green");
+	        } else if(systolicData.alertStatus == "EXPIRED_MEASUREMENT" || diastolicData.alertStatus == "EXPIRED_MEASUREMENT"){
+	        	$("#" + includeObject.recentMeasurementValueId).attr("class", "grey");
 	        } else {
 	        	$("#" + includeObject.recentMeasurementValueId).attr("class", "amber");
 	        }
