@@ -42,69 +42,64 @@ import com.dev.ops.exceptions.impl.DefaultWrappedException;
 @Component
 public class AttributeThresholdService {
 
-	@Autowired
-	private MapperFacade mapperFacade;
+    @Autowired
+    private MapperFacade mapperFacade;
 
-	@Autowired
-	@Qualifier("attributeThresholdsDAO")
-	private AttributeThresholdDAO attributeThresholdDAO;
+    @Autowired
+    @Qualifier("attributeThresholdsDAO")
+    private AttributeThresholdDAO attributeThresholdDAO;
 
-	@Autowired
-	@Qualifier("patientsDAO")
-	private PatientDAO patientDAO;
+    @Autowired
+    @Qualifier("patientsDAO")
+    private PatientDAO patientDAO;
 
-	@Autowired
-	@Qualifier("recordingDevicesAttributeDAO")
-	private RecordingDeviceAttributeDAO recordingDeviceAttributeDAO;
+    @Autowired
+    @Qualifier("recordingDevicesAttributeDAO")
+    private RecordingDeviceAttributeDAO recordingDeviceAttributeDAO;
 
-	private static final Logger LOGGER = LogManager.getLogger(AttributeThresholdService.class);
+    private static final Logger LOGGER = LogManager.getLogger(AttributeThresholdService.class);
 
-	@Transactional(rollbackFor = {Exception.class})
-	public AttributeThreshold getAttributeThreshold(final String patientUUID, final Integer attributeId) throws DefaultWrappedException {
-		final AttributeThresholdMaster attributeThresholdMaster = this.attributeThresholdDAO.fetchLatestAttributeThreshold(patientUUID, attributeId);
-		AttributeThreshold attributeThreshold = null;
-		if(null != attributeThresholdMaster) {
-			attributeThreshold = this.mapperFacade.map(attributeThresholdMaster, AttributeThreshold.class);
-		}
-		return attributeThreshold;
-	}
+    @Transactional(rollbackFor = {Exception.class})
+    public AttributeThreshold getAttributeThreshold(final String patientUUID, final Integer attributeId) throws DefaultWrappedException {
+        final AttributeThresholdMaster attributeThresholdMaster = this.attributeThresholdDAO.fetchLatestAttributeThreshold(patientUUID, attributeId);
+        AttributeThreshold attributeThreshold = null;
+        if (null != attributeThresholdMaster) {
+            attributeThreshold = this.mapperFacade.map(attributeThresholdMaster, AttributeThreshold.class);
+        }
+        return attributeThreshold;
+    }
 
-	@Transactional(rollbackFor = {Exception.class})
-	public AttributeThreshold saveAttributeThreshold(final AttributeThreshold attributeThreshold) throws DefaultWrappedException {
-		AttributeThreshold returnThreshold = null;
-		RecordingDeviceAttributeMaster recordingDeviceAttribute = recordingDeviceAttributeDAO.fetchRecordingDeviceAttributeById(attributeThreshold.getAttributeId());
+    @Transactional(rollbackFor = {Exception.class})
+    public AttributeThreshold saveAttributeThreshold(final AttributeThreshold attributeThreshold) throws DefaultWrappedException {
+        AttributeThreshold returnThreshold = null;
+        RecordingDeviceAttributeMaster recordingDeviceAttribute = recordingDeviceAttributeDAO.fetchRecordingDeviceAttributeById(attributeThreshold.getAttributeId());
 
-		PatientMaster patient = patientDAO.findByPrimaryKey(attributeThreshold.getPatientUUID());
-		if(null == patient) {
-			throw new DefaultWrappedException("PATIENT_WITH_ID_NOT_FOUND_EXCEPTION", null, new Object[] {attributeThreshold.getPatientUUID()});
-		}
+        PatientMaster patient = patientDAO.findByPrimaryKey(attributeThreshold.getPatientUUID());
+        if (null == patient) {
+            throw new DefaultWrappedException("PATIENT_WITH_ID_NOT_FOUND_EXCEPTION", null, new Object[]{attributeThreshold.getPatientUUID()});
+        }
 
-		final AttributeThresholdMaster latestAttributeThreshold = this.attributeThresholdDAO.fetchLatestAttributeThreshold(attributeThreshold.getPatientUUID(), attributeThreshold.getAttributeId());
-		if(null != latestAttributeThreshold && latestAttributeThreshold.getThresholdLowValue().equals(attributeThreshold.getThresholdLowValue()) && latestAttributeThreshold.getThresholdHighValue().equals(attributeThreshold.getThresholdHighValue())) {
-			//Do nothing and return the fetched attribute threshold as is because there are no changes in thresholds.
-			returnThreshold = mapperFacade.map(latestAttributeThreshold, AttributeThreshold.class);
-		} else {
+        final AttributeThresholdMaster latestAttributeThreshold = this.attributeThresholdDAO.fetchLatestAttributeThreshold(attributeThreshold.getPatientUUID(), attributeThreshold.getAttributeId());
+        if (null != latestAttributeThreshold && latestAttributeThreshold.getThresholdLowValue().equals(attributeThreshold.getThresholdLowValue()) && latestAttributeThreshold.getThresholdHighValue().equals(attributeThreshold.getThresholdHighValue())) {
+            //Do nothing and return the fetched attribute threshold as is because there are no changes in thresholds.
+            returnThreshold = mapperFacade.map(latestAttributeThreshold, AttributeThreshold.class);
+        } else {
 
-			String thresholdType = null;
-			if(ServiceConstants.Attributes.WEIGHT.equalsIgnoreCase(recordingDeviceAttribute.getAttributeName().trim())) {
-				thresholdType = ServiceConstants.AttributeThresholdTypes.CHANGE_OVER_TIME_TEST;
-			} else {
-				thresholdType = ServiceConstants.AttributeThresholdTypes.SIMPLE_HIGH_LOW_INCLUSIVE_TEST;
-			}
+            String thresholdType = ServiceConstants.AttributeThresholdTypes.SIMPLE_HIGH_LOW_INCLUSIVE_TEST;
 
-			AttributeThresholdMaster attributeThresholdMaster = new AttributeThresholdMaster(null, thresholdType, TimestampUtil.getCurentTimestamp(), attributeThreshold.getThresholdHighValue(), attributeThreshold.getThresholdLowValue(), patient, recordingDeviceAttribute);
-			attributeThresholdDAO.save(attributeThresholdMaster);
-			LOGGER.debug("Saved Attribute Threshold with id:<" + attributeThresholdMaster.getAttributeThresholdId() + ">");
-			returnThreshold = mapperFacade.map(attributeThresholdMaster, AttributeThreshold.class);
-		}
-		return returnThreshold;
-	}
+            AttributeThresholdMaster attributeThresholdMaster = new AttributeThresholdMaster(null, thresholdType, TimestampUtil.getCurentTimestamp(), attributeThreshold.getThresholdHighValue(), attributeThreshold.getThresholdLowValue(), patient, recordingDeviceAttribute);
+            attributeThresholdDAO.save(attributeThresholdMaster);
+            LOGGER.debug("Saved Attribute Threshold with id:<" + attributeThresholdMaster.getAttributeThresholdId() + ">");
+            returnThreshold = mapperFacade.map(attributeThresholdMaster, AttributeThreshold.class);
+        }
+        return returnThreshold;
+    }
 
-	@Transactional(rollbackFor = {Exception.class})
-	public BloodPressureAttributeThreshold saveBloodPressureAttributeThreshold(final BloodPressureAttributeThreshold attributeThreshold) throws DefaultWrappedException {
-		BloodPressureAttributeThreshold returnThreshold = new BloodPressureAttributeThreshold();
-		returnThreshold.setSystolic(saveAttributeThreshold(attributeThreshold.getSystolic()));
-		returnThreshold.setDiastolic(saveAttributeThreshold(attributeThreshold.getDiastolic()));
-		return returnThreshold;
-	}
+    @Transactional(rollbackFor = {Exception.class})
+    public BloodPressureAttributeThreshold saveBloodPressureAttributeThreshold(final BloodPressureAttributeThreshold attributeThreshold) throws DefaultWrappedException {
+        BloodPressureAttributeThreshold returnThreshold = new BloodPressureAttributeThreshold();
+        returnThreshold.setSystolic(saveAttributeThreshold(attributeThreshold.getSystolic()));
+        returnThreshold.setDiastolic(saveAttributeThreshold(attributeThreshold.getDiastolic()));
+        return returnThreshold;
+    }
 }

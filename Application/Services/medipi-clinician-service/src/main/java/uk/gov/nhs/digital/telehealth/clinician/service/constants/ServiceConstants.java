@@ -26,6 +26,5 @@ public interface ServiceConstants {
 
 	interface AttributeThresholdTypes {
 		String SIMPLE_HIGH_LOW_INCLUSIVE_TEST = "org.medipi.clinical.threshold.SimpleInclusiveHighLowTest";
-		String CHANGE_OVER_TIME_TEST = "org.medipi.clinical.threshold.RelativeInclusiveHighTest";
 	}
 }
