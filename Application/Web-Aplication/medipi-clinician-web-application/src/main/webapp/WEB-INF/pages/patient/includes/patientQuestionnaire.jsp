@@ -1,6 +1,3 @@
-<script type="text/javascript" charset="utf8" src="/plugins/chart-js/Chart.js"></script>
-<script type="text/javascript" charset="utf8" src="/plugins/chart-js/Chart.bundle.js"></script>
-<script type="text/javascript" charset="utf8" src="/js/common/chart.js.common.js"></script>
 <script type="text/javascript" charset="utf8" src="/js/patient/includes/patient.questionnaire.js"></script>
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <div class="accordion-section">

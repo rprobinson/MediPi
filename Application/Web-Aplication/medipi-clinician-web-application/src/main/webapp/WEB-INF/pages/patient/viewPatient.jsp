@@ -2,6 +2,9 @@
 <jsp:include page="/WEB-INF/pages/headers/header.jsp" />
 <script type="text/javascript" charset="utf8" src="/js/common/common.ui.util.js"></script>
 <script type="text/javascript" charset="utf8" src="/js/patient/view.patient.js"></script>
+<script type="text/javascript" charset="utf8" src="/plugins/chart-js/Chart.js"></script>
+<script type="text/javascript" charset="utf8" src="/plugins/chart-js/Chart.bundle.js"></script>
+<script type="text/javascript" charset="utf8" src="/js/common/chart.js.common.js"></script>
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <%@taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt"%>
 <%@taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
