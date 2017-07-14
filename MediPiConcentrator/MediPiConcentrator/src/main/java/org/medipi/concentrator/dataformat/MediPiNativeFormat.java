@@ -25,6 +25,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import javax.persistence.EntityExistsException;
+import org.apache.commons.io.IOUtils;
+import org.medipi.concentrator.MediPiProperties;
 import org.medipi.concentrator.dao.RecordingDeviceDataDAOImpl;
 import org.medipi.concentrator.dao.RecordingDeviceAttributeDAOImpl;
 import org.medipi.concentrator.dao.RecordingDeviceTypeDAOImpl;
@@ -35,6 +37,7 @@ import org.medipi.concentrator.entities.RecordingDeviceType;
 import org.medipi.concentrator.exception.BadRequest400Exception;
 import org.medipi.concentrator.exception.InternalServerError500Exception;
 import org.medipi.concentrator.logging.MediPiLogger;
+import org.medipi.concentrator.utilities.Utilities;
 import org.medipi.model.DeviceDataDO;
 import org.medipi.model.DevicesPayloadDO;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,9 +57,11 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class MediPiNativeFormat extends PatientUploadDataFormat {
 
+    private static final String SUCCESSFULLYPROCESSEDSUBMISSIONSCRIPT = "medipi.concentrator.successfullyprocessedsubmissionscript";
     private String classToken;
     private final MediPiLogger logger = MediPiLogger.getInstance();
     private String trackingId;
+    private String successfullyProcessedSubmission;
 
     @Autowired
     private RecordingDeviceTypeDAOImpl recordingDeviceTypeDAO;
@@ -67,6 +72,9 @@ public class MediPiNativeFormat extends PatientUploadDataFormat {
     @Autowired
     private RecordingDeviceDataDAOImpl recordingDeviceDataDAO;
 
+    @Autowired
+    private Utilities utils;
+
     @Override
     public void setClassToken(String classToken) {
         this.classToken = classToken;
@@ -74,6 +82,7 @@ public class MediPiNativeFormat extends PatientUploadDataFormat {
 
     @Override
     public String init() {
+        successfullyProcessedSubmission = utils.getProperties().getProperty(SUCCESSFULLYPROCESSEDSUBMISSIONSCRIPT);
         return null;
     }
 
@@ -241,7 +250,7 @@ public class MediPiNativeFormat extends PatientUploadDataFormat {
                                         if (dd.isEmpty()) {
                                             writeData = true;
                                         } else {
-                                            System.out.println("Duplicate data: "+ data + " @ "+dataPointTime.getTime());
+                                            System.out.println("Duplicate data: " + data + " @ " + dataPointTime.getTime());
                                             break;
                                         }
                                     } catch (Exception e) {
@@ -290,6 +299,20 @@ public class MediPiNativeFormat extends PatientUploadDataFormat {
 
             }
             logger.log(MediPiNativeFormat.class.getName() + ".dbInfo", totalRowsWrittenToDB + " rows of data written to the DB in total for transaction covered by trackingID: " + trackingId);
+            System.out.println("Patient " + patient.getPatientUuid() + " has submitted " + totalRowsWrittenToDB + " pieces of data at " + new Date());
+            Runtime runtime = Runtime.getRuntime();
+            try {
+                String script = successfullyProcessedSubmission.replace("__PATIENT_UUID__",patient.getPatientUuid());
+                Process process = runtime.exec(script);
+                int resultCode = process.waitFor();
+                if (resultCode == 0) {
+                    // all is good
+                }
+            } catch (Throwable ex) {
+                logger.log(MediPiNativeFormat.class.getName() + ".curlIssue", "Attempt to curl notoification for " + patient.getPatientUuid() + " failed @" + new Date() + " because " + ex.getLocalizedMessage());
+                System.out.println("Attempt to curl notification for " + patient.getPatientUuid() + " failed @" + new Date() + " because " + ex.getLocalizedMessage());
+                return null;
+            }
             if (totalRowsWrittenToDB == 0) {
                 // should any particular response be made for no data added to db for any payload?
             }
