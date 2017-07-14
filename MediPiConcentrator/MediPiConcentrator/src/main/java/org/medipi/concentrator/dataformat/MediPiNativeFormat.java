@@ -300,18 +300,19 @@ public class MediPiNativeFormat extends PatientUploadDataFormat {
             }
             logger.log(MediPiNativeFormat.class.getName() + ".dbInfo", totalRowsWrittenToDB + " rows of data written to the DB in total for transaction covered by trackingID: " + trackingId);
             System.out.println("Patient " + patient.getPatientUuid() + " has submitted " + totalRowsWrittenToDB + " pieces of data at " + new Date());
-            Runtime runtime = Runtime.getRuntime();
-            try {
-                String script = successfullyProcessedSubmission.replace("__PATIENT_UUID__",patient.getPatientUuid());
-                Process process = runtime.exec(script);
-                int resultCode = process.waitFor();
-                if (resultCode == 0) {
-                    // all is good
+            if (successfullyProcessedSubmission != null) {
+                Runtime runtime = Runtime.getRuntime();
+                try {
+                    String script = successfullyProcessedSubmission.replace("__PATIENT_UUID__", patient.getPatientUuid());
+                    Process process = runtime.exec(script);
+                    int resultCode = process.waitFor();
+                    if (resultCode == 0) {
+                        // all is good
+                    }
+                } catch (Throwable ex) {
+                    logger.log(MediPiNativeFormat.class.getName() + ".curlIssue", "Attempt to curl notification for " + patient.getPatientUuid() + " failed @" + new Date() + " because " + ex.getLocalizedMessage());
+                    System.out.println("Attempt to curl notification for " + patient.getPatientUuid() + " failed @" + new Date() + " because " + ex.getLocalizedMessage());
                 }
-            } catch (Throwable ex) {
-                logger.log(MediPiNativeFormat.class.getName() + ".curlIssue", "Attempt to curl notoification for " + patient.getPatientUuid() + " failed @" + new Date() + " because " + ex.getLocalizedMessage());
-                System.out.println("Attempt to curl notification for " + patient.getPatientUuid() + " failed @" + new Date() + " because " + ex.getLocalizedMessage());
-                return null;
             }
             if (totalRowsWrittenToDB == 0) {
                 // should any particular response be made for no data added to db for any payload?
