@@ -298,9 +298,9 @@ public class MediPiNativeFormat extends PatientUploadDataFormat {
                 logger.log(MediPiNativeFormat.class.getName() + ".dbInfo", rowsWrittenToDBPerPayload + " rows of data written to the DB for payload: " + type);
 
             }
-            logger.log(MediPiNativeFormat.class.getName() + ".dbInfo", totalRowsWrittenToDB + " rows of data written to the DB in total for transaction covered by trackingID: " + trackingId);
-            System.out.println("Patient " + patient.getPatientUuid() + " has submitted " + totalRowsWrittenToDB + " pieces of data at " + new Date());
-            if (successfullyProcessedSubmission != null && totalRowsWrittenToDB>0) {
+            if (successfullyProcessedSubmission != null && totalRowsWrittenToDB > 0) {
+                logger.log(MediPiNativeFormat.class.getName() + ".dbInfo", totalRowsWrittenToDB + " rows of data written to the DB in total for transaction covered by trackingID: " + trackingId);
+                System.out.println("Patient " + patient.getPatientUuid() + " has submitted " + totalRowsWrittenToDB + " pieces of data at " + new Date());
                 Runtime runtime = Runtime.getRuntime();
                 try {
                     String script = successfullyProcessedSubmission.replace("__PATIENT_UUID__", patient.getPatientUuid());
