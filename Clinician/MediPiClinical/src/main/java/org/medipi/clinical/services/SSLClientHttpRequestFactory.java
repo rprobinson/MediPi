@@ -32,7 +32,9 @@ import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 
 /**
- * Class to create a ClientHttpRequestFactory from the trust and keystores and configured passwords
+ * Class to create a ClientHttpRequestFactory from the trust and keystores and
+ * configured passwords
+ *
  * @author rick@robinsonhq.com
  */
 @Component
@@ -46,16 +48,33 @@ public class SSLClientHttpRequestFactory {
     private String truststoreLocation;
     @Value("${medipi.clinical.truststore.password}")
     private String truststorePass;
+    @Value("${medipi.clinical.connecttimeout}")
+    private String connectTO;
+    @Value("${medipi.clinical.connectionrequesttimeout}")
+    private String connectionRT;
+    
+    private int connectTimeout = 0;
+    private int connectionRequestTimeout = 0;
 
     public SSLClientHttpRequestFactory() {
 
     }
 
     public ClientHttpRequestFactory getClientHttpRequestFactory() throws Exception {
+        try{
+                connectTimeout = Integer.parseInt(connectTO);
+                connectionRequestTimeout = Integer.parseInt(connectionRT);
+                
+        }catch(Exception nfe){
+            
+        }
         //Create RestTemplate to send message to MediPiConcentrator
         SSLConnectionSocketFactory socketFactory = new SSLConnectionSocketFactory(createSSLContext(), NoopHostnameVerifier.INSTANCE);
         HttpClient httpClient = HttpClients.custom().setSSLSocketFactory(socketFactory).build();
-        ClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory(httpClient);
+        HttpComponentsClientHttpRequestFactory componentsRequestFactory = new HttpComponentsClientHttpRequestFactory(httpClient);
+        componentsRequestFactory.setConnectTimeout(connectTimeout);
+        componentsRequestFactory.setConnectionRequestTimeout(connectionRequestTimeout);
+        ClientHttpRequestFactory requestFactory = componentsRequestFactory;
         return requestFactory;
     }
 
