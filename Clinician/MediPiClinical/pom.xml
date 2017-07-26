@@ -5,7 +5,7 @@
 
     <groupId>org.medipi.clinical</groupId>
     <artifactId>MediPiClinical</artifactId>
-    <version>PILOT-20170103-1</version>
+    <version>PILOT-20170726-1</version>
     <packaging>jar</packaging>
 
     <name>MediPiClinical</name>

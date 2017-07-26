@@ -52,9 +52,12 @@ public class SSLClientHttpRequestFactory {
     private String connectTO;
     @Value("${medipi.clinical.connectionrequesttimeout}")
     private String connectionRT;
+    @Value("${medipi.clinical.readtimeout}")
+    private String readTO;
     
     private int connectTimeout = 0;
     private int connectionRequestTimeout = 0;
+    private int readTimeout = 0;
 
     public SSLClientHttpRequestFactory() {
 
@@ -64,7 +67,7 @@ public class SSLClientHttpRequestFactory {
         try{
                 connectTimeout = Integer.parseInt(connectTO);
                 connectionRequestTimeout = Integer.parseInt(connectionRT);
-                
+                readTimeout = Integer.parseInt(readTO);
         }catch(Exception nfe){
             
         }
@@ -74,6 +77,7 @@ public class SSLClientHttpRequestFactory {
         HttpComponentsClientHttpRequestFactory componentsRequestFactory = new HttpComponentsClientHttpRequestFactory(httpClient);
         componentsRequestFactory.setConnectTimeout(connectTimeout);
         componentsRequestFactory.setConnectionRequestTimeout(connectionRequestTimeout);
+        componentsRequestFactory.setReadTimeout(readTimeout);
         ClientHttpRequestFactory requestFactory = componentsRequestFactory;
         return requestFactory;
     }
