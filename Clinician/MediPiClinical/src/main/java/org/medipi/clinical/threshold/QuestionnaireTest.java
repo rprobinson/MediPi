@@ -23,10 +23,12 @@ import java.util.List;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.medipi.clinical.dao.DirectMessageTextDAOImpl;
 import org.medipi.clinical.entities.AttributeThreshold;
 import org.medipi.clinical.entities.RecordingDeviceData;
 import org.springframework.stereotype.Component;
 import org.medipi.clinical.model.QuestionnaireDO;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  *
@@ -34,6 +36,9 @@ import org.medipi.clinical.model.QuestionnaireDO;
  */
 @Component
 public class QuestionnaireTest implements AttributeThresholdTest {
+
+    @Autowired
+    private DirectMessageTextDAOImpl directMessageTextDAOImpl;
 
     private static final String GREEN_FLAG = "GREEN_FLAG";
     private static final String RED_FLAG = "RED_FLAG";
@@ -56,18 +61,10 @@ public class QuestionnaireTest implements AttributeThresholdTest {
      */
     @Override
     public void init(Properties properties, AttributeThreshold attributeThreshold) throws Exception {
-        failedTestText = properties.getProperty(MEDIPICLINICALALERTFAILEDTESTTEXT);
-        if (failedTestText == null || failedTestText.trim().length() == 0) {
-            throw new Exception("Cannot find failed test text");
-        }
-        cantCalculateTestText = properties.getProperty(MEDIPICLINICALALERTCANTCALCULATETESTTEXT);
-        if (cantCalculateTestText == null || cantCalculateTestText.trim().length() == 0) {
-            throw new Exception("Cannot find cant calculate test text");
-        }
-        passedTestText = properties.getProperty(MEDIPICLINICALALERTPASSEDTESTTEXT);
-        if (passedTestText == null || passedTestText.trim().length() == 0) {
-            throw new Exception("Cannot find passed test text");
-        }
+        failedTestText = this.directMessageTextDAOImpl.findByDirectMessageTextId(MEDIPICLINICALALERTFAILEDTESTTEXT).getDirectMessageText();
+        cantCalculateTestText = this.directMessageTextDAOImpl.findByDirectMessageTextId(MEDIPICLINICALALERTCANTCALCULATETESTTEXT).getDirectMessageText();
+        passedTestText = this.directMessageTextDAOImpl.findByDirectMessageTextId(MEDIPICLINICALALERTPASSEDTESTTEXT).getDirectMessageText();
+
     }
 
     /**

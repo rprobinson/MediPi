@@ -36,6 +36,7 @@ import org.medipi.clinical.exception.InternalServerError500Exception;
 import org.medipi.clinical.logging.MediPiLogger;
 import org.medipi.clinical.model.PatientDataRequestDO;
 import org.medipi.model.AlertListDO;
+import org.medipi.model.SimpleMessageDO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -68,7 +69,9 @@ public class RequestDataFromConcentrator {
     @Autowired
     private SendAlertService sendAlertService;
     @Autowired
-    private DataThresholdTest dataThresholdTest;
+    private DataThresholdTester dataThresholdTester;
+    @Autowired
+    private LinkedSubmissionsTester linkedSubmissionsTester;
     @Autowired
     private MediPiLogger logger;
 
@@ -93,8 +96,15 @@ public class RequestDataFromConcentrator {
             System.out.println("Error in connectiong using SSL: " + e.getLocalizedMessage());
             return;
         }
+        dataThresholdTester.init();
+        linkedSubmissionsTester.init();
         // Check for any unsent alerts and send on any found until they reach the upper resend limit
-        sendAlertService.resendAlerts(restTemplate);
+        if (dataThresholdTester.isEnabled()) {
+            sendAlertService.resendDirectMessages(dataThresholdTester, restTemplate);
+        }
+        if (linkedSubmissionsTester.isEnabled()) {
+            sendAlertService.resendDirectMessages(linkedSubmissionsTester, restTemplate);
+        }
 
         // get List of all the patient groups to retreive data for 
         List<PatientGroup> patGrpList = patientGroupDAOImpl.getAllGroups();
@@ -139,16 +149,21 @@ public class RequestDataFromConcentrator {
                                         // Create the container for any possible alerts
                                         AlertListDO alertListDO = new AlertListDO(patient.getPatientUuid());
                                         // loop through all the individual datapoints, persiste them to the DB and test for any thresholds
-                                        System.out.println("patient:"+patient.getPatientUuid()+" data items:"+pdr.getRecordingDeviceDataList().size());
+                                        System.out.println("patient:" + patient.getPatientUuid() + " data items:" + pdr.getRecordingDeviceDataList().size());
                                         for (RecordingDeviceData rdd : pdr.getRecordingDeviceDataList()) {
                                             updateRecordingDeviceData(rdd, patient, alertListDO);
                                         }
 
-                                        if (!alertListDO.getAlert().isEmpty()) {
-
-                                            sendAlertService.sendAlert(alertListDO, patient, restTemplate);
-
+                                        if (!alertListDO.getAlert().isEmpty() && dataThresholdTester.isEnabled()) {
+                                            sendAlertService.sendDirectMessage(dataThresholdTester, alertListDO, patient.getPatientUuid(), restTemplate);
                                         }
+
+                                        if (linkedSubmissionsTester.isEnabled()) {
+                                            SimpleMessageDO simpleMessageDO = new SimpleMessageDO(patient.getPatientUuid());
+                                            linkedSubmissionsTester.testNewData(patient, simpleMessageDO);
+                                            sendAlertService.sendDirectMessage(linkedSubmissionsTester, simpleMessageDO, patient.getPatientUuid(), restTemplate);
+                                        }
+
                                     } else {
                                         MediPiLogger.getInstance().log(RequestDataFromConcentrator.class.getName() + "error", "Error - Can't find a returned patient in the local DB: " + pdr.getPatientUuid());
                                         System.out.println("Error - Can't find a returned patient in the local DB: " + pdr.getPatientUuid());
@@ -207,8 +222,9 @@ public class RequestDataFromConcentrator {
 
         try {
             this.recordingDeviceDataDAOImpl.save(rddSet);
-
-            dataThresholdTest.testNewData(rda, patient, rddSet, alertListDO);
+            if (dataThresholdTester.isEnabled()) {
+                dataThresholdTester.testNewData(rda, patient, rddSet, alertListDO);
+            }
         } catch (EmptyResultDataAccessException e) {
             // Nothing to do if there is no Attribute threshold for the reading
         } catch (Exception e) {

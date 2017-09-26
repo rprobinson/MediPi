@@ -60,6 +60,15 @@ public class RecordingDeviceDataDAOImpl extends GenericDAOImpl<RecordingDeviceDa
     }
 
     @Override
+    public Date findByGroupedPatientAndScheduledTime(Patient patient, Date scheduleEffectiveTime) {
+        return this.getEntityManager().createNamedQuery("RecordingDeviceData.findByGroupedPatientAndScheduledTime", Date.class)
+                .setParameter("patientUuid", patient)
+                .setParameter("scheduleEffectiveTime", scheduleEffectiveTime)
+                .getSingleResult();
+
+    }
+
+    @Override
     public RecordingDeviceData findByPatientAndScheduledTime(Patient patient, Date scheduleEffectiveTime, Date scheduleExpiryTime) {
         return this.getEntityManager().createNamedQuery("RecordingDeviceData.findByPatientAndScheduledTime", RecordingDeviceData.class)
                 .setParameter("patientUuid", patient)

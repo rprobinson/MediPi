@@ -20,6 +20,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Properties;
 import org.medipi.clinical.dao.AttributeThresholdDAOImpl;
+import org.medipi.clinical.dao.DirectMessageTextDAOImpl;
 import org.medipi.clinical.dao.RecordingDeviceDataDAOImpl;
 import org.medipi.clinical.entities.AttributeThreshold;
 import org.medipi.clinical.entities.RecordingDeviceData;
@@ -48,6 +49,9 @@ public class SimpleInclusiveHighLowTest implements AttributeThresholdTest {
     @Autowired
     private AttributeThresholdDAOImpl attributeThresholdDAOImpl;
 
+    @Autowired
+    private DirectMessageTextDAOImpl directMessageTextDAOImpl;
+
     private Properties properties;
     private AttributeThreshold attributeThreshold;
     private double lowValue;
@@ -68,18 +72,10 @@ public class SimpleInclusiveHighLowTest implements AttributeThresholdTest {
      */
     @Override
     public void init(Properties properties, AttributeThreshold attributeThreshold) throws Exception {
-        failedTestText = properties.getProperty(MEDIPICLINICALALERTFAILEDTESTTEXT);
-        if (failedTestText == null || failedTestText.trim().length() == 0) {
-            throw new Exception("Cannot find failed test text");
-        }
-        cantCalculateTestText = properties.getProperty(MEDIPICLINICALALERTCANTCALCULATETESTTEXT);
-        if (cantCalculateTestText == null || cantCalculateTestText.trim().length() == 0) {
-            throw new Exception("Cannot find cant calculate test text");
-        }
-        passedTestText = properties.getProperty(MEDIPICLINICALALERTPASSEDTESTTEXT);
-        if (passedTestText == null || passedTestText.trim().length() == 0) {
-            throw new Exception("Cannot find passed test text");
-        }
+        failedTestText = this.directMessageTextDAOImpl.findByDirectMessageTextId(MEDIPICLINICALALERTFAILEDTESTTEXT).getDirectMessageText();
+        cantCalculateTestText = this.directMessageTextDAOImpl.findByDirectMessageTextId(MEDIPICLINICALALERTCANTCALCULATETESTTEXT).getDirectMessageText();
+        passedTestText = this.directMessageTextDAOImpl.findByDirectMessageTextId(MEDIPICLINICALALERTPASSEDTESTTEXT).getDirectMessageText();
+
         lowValue = getLowValue(attributeThreshold.getThresholdLowValue());
         highValue = getHighValue(attributeThreshold.getThresholdHighValue());
 

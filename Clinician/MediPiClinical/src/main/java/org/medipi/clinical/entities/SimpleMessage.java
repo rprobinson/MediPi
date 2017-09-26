@@ -39,36 +39,36 @@ import javax.xml.bind.annotation.XmlRootElement;
  * @author rick@robinsonhq.com
  */
 @Entity
-@Table(name = "alert")
+@Table(name = "simple_message")
 @XmlRootElement
 @NamedQueries({
 //added
-    @NamedQuery(name = "Alert.findByNullTransmitSuccessDate", query = "SELECT a FROM Alert a WHERE a.transmitSuccessDate = null AND a.retryAttempts < :maxRetries AND a.retryAttempts >=0"),
+    @NamedQuery(name = "SimpleMessage.findByNullTransmitSuccessDate", query = "SELECT a FROM SimpleMessage a WHERE a.transmitSuccessDate = null AND a.retryAttempts < :maxRetries AND a.retryAttempts >=0"),
 
 
-    @NamedQuery(name = "Alert.findAll", query = "SELECT a FROM Alert a"),
-    @NamedQuery(name = "Alert.findByAlertId", query = "SELECT a FROM Alert a WHERE a.alertId = :alertId"),
-    @NamedQuery(name = "Alert.findByAlertTime", query = "SELECT a FROM Alert a WHERE a.alertTime = :alertTime"),
-    @NamedQuery(name = "Alert.findByAlertText", query = "SELECT a FROM Alert a WHERE a.alertText = :alertText")})
-public class Alert implements Serializable {
+    @NamedQuery(name = "SimpleMessage.findAll", query = "SELECT a FROM SimpleMessage a"),
+    @NamedQuery(name = "SimpleMessage.findBySimpleMessageId", query = "SELECT a FROM SimpleMessage a WHERE a.simpleMessageId = :simpleMessageId"),
+    @NamedQuery(name = "SimpleMessage.findBySimpleMessageTime", query = "SELECT a FROM SimpleMessage a WHERE a.simpleMessageTime = :simpleMessageTime"),
+    @NamedQuery(name = "SimpleMessage.findBySimpleMessageText", query = "SELECT a FROM SimpleMessage a WHERE a.simpleMessageText = :simpleMessageText")})
+public class SimpleMessage implements Serializable {
 
 
     private static final long serialVersionUID = 1L;
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Basic(optional = false)
-    @Column(name = "alert_id")
-    private Long alertId;
+    @Column(name = "simple_message_id")
+    private Long simpleMessageId;
     @Basic(optional = false)
     @NotNull
-    @Column(name = "alert_time")
+    @Column(name = "simple_message_time")
     @Temporal(TemporalType.TIMESTAMP)
-    private Date alertTime;
+    private Date simpleMessageTime;
     @Basic(optional = false)
     @NotNull
     @Size(min = 1, max = 5000)
-    @Column(name = "alert_text")
-    private String alertText;
+    @Column(name = "simple_message_text")
+    private String simpleMessageText;
     @Column(name = "transmit_success_date")
     @Temporal(TemporalType.TIMESTAMP)
     private Date transmitSuccessDate;
@@ -79,45 +79,42 @@ public class Alert implements Serializable {
     @JoinColumn(name = "patient_uuid", referencedColumnName = "patient_uuid")
     @ManyToOne(optional = false)
     private Patient patientUuid;
-    @JoinColumn(name = "data_id", referencedColumnName = "data_id")
-    @ManyToOne(optional = true)
-    private RecordingDeviceData dataId;
 
-    public Alert() {
+    public SimpleMessage() {
     }
 
-    public Alert(Long alertId) {
-        this.alertId = alertId;
+    public SimpleMessage(Long simpleMessageId) {
+        this.simpleMessageId = simpleMessageId;
     }
 
-    public Alert(Long alertId, Date alertTime, String alertText) {
-        this.alertId = alertId;
-        this.alertTime = alertTime;
-        this.alertText = alertText;
+    public SimpleMessage(Long simpleMessageId, Date simpleMessageTime, String simpleMessageText) {
+        this.simpleMessageId = simpleMessageId;
+        this.simpleMessageTime = simpleMessageTime;
+        this.simpleMessageText = simpleMessageText;
     }
 
-    public Long getAlertId() {
-        return alertId;
+    public Long getSimpleMessageId() {
+        return simpleMessageId;
     }
 
-    public void setAlertId(Long alertId) {
-        this.alertId = alertId;
+    public void setSimpleMessageId(Long simpleMessageId) {
+        this.simpleMessageId = simpleMessageId;
     }
 
-    public Date getAlertTime() {
-        return alertTime;
+    public Date getSimpleMessageTime() {
+        return simpleMessageTime;
     }
 
-    public void setAlertTime(Date alertTime) {
-        this.alertTime = alertTime;
+    public void setSimpleMessageTime(Date simpleMessageTime) {
+        this.simpleMessageTime = simpleMessageTime;
     }
 
-    public String getAlertText() {
-        return alertText;
+    public String getSimpleMessageText() {
+        return simpleMessageText;
     }
 
-    public void setAlertText(String alertText) {
-        this.alertText = alertText;
+    public void setSimpleMessageText(String simpleMessageText) {
+        this.simpleMessageText = simpleMessageText;
     }
 
     public Patient getPatientUuid() {
@@ -128,13 +125,6 @@ public class Alert implements Serializable {
         this.patientUuid = patientUuid;
     }
 
-    public RecordingDeviceData getDataId() {
-        return dataId;
-    }
-
-    public void setDataId(RecordingDeviceData dataId) {
-        this.dataId = dataId;
-    }
 
     public Date getTransmitSuccessDate() {
         return transmitSuccessDate;
@@ -157,18 +147,18 @@ public class Alert implements Serializable {
     @Override
     public int hashCode() {
         int hash = 0;
-        hash += (alertId != null ? alertId.hashCode() : 0);
+        hash += (simpleMessageId != null ? simpleMessageId.hashCode() : 0);
         return hash;
     }
 
     @Override
     public boolean equals(Object object) {
         // TODO: Warning - this method won't work in the case the id fields are not set
-        if (!(object instanceof Alert)) {
+        if (!(object instanceof SimpleMessage)) {
             return false;
         }
-        Alert other = (Alert) object;
-        if ((this.alertId == null && other.alertId != null) || (this.alertId != null && !this.alertId.equals(other.alertId))) {
+        SimpleMessage other = (SimpleMessage) object;
+        if ((this.simpleMessageId == null && other.simpleMessageId != null) || (this.simpleMessageId != null && !this.simpleMessageId.equals(other.simpleMessageId))) {
             return false;
         }
         return true;
@@ -176,7 +166,7 @@ public class Alert implements Serializable {
 
     @Override
     public String toString() {
-        return "org.medipi.clinical.entities.Alert[ alertId=" + alertId + " ]";
+        return "org.medipi.clinical.entities.SimpleMessage[ simpleMessageId=" + simpleMessageId + " ]";
     }
     
 }

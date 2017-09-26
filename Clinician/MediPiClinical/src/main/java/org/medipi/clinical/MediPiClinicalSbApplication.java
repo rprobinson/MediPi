@@ -50,8 +50,8 @@ public class MediPiClinicalSbApplication implements CommandLineRunner {
     private static final String LOG = "medipi.log";
     // MediPi version Number
     private static final String MEDIPINAME = "MediPi Clinical";
-    private static final String VERSION = "MediPiClinical_v1.0.4";
-    private static final String VERSIONNAME = "PILOT-20170726-1";
+    private static final String VERSION = "MediPiClinical_v1.0.5";
+    private static final String VERSIONNAME = "PILOT-20170921-1";
     private final MediPiLogger logger = MediPiLogger.getInstance();
 
     @Autowired

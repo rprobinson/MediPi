@@ -44,6 +44,8 @@ public interface RecordingDeviceDataDAO extends GenericDAO<RecordingDeviceData> 
 
     public Date dateOfLatestPatientGroupSync(PatientGroup patientGroup);
 
+    public Date findByGroupedPatientAndScheduledTime(Patient patient, Date scheduleEffectiveTime);
+    
     public RecordingDeviceData findByPatientAndScheduledTime(Patient patient, Date scheduleEffectiveTime, Date scheduleExpiryTime);
 
     public List<RecordingDeviceData> findByPatientAndAttributeAndPeriod(String patientUuid, int attributeId, Date periodStartTime, Date periodEndTime);

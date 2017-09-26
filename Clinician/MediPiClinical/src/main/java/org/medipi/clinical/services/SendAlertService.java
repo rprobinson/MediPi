@@ -15,17 +15,12 @@
  */
 package org.medipi.clinical.services;
 
+import java.io.Serializable;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import org.medipi.clinical.dao.AlertDAOImpl;
-import org.medipi.clinical.entities.Alert;
-import org.medipi.clinical.entities.Patient;
 import org.medipi.clinical.logging.MediPiLogger;
 import org.medipi.clinical.utilities.Utilities;
-import org.medipi.model.AlertDO;
-import org.medipi.model.AlertListDO;
+import org.medipi.model.DirectPatientMessage;
 import org.medipi.security.CertificateDefinitions;
 import org.medipi.model.EncryptedAndSignedUploadDO;
 import org.medipi.security.UploadEncryptionAdapter;
@@ -35,6 +30,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
@@ -47,71 +43,30 @@ import org.springframework.web.util.UriComponentsBuilder;
 @Component
 public class SendAlertService {
 
-    private static final String MEDIPICLINICALMAXNUMBEROFRETRIES = "medipi.clinical.alert.maxnumberofretries";
-
-    @Autowired
-    private AlertDAOImpl alertDAOImpl;
     @Autowired
     private Utilities utils;
 
     //Path for posting alerts for patients
-    @Value("${medipi.clinical.alert.resourcepath}")
-    private String alertPatientResourcePath;
-    //Path for posting alerts for patients
     @Value("${medipi.clinical.patientcertificate.resourcepath}")
     private String patientCertificateResourcePath;
 
-    public void resendAlerts(RestTemplate restTemplate) {
-        String maxRetriesString = utils.getProperties().getProperty(MEDIPICLINICALMAXNUMBEROFRETRIES);
-        int maxRetries;
-        if (maxRetriesString == null || maxRetriesString.trim().length() == 0) {
-            maxRetries = 3;
-        } else {
-            try {
-                maxRetries = Integer.parseInt(maxRetriesString);
-            } catch (NumberFormatException numberFormatException) {
-                MediPiLogger.getInstance().log(SendAlertService.class.getName() + "error", "Error - Cant read the max number of retires for an alert from the properties file: " + numberFormatException.getLocalizedMessage());
-                System.out.println("Error - Cant read the max number of retires for an alert from the properties file: " + numberFormatException.getLocalizedMessage());
-                maxRetries = 3;
+    public void resendDirectMessages(Tester tester, RestTemplate restTemplate) {
+
+        List<DirectPatientMessage> retryDirectMessageList = tester.findDirectPatientMessagesToResend();
+        for (DirectPatientMessage dpm : retryDirectMessageList) {
+            if (!sendDirectMessage(tester, dpm, dpm.getPatientUuid(), restTemplate)) {
+                tester.updateDirectPatientMessageTableWithFail(dpm);
+
             }
         }
-        List<Alert> aList = alertDAOImpl.findByNullTransmitSuccessDate(maxRetries);
-        if (aList != null && !aList.isEmpty()) {
-            for (Alert alert : aList) {
-                //create the alert data object to be serialised to the concentrator
-                AlertDO alertDO = new AlertDO(alert.getPatientUuid().getPatientUuid());
-                alertDO.setAlertId(alert.getAlertId());
-                alertDO.setAlertText(alert.getAlertText());
-                alertDO.setAlertTime(alert.getAlertTime());
-                alertDO.setType(alert.getDataId().getAttributeId().getTypeId().getType());
-                alertDO.setMake(alert.getDataId().getAttributeId().getTypeId().getMake());
-                alertDO.setModel(alert.getDataId().getAttributeId().getTypeId().getModel());
-                alertDO.setStatus(alert.getDataId().getAlertStatus());
-                alertDO.setAttributeName(alert.getDataId().getAttributeId().getAttributeName());
-                alertDO.setDataValue(alert.getDataId().getDataValue());
-                alertDO.setDataValueTime(alert.getDataId().getDataValueTime());
-                List<AlertDO> adoList = new ArrayList<>();
-                adoList.add(alertDO);
-                AlertListDO aldo = new AlertListDO(alert.getPatientUuid().getPatientUuid(), adoList);
-                if (!sendAlert(aldo, alert.getPatientUuid(), restTemplate)) {
-                    for (AlertDO ado : aldo.getAlert()) {
-                        Alert a = alertDAOImpl.findByPrimaryKey(ado.getAlertId());
-                        a.setRetryAttempts(a.getRetryAttempts() + 1);
-                        alertDAOImpl.update(a);
-                    }
-
-                }
-            }
-        }
-
     }
 
-    public boolean sendAlert(AlertListDO alertListDO, Patient patient, RestTemplate restTemplate) {
+    public boolean sendDirectMessage(Tester tester, DirectPatientMessage directPatientMessage, String patientUuid, RestTemplate restTemplate) {
 
         // create a URL of the concentrator inclusing the patient group uuid and the last sync time
         URI targetUrl = UriComponentsBuilder.fromUriString(patientCertificateResourcePath)
                 .path("/")
-                .path(patient.getPatientUuid())
+                .path(patientUuid)
                 .build()
                 .toUri();
         byte[] response;
@@ -120,9 +75,16 @@ public class SendAlertService {
             response = restTemplate.getForObject(targetUrl, byte[].class);
             System.out.println(response);
 
+        } catch (HttpClientErrorException hcee) {
+            if (hcee.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
+                //The patient certificate has not been loaded onto the concentrator therefore ignore sending direct message
+                tester.failDirectPatientMessageTable(directPatientMessage);
+            }
+            return false;
         } catch (Exception e) {
             MediPiLogger.getInstance().log(SendAlertService.class.getName() + "error", "Error in connectiong to target system using SSL: " + e.getLocalizedMessage());
             System.out.println("Error in connectiong to target system using SSL: " + e.getLocalizedMessage());
+            tester.failDirectPatientMessageTable(directPatientMessage);
             return false;
         }
         // Send the alert to the concentrator
@@ -138,33 +100,22 @@ public class SendAlertService {
             if (error != null) {
                 throw new Exception(error);
             }
-            EncryptedAndSignedUploadDO encryptedMessage = uploadEncryptionAdapter.encryptAndSign(alertListDO);
-            HttpEntity<EncryptedAndSignedUploadDO> alertRequest = new HttpEntity<>(encryptedMessage);
+            EncryptedAndSignedUploadDO encryptedMessage = uploadEncryptionAdapter.encryptAndSign((Serializable) directPatientMessage);
+            HttpEntity<EncryptedAndSignedUploadDO> request = new HttpEntity<>(encryptedMessage);
             // create a URL of the concentrator Alert url including the patient uuid
-            URI alertUrl = UriComponentsBuilder.fromUriString(alertPatientResourcePath)
+            URI uri = UriComponentsBuilder.fromUriString(tester.getDirectPatientMessageResourcePath())
                     .path("/")
-                    .path(patient.getPatientUuid())
+                    .path(patientUuid)
                     .build()
                     .toUri();
 
-            ResponseEntity<?> x = restTemplate.postForEntity(alertUrl, alertRequest, ResponseEntity.class);
+            ResponseEntity<?> x = restTemplate.postForEntity(uri, request, ResponseEntity.class);
             try {
                 if (x.getStatusCode() == HttpStatus.OK) {
                     // update the alert DB when it has been sucessfully sent to the concentrator
                     // Note: The only thing this proves is that it was sucessfully transmitted and persisted to
                     // the concentrator and makes no claim on its progress to the patient unit per se
-                    boolean doneSomething = false;
-                    for (AlertDO ado : alertListDO.getAlert()) {
-                        Alert a = alertDAOImpl.findByPrimaryKey(ado.getAlertId());
-                        a.setTransmitSuccessDate(new Date());
-                        alertDAOImpl.update(a);
-                        doneSomething = true;
-                    }
-                    if (doneSomething) {
-                        return true;
-                    } else {
-                        return false;
-                    }
+                    return tester.updateDirectPatientMessageTableWithSuccess(directPatientMessage);
                 } else {
                     return false;
                 }
