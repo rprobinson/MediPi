@@ -20,9 +20,13 @@ import java.util.Optional;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.StringProperty;
+import javafx.geometry.Pos;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
+import javafx.scene.text.TextAlignment;
 import org.medipi.model.DeviceDataDO;
 
 /**
@@ -132,11 +136,17 @@ public abstract class Device extends Element {
         alert.setTitle(getSpecificDeviceDisplayName());
         alert.setHeaderText(null);
         alert.getDialogPane().getStylesheets().add("file:///" + medipi.getCssfile());
-        alert.getDialogPane().setMaxSize(600, 300);
+        alert.getDialogPane().setMaxSize(500, 300);
         alert.getDialogPane().setId("message-box");
-        Text text = new Text(getSpecificDeviceDisplayName() + "\n\n" + getResultsSummary().getValue() + "\nThis reading has not been transmitted.\nAre you sure you want to reset?");
-        text.setWrappingWidth(600);
-        alert.getDialogPane().setContent(text);
+        VBox vb = new VBox();
+        Text text = new Text(getSpecificDeviceDisplayName() + "\n\n" + getResultsSummary().getValue() + "\nThis reading has not been transmitted.\nAre you sure you want to delete this measurement?");
+        text.setWrappingWidth(500);
+        text.setTextAlignment(TextAlignment.CENTER);
+        vb.getChildren().add(text);
+        vb.setAlignment(Pos.CENTER);
+        alert.getDialogPane().setContent(vb);
+        ImageView iw = medipi.utils.getImageView("medipi.images.doctor", 80, 80);
+        alert.setGraphic(iw);
         Optional<ButtonType> result = alert.showAndWait();
         if (result.get() == ButtonType.OK) {
             return true;

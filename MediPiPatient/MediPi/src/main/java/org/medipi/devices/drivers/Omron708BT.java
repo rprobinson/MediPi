@@ -16,50 +16,36 @@
 package org.medipi.devices.drivers;
 
 import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.regex.Pattern;
+import java.util.Arrays;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.concurrent.Task;
-import javafx.scene.Node;
-import javafx.scene.control.Label;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.VBox;
 
-import org.medipi.MediPi;
 import org.medipi.MediPiMessageBox;
 import org.medipi.devices.BloodPressure;
-import org.medipi.devices.Guide;
-import org.medipi.devices.drivers.domain.DeviceTimestampChecker;
-import org.medipi.logging.MediPiLogger;
-import org.medipi.devices.drivers.domain.DeviceTimestampUpdateInterface;
+import org.medipi.devices.drivers.domain.ContinuaBloodPressure;
+import org.medipi.devices.drivers.domain.ContinuaData;
+import org.medipi.devices.drivers.domain.ContinuaManager;
+import org.medipi.devices.drivers.domain.ContinuaMeasurement;
 
 /**
  * A concrete implementation of a specific device - Omron708BT Blood Pressure
  * meter
  *
- * The class uses a python script using the Continua HDP protocol to retrieve
+ * The class uses the Continua Manager class which uses Antidote IEEE 11073 Library to retrieve
  * the data via the stdout of the script.
  *
  * This class defines the device which is to be connected, defines the data to
  * be collected and passes this forward to the generic device class
  *
- * In the event that the data is found to be outside the timestamp checker's
- * threshold then the class also is able to guide the user to update the
- * device's internal clock
  *
  * @author rick@robinsonhq.com
  */
 @SuppressWarnings("restriction")
-public class Omron708BT extends BloodPressure implements DeviceTimestampUpdateInterface {
+public class Omron708BT extends BloodPressure {
 
     private static final String MAKE = "Omron";
     private static final String MODEL = "708-BT";
@@ -68,9 +54,7 @@ public class Omron708BT extends BloodPressure implements DeviceTimestampUpdateIn
     // The number of increments of the progress bar - a value of 0 removes the progBar
     private static final Double PROGBARRESOLUTION = 60D;
     private ImageView stopImg;
-    private String deviceNamespace;
     private Task<String> task = null;
-    private DeviceTimestampChecker deviceTimestampChecker;
     private Process process = null;
 
     String pythonScript;
@@ -86,14 +70,6 @@ public class Omron708BT extends BloodPressure implements DeviceTimestampUpdateIn
     // initialise and load the configuration data
     @Override
     public String init() throws Exception {
-        //find the python script location
-        deviceNamespace = MediPi.ELEMENTNAMESPACESTEM + getClassTokenName();
-        pythonScript = medipi.getProperties().getProperty(deviceNamespace + ".python");
-        if (pythonScript == null || pythonScript.trim().length() == 0) {
-            String error = "Cannot find python script for driver for " + MAKE + " " + MODEL + " - for " + deviceNamespace + ".python";
-            MediPiLogger.getInstance().log(Omron708BT.class.getName(), error);
-            return error;
-        }
 
         progressBarResolution = PROGBARRESOLUTION;
         stopImg = medipi.utils.getImageView("medipi.images.no", 20, 20);
@@ -107,18 +83,19 @@ public class Omron708BT extends BloodPressure implements DeviceTimestampUpdateIn
         columns.add("diastol");
         columns.add("pulserate");
         columns.add("MAP");
+        columns.add("irregularHeartBeat");
         format.add("DATE");
         format.add("INTEGER");
         format.add("INTEGER");
         format.add("INTEGER");
         format.add("INTEGER");
+        format.add("BOOLEAN");
         units.add("NONE");
         units.add("mmHg");
         units.add("mmHg");
         units.add("BPM");
         units.add("NONE");
-        //Initialise the timestamp checker
-        deviceTimestampChecker = new DeviceTimestampChecker(medipi, Omron708BT.this);
+        units.add("NONE");
         return super.init();
 
     }
@@ -135,9 +112,6 @@ public class Omron708BT extends BloodPressure implements DeviceTimestampUpdateIn
         } else {
             Platform.runLater(() -> {
                 task.cancel();
-                if (process != null && process.isAlive()) {
-                    process.destroy();
-                }
             });
 
         }
@@ -146,53 +120,93 @@ public class Omron708BT extends BloodPressure implements DeviceTimestampUpdateIn
     protected void processData() {
         task = new Task<String>() {
             ArrayList<ArrayList<String>> data = new ArrayList<>();
+            ContinuaManager continuaManager = null;
 
             @Override
             protected String call() throws Exception {
                 try {
+                    continuaManager = ContinuaManager.getInstance();
+                    continuaManager.reset();
                     setButton2Name("Stop", stopImg);
                     // input datastream from the device driver
-                    BufferedReader stdInput = callHDPPython();
+                    BufferedReader stdInput = continuaManager.callIEEE11073Agent("0x1007");
                     if (stdInput != null) {
                         String readData = new String();
                         while ((readData = stdInput.readLine()) != null) {
                             System.out.println(readData);
-                            //Digest the incoming read data
-                            if (readData.startsWith("START")) {
-                                setB2Label("Press Upload");
-                                updateProgress(0D, progressBarResolution);
-                            } else if (readData.startsWith("METADATA")) {
-                                metadata.add(readData.substring(readData.indexOf(":") + 1));
-                            } else if (readData.startsWith("DATA")) {
-                                setB2Label("Downloading");
-                                String dataStream = readData.substring(readData.indexOf(":") + 1);
-                                String[] line = dataStream.split(Pattern.quote(separator));
-                                // add the data to the data array
-                                final ArrayList<String> values = new ArrayList<>();
-                                // compensate for the date/time change
-                                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
-                                LocalDateTime localtDateAndTime = LocalDateTime.parse(line[0], formatter);
-                                ZonedDateTime zDate = ZonedDateTime.of(localtDateAndTime, ZoneId.systemDefault());
-                                values.add(zDate.toInstant().toString());
-                                values.add(line[1]);
-                                values.add(line[2]);
-                                values.add(line[3]);
-                                values.add(line[4]);
-                                data.add(values);
-                            } else if (readData.startsWith("END")) {
-                                updateProgress(progressBarResolution, progressBarResolution);
-                                // Check to see if the time is within the definable threshold
-                                return "SUCCESS";
-                            } else {
-                                return readData;
+
+                            if (continuaManager.parse(readData)) {
+                                ContinuaData cd = continuaManager.getData();
+                                if (!cd.getManufacturer().equals("OMRON HEALTHCARE")) {
+                                    return "Expected device manufacturer is OMRON HEALTHCARE but returned device manufacturer is: "+cd.getManufacturer();
+                                }
+                                if (!cd.getModel().equals("HEM-7081-IT")) {
+                                    return "Expected device model is HEM-7081-IT but returned device model is: "+cd.getModel();
+                                }
+
+                                int setId = 0;
+                                while (cd.getDataSetCounter() >= setId) {
+                                    String sys = null;
+                                    String dia = null;
+                                    String mean = null;
+                                    String heartRate = null;
+                                    String irregular = null;
+                                    String time = null;
+                                    for (ContinuaMeasurement cm : cd.getMeasurements()) {
+                                        if (cm.getMeasurementSetID() == setId) {
+                                            if (cm.getReportedIdentifier() == ContinuaBloodPressure.MMHG) {
+                                                sys = cm.getDataValue()[0];
+                                                dia = cm.getDataValue()[1];
+                                                mean = cm.getDataValue()[2];
+                                                time = cm.getTime();
+                                            } else if (cm.getReportedIdentifier() == ContinuaBloodPressure.BPM) {
+                                                heartRate = cm.getDataValue()[0];
+                                                time = cm.getTime();
+                                            } else if (cm.getReportedIdentifier() == ContinuaBloodPressure.DIMENTIONLESS) {
+                                                irregular = cm.getDataValue()[0];
+                                                time = cm.getTime();
+                                            }
+
+                                        }
+                                        if (sys != null && dia != null && mean != null && heartRate != null && irregular != null && time != null) {
+                                            data.add(new ArrayList<>(Arrays.asList(time, sys, dia, heartRate, mean, irregular)));
+                                            setId++;
+                                            break;
+                                        }
+                                    }
+                                }
+                                if (!data.isEmpty()) {
+                                    return "SUCCESS";
+                                } else {
+                                    return "There are no measurements available on the Blood Pressure device for download - please retake your blood pressure and try again";
+                                }
+
                             }
+                            switch (continuaManager.getStatus()) {
+                                case WAITING:
+                                    setB2Label("Press Upload");
+                                    break;
+                                case ATTRIBUTES:
+                                    setB2Label("Connecting...");
+                                    break;
+                                case CONFIGURATION:
+                                    setB2Label("Reading Device");
+                                    break;
+                                case MEASUREMENT:
+                                    setB2Label("Downloading");
+
+                                    break;
+                                default:
+                                    break;
+                            }
+
                         }
                     }
 
-                } catch (IOException | NumberFormatException ex) {
+                } catch (Exception ex) {
                     return ex.getLocalizedMessage();
                 }
-                return "Unknown error connecting to Meter";
+                return getSpecificDeviceDisplayName()+" - Unknown error connecting to Meter";
             }
 
             // the measure of completion and success is returning "SUCCESS"
@@ -203,7 +217,9 @@ public class Omron708BT extends BloodPressure implements DeviceTimestampUpdateIn
                 super.succeeded();
                 setButton2Name(STARTBUTTONTEXT, graphic);
                 setB2Label(null);
-                if (getValue().equals("SUCCESS")) {
+                if (getValue() == null) {
+                    MediPiMessageBox.getInstance().makeErrorMessage("Failed to get Data from Device", null);
+                } else if (getValue().equals("SUCCESS")) {
                     setData(data);
                 } else {
                     MediPiMessageBox.getInstance().makeErrorMessage(getValue(), null);
@@ -220,7 +236,11 @@ public class Omron708BT extends BloodPressure implements DeviceTimestampUpdateIn
                 super.failed();
                 setButton2Name(STARTBUTTONTEXT, graphic);
                 setB2Label(null);
-                MediPiMessageBox.getInstance().makeErrorMessage(getValue(), null);
+                if (getValue() == null) {
+                    MediPiMessageBox.getInstance().makeErrorMessage("Failed to get Data from Device", null);
+                } else {
+                    MediPiMessageBox.getInstance().makeErrorMessage(getValue(), null);
+                }
             }
 
             @Override
@@ -228,34 +248,26 @@ public class Omron708BT extends BloodPressure implements DeviceTimestampUpdateIn
                 super.failed();
                 setButton2Name(STARTBUTTONTEXT, graphic);
                 setB2Label(null);
+                continuaManager.stopIEEE11073Agent();
             }
 
         };        // Set up the bindings to control the UI elements during the running of the task
-        if (progressBarResolution > 0D) {
+        if (progressBarResolution
+                > 0D) {
             downProg.progressProperty().bind(task.progressProperty());
             downProg.visibleProperty().bind(task.runningProperty());
         }
 
-        progressIndicator.visibleProperty().bind(task.runningProperty());
-        button3.disableProperty().bind(Bindings.when(task.runningProperty().and(isThisElementPartOfAScheduleExecution)).then(true).otherwise(false));
-        button1.disableProperty().bind(Bindings.when(task.runningProperty().and(isThisElementPartOfAScheduleExecution)).then(true).otherwise(false));
+        progressIndicator.visibleProperty()
+                .bind(task.runningProperty());
+        button3.disableProperty()
+                .bind(Bindings.when(task.runningProperty().and(isThisElementPartOfAScheduleExecution)).then(true).otherwise(false));
+        button1.disableProperty()
+                .bind(Bindings.when(task.runningProperty().and(isThisElementPartOfAScheduleExecution)).then(true).otherwise(false));
         //Last measurement taken large display
 //        meterVBox.visibleProperty().bind(Bindings.when(task.valueProperty().isEqualTo("SUCCESS")).then(true).otherwise(false));
-        new Thread(task).start();
-    }
-
-    public BufferedReader callHDPPython() {
-        try {
-            System.out.println(pythonScript);
-            String[] callAndArgs = {"python", pythonScript};
-            process = Runtime.getRuntime().exec(callAndArgs);
-            BufferedReader stdInput = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            return stdInput;
-        } catch (Exception ex) {
-            MediPiMessageBox.getInstance().makeErrorMessage("Download of data unsuccessful", ex);
-            return null;
-        }
-
+        new Thread(task)
+                .start();
     }
 
     /**
@@ -292,14 +304,4 @@ public class Omron708BT extends BloodPressure implements DeviceTimestampUpdateIn
         }
     }
 
-    @Override
-    public Node getDeviceTimestampUpdateMessageBoxContent() {
-        try {
-            Guide guide = new Guide(deviceNamespace + ".timeset");
-            return guide.getGuide();
-        } catch (Exception ex) {
-            return new Label("Cant find the appropriate action for setting the timestamp for " + deviceNamespace);
-        }
-
-    }
 }

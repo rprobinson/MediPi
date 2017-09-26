@@ -18,13 +18,12 @@ package org.medipi.devices.drivers;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.ArrayList;
-import java.util.regex.Pattern;
+import java.util.Arrays;
+import java.util.Timer;
+import java.util.TimerTask;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.concurrent.Task;
@@ -46,30 +45,30 @@ import org.medipi.MediPiMessageBox;
 import org.medipi.devices.Element;
 import org.medipi.devices.Guide;
 import org.medipi.devices.Oximeter;
+import org.medipi.devices.drivers.domain.ContinuaData;
+import org.medipi.devices.drivers.domain.ContinuaManager;
+import org.medipi.devices.drivers.domain.ContinuaMeasurement;
+import org.medipi.devices.drivers.domain.ContinuaOximeter;
 import org.medipi.devices.drivers.service.BluetoothPropertiesDO;
 import org.medipi.devices.drivers.service.BluetoothPropertiesService;
-import org.medipi.logging.MediPiLogger;
-import org.medipi.devices.drivers.domain.DeviceTimestampUpdateInterface;
 import org.medipi.devices.drivers.domain.DeviceModeUpdateInterface;
 
 /**
  * A concrete implementation of a specific device - Nonin 9560 PulseOx Pulse
  * Oximeter
  *
- * The class uses a python script using the Continua HDP protocol to retrieve
+ * The class uses the Continua Manager class which uses Antidote IEEE 11073 Library to retrieve
  * the data via the stdout of the script.
  *
  * This class defines the device which is to be connected, defines the data to
  * be collected and passes this forward to the generic device class
  *
- * In the event that the data is found to be outside the timestamp checker's
- * threshold then the class also is able to guide the user to resynchronise the
- * device
+ * The class also is able to update the mode of operation of the pulse oximeter when being setup
  *
  * @author rick@robinsonhq.com
  */
 //@SuppressWarnings("restriction")
-public class Nonin9560Continua extends Oximeter implements DeviceTimestampUpdateInterface, DeviceModeUpdateInterface {
+public class Nonin9560Continua extends Oximeter implements DeviceModeUpdateInterface {
 
     private static final String MAKE = "Nonin";
     private static final String MODEL = "9560";
@@ -80,12 +79,10 @@ public class Nonin9560Continua extends Oximeter implements DeviceTimestampUpdate
     private static final String DOWNLOADING_MESSAGE = "Downloading";
     private ImageView graphic;
     private ImageView stopImg;
-    private String pythonScript;
     private String deviceNamespace;
     private BluetoothPropertiesService bluetoothPropertiesService;
     private Task<String> task = null;
     private Task<String> modeTask = null;
-    private Task<String> timeTask = null;
 
     private Process process = null;
 
@@ -100,12 +97,6 @@ public class Nonin9560Continua extends Oximeter implements DeviceTimestampUpdate
     public String init() throws Exception {
         //find the python script location
         deviceNamespace = MediPi.ELEMENTNAMESPACESTEM + getClassTokenName();
-        pythonScript = medipi.getProperties().getProperty(deviceNamespace + ".python");
-        if (pythonScript == null || pythonScript.trim().length() == 0) {
-            String error = "Cannot find python script for driver for " + MAKE + " " + MODEL + " - for " + deviceNamespace + ".python";
-            MediPiLogger.getInstance().log(Nonin9560Continua.class.getName(), error);
-            return error;
-        }
         stopImg = medipi.utils.getImageView("medipi.images.no", 20, 20);
         graphic = medipi.utils.getImageView("medipi.images.arrow", 20, 20);
         graphic.setRotate(90);
@@ -170,9 +161,6 @@ public class Nonin9560Continua extends Oximeter implements DeviceTimestampUpdate
         } else {
             Platform.runLater(() -> {
                 task.cancel();
-                if (process != null && process.isAlive()) {
-                    process.destroy();
-                }
             });
 
         }
@@ -181,45 +169,94 @@ public class Nonin9560Continua extends Oximeter implements DeviceTimestampUpdate
     protected void processData() {
         task = new Task<String>() {
             ArrayList<ArrayList<String>> data = new ArrayList<>();
+            ContinuaManager continuaManager = null;
+            MeasurementTimerTask mtt = null;
 
             @Override
             protected String call() throws Exception {
                 try {
+                    continuaManager = ContinuaManager.getInstance();
+                    continuaManager.reset();
                     setButton2Name("Stop", stopImg);
                     // input datastream from the device driver
-                    BufferedReader stdInput = callHDPPython();
+                    BufferedReader stdInput = continuaManager.callIEEE11073Agent("0x1004");
                     if (stdInput != null) {
                         String readData = new String();
                         while ((readData = stdInput.readLine()) != null) {
                             System.out.println(readData);
-                            //Digest the incoming read data
-                            if (readData.startsWith("START")) {
-                                setB2Label(SEARCHING_MESSAGE);
-                            } else if (readData.startsWith("METADATA")) {
-                                metadata.add(readData.substring(readData.indexOf(":") + 1));
-                                // the LOOP function allows devices to control a progress bar
-                            } else if (readData.startsWith("DATA")) {
-                                setB2Label(DOWNLOADING_MESSAGE);
-                                String dataStream = readData.substring(readData.indexOf(":") + 1);
-                                String[] line = dataStream.split(Pattern.quote(separator));
-//                                // add the data to the data array
-                                final ArrayList<String> values = new ArrayList<>();
-                                values.add(line[0]);
-                                values.add(line[1]);
-                                values.add(line[2]);
-                                data.add(values);
-                            } else if (readData.startsWith("END")) {
-                                return "SUCCESS";
-                            } else {
-                                return readData;
+
+                            if (continuaManager.parse(readData)) {
+                                if (mtt != null) {
+                                    mtt.stopTimer();
+                                }
+                                ContinuaData cd = continuaManager.getData();
+                                if (!cd.getManufacturer().equals("Nonin Medical, Inc.")) {
+                                    return "Expected device manufacturer is Nonin Medical, Inc. but returned device manufacturer is: " + cd.getManufacturer();
+                                }
+                                if (!cd.getModel().equals("Model 9560")) {
+                                    return "Expected device model is Model 9560 but returned device model is: " + cd.getModel();
+                                }
+                                int setId = 0;
+                                while (cd.getDataSetCounter() >= setId) {
+                                    String spO2 = null;
+                                    String heartRate = null;
+                                    String time = null;
+                                    for (ContinuaMeasurement cm : cd.getMeasurements()) {
+                                        if (cm.getMeasurementSetID() == setId) {
+                                            if (cm.getReportedIdentifier() == ContinuaOximeter.PERCENT) {
+                                                spO2 = cm.getDataValue()[0];
+                                                time = cm.getTime();
+                                            } else if (cm.getReportedIdentifier() == ContinuaOximeter.BPM) {
+                                                heartRate = cm.getDataValue()[0];
+                                                time = cm.getTime();
+                                            }
+
+                                        }
+                                        if (spO2 != null && heartRate != null && time != null) {
+                                            data.add(new ArrayList<>(Arrays.asList(time, heartRate, spO2)));
+                                            setId++;
+                                            break;
+                                        }
+                                    }
+                                }
+                                if (!data.isEmpty()) {
+                                    return "SUCCESS";
+                                } else {
+                                    return getSpecificDeviceDisplayName()+" has no data to download - please try again, referring to your clinician's advice on how best to take the measurements";
+                                }
+
                             }
+                            switch (continuaManager.getStatus()) {
+                                case WAITING:
+                                    setB2Label("Please Insert Finger");
+                                    break;
+                                case ATTRIBUTES:
+                                    setB2Label("Connecting...");
+                                    break;
+                                case CONFIGURATION:
+                                    setB2Label("Reading Device");
+                                    break;
+                                case MEASUREMENT:
+                                    if (mtt != null && mtt.isRunning()) {
+                                        mtt.reset();
+                                    } else {
+                                        mtt = new MeasurementTimerTask();
+                                        Timer timer = new Timer();
+                                        timer.schedule(mtt, 0, 1000);
+                                    }
+
+                                    break;
+                                default:
+                                    break;
+                            }
+
                         }
                     }
 
-                } catch (IOException | NumberFormatException ex) {
+                } catch (Exception ex) {
                     return ex.getLocalizedMessage();
                 }
-                return "Unknown error connecting to Meter";
+                return getSpecificDeviceDisplayName() + " - Unknown error connecting to Meter";
 
             }
 
@@ -231,7 +268,9 @@ public class Nonin9560Continua extends Oximeter implements DeviceTimestampUpdate
                 super.succeeded();
                 setButton2Name(STARTBUTTONTEXT, graphic);
                 setB2Label(null);
-                if (getValue().equals("SUCCESS")) {
+                if (getValue() == null) {
+                    MediPiMessageBox.getInstance().makeErrorMessage("Failed to get Data from Device", null);
+                } else if (getValue().equals("SUCCESS")) {
                     setData(data);
                 } else {
                     MediPiMessageBox.getInstance().makeErrorMessage(getValue(), null);
@@ -248,7 +287,11 @@ public class Nonin9560Continua extends Oximeter implements DeviceTimestampUpdate
                 super.failed();
                 setButton2Name(STARTBUTTONTEXT, graphic);
                 setB2Label(null);
-                MediPiMessageBox.getInstance().makeErrorMessage(getValue(), null);
+                if (getValue() == null) {
+                    MediPiMessageBox.getInstance().makeErrorMessage("Failed to get Data from Device", null);
+                } else {
+                    MediPiMessageBox.getInstance().makeErrorMessage(getValue(), null);
+                }
             }
 
             @Override
@@ -256,7 +299,7 @@ public class Nonin9560Continua extends Oximeter implements DeviceTimestampUpdate
                 super.failed();
                 setButton2Name(STARTBUTTONTEXT, graphic);
                 setB2Label(null);
-//                MediPiMessageBox.getInstance().makeErrorMessage(getValue(), null);
+                continuaManager.stopIEEE11073Agent();
             }
         };        // Set up the bindings to control the UI elements during the running of the task
 
@@ -264,67 +307,6 @@ public class Nonin9560Continua extends Oximeter implements DeviceTimestampUpdate
         button3.disableProperty().bind(Bindings.when(task.runningProperty().and(isThisElementPartOfAScheduleExecution)).then(true).otherwise(false));
         button1.disableProperty().bind(Bindings.when(task.runningProperty().and(isThisElementPartOfAScheduleExecution)).then(true).otherwise(false));
         new Thread(task).start();
-    }
-
-    public BufferedReader callHDPPython() {
-        try {
-            System.out.println(pythonScript);
-            String[] callAndArgs = {"python", pythonScript};
-            process = Runtime.getRuntime().exec(callAndArgs);
-            BufferedReader stdInput = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            return stdInput;
-        } catch (Exception ex) {
-            MediPiMessageBox.getInstance().makeErrorMessage("Download of data unsuccessful", ex);
-            return null;
-        }
-
-    }
-
-    @Override
-    public Node getDeviceTimestampUpdateMessageBoxContent() {
-        Guide guide = null;
-        try {
-            guide = new Guide(deviceNamespace + ".timeset");
-        } catch (Exception ex) {
-            return new Label("Cant find the appropriate action for setting the timestamp for " + deviceNamespace);
-        }
-        ProgressIndicator pi = new ProgressIndicator(ProgressIndicator.INDETERMINATE_PROGRESS);
-        pi.setMinSize(20, 20);
-        pi.setMaxSize(20, 20);
-        pi.setVisible(false);
-        VBox timeSyncVbox = new VBox();
-        HBox buttonHbox = new HBox();
-        Label status = new Label("Unsynchronised");
-        status.setId("guide-text");
-        Button syncButton = new Button("Synchronise Time");
-        syncButton.setId("button-record");
-        buttonHbox.setPadding(new Insets(10, 10, 10, 10));
-        buttonHbox.setSpacing(10);
-        buttonHbox.getChildren().addAll(
-                syncButton,
-                status,
-                pi
-        );
-        timeSyncVbox.getChildren().addAll(
-                guide.getGuide(),
-                buttonHbox
-        );
-        syncButton.setOnAction((ActionEvent t) -> {
-            if (timeTask == null || !timeTask.isRunning()) {
-                status.setText("Attempting to connect...");
-                timeTask = callUpdateTask(syncButton, status, "TIMESTAMP");
-                // Set up the bindings to control the UI elements during the running of the task
-                pi.visibleProperty().bind(timeTask.runningProperty());
-                new Thread(timeTask).start();
-            } else {
-                Platform.runLater(() -> {
-                    timeTask.cancel();
-                    status.setText("Synchronisation Cancelled");
-                });
-
-            }
-        });
-        return timeSyncVbox;
     }
 
     private Task<String> callUpdateTask(Button syncButton, Label status, String mode) {
@@ -367,9 +349,6 @@ public class Nonin9560Continua extends Oximeter implements DeviceTimestampUpdate
                         // First need to check that the device is in the correct data format - i.e. Data Format 2 - refer to nonin spec
                         if (mode.equals("MODE")) {
                             ensureCorrectDataFormat(os);
-                        } else if (mode.equals("TIMESTAMP")) {
-                            // Next need to update the time if necessary
-                            ensureCorrectTime(os);
                         }
                         dataloop:
                         while ((byteInt = is.read()) != -1) {
@@ -419,8 +398,6 @@ public class Nonin9560Continua extends Oximeter implements DeviceTimestampUpdate
                 super.succeeded();
                 if (mode.equals("MODE")) {
                     syncButton.setText("Synchronise Mode");
-                } else if (mode.equals("TIMESTAMP")) {
-                    syncButton.setText("Synchronise Time");
                 }
             }
 
@@ -435,8 +412,6 @@ public class Nonin9560Continua extends Oximeter implements DeviceTimestampUpdate
                 Platform.runLater(() -> status.setText("Failed to synchronise"));
                 if (mode.equals("MODE")) {
                     syncButton.setText("Synchronise Mode");
-                } else if (mode.equals("TIMESTAMP")) {
-                    syncButton.setText("Synchronise Time");
                 }
             }
 
@@ -444,37 +419,11 @@ public class Nonin9560Continua extends Oximeter implements DeviceTimestampUpdate
             protected void cancelled() {
                 if (mode.equals("MODE")) {
                     syncButton.setText("Synchronise Mode");
-                } else if (mode.equals("TIMESTAMP")) {
-                    syncButton.setText("Synchronise Time");
                 }
             }
 
         };
         return task;
-    }
-
-    private void ensureCorrectTime(OutputStream os) throws IOException {
-        Instant i = Instant.now();
-        LocalDateTime ldt = LocalDateTime.ofInstant(i, ZoneId.of("UTC"));
-        int hexYY = formatDateElements(ldt.getYear() - 2000);
-        int hexMM = formatDateElements(ldt.getMonthValue());
-        int hexdd = formatDateElements(ldt.getDayOfMonth());
-        int hexhh = formatDateElements(ldt.getHour());
-        int hexmm = formatDateElements(ldt.getMinute());
-        int hexss = formatDateElements(ldt.getSecond());
-        byte[] setdatetime = new byte[]{
-            (byte) 0x02,
-            (byte) 0x72,
-            (byte) 0x06,
-            (byte) hexYY, //YY
-            (byte) hexMM, //MM
-            (byte) hexdd, //dd
-            (byte) hexhh, //hh
-            (byte) hexmm, //mm
-            (byte) hexss, //ss
-            (byte) 0x03
-        };
-        os.write(setdatetime);
     }
 
     //This methos sets the device to be in data format 13 without ATR (attempt to reconnect) which is required for best operation
@@ -490,10 +439,6 @@ public class Nonin9560Continua extends Oximeter implements DeviceTimestampUpdate
             (byte) 0x03 //ETX
         };
         os.write(dataFormat);
-    }
-
-    private int formatDateElements(int i) {
-        return Integer.parseInt(Integer.toHexString(i), 16);
     }
 
     @Override
@@ -543,4 +488,34 @@ public class Nonin9560Continua extends Oximeter implements DeviceTimestampUpdate
         return timeSyncVbox;
     }
 
+    private class MeasurementTimerTask extends TimerTask {
+
+        private boolean isRunning = true;
+        int second = 15;
+
+        @Override
+        public void run() {
+            this.isRunning = true;
+            setB2Label("Downloading " + second-- + "s");
+            if (second <= 0) {
+                setB2Label("Downloaded");
+                this.isRunning = false;
+                this.cancel();
+            }
+        }
+
+        public boolean isRunning() {
+            return this.isRunning;
+        }
+
+        public void stopTimer() {
+            setB2Label("");
+            this.isRunning = false;
+            this.cancel();
+        }
+
+        public void reset() {
+            second = 15;
+        }
+    }
 }

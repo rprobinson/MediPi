@@ -75,6 +75,7 @@ import javafx.scene.layout.TilePane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
+import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import org.apache.commons.io.output.TeeOutputStream;
@@ -122,7 +123,7 @@ public class MediPi extends Application implements UnlockConsumer {
     // MediPi version Number
     private static final String MEDIPINAME = "MediPi Telehealth";
     private static final String VERSION = "MediPi_v1.0.15";
-    private static final String VERSIONNAME = "PILOT-20170530-1";
+    private static final String VERSIONNAME = "PILOT-20170920-1";
 
     // Set the MediPi Log directory
     private static final String LOG = "medipi.log";
@@ -193,6 +194,8 @@ public class MediPi extends Application implements UnlockConsumer {
     private Scheduler scheduler = null;
     private String cssfile = null;
     private BooleanProperty unlocked = new SimpleBooleanProperty(false);
+    private PollDownloads pim;
+    private Integer incomingMessageCheckPeriod;
     /**
      * When set on the debug mode will send all std and err output to the
      * version screen accessed by tapping the MediPi Telehealth banner label
@@ -505,7 +508,8 @@ public class MediPi extends Application implements UnlockConsumer {
             title.setWrapText(true);
             title.setAlignment(Pos.CENTER);
             title.setOnMouseClicked((MouseEvent event) -> {
-                Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+
+                Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "", ButtonType.YES, ButtonType.NO);
                 alert.setTitle(getVersion());
                 alert.setHeaderText("Version: " + getVersion());
                 if (debugMode) {
@@ -513,8 +517,12 @@ public class MediPi extends Application implements UnlockConsumer {
                 } else {
                     alert.getDialogPane().setContentText("Would you like to lock MediPi?");
                 }
+                alert.getDialogPane().getStylesheets().add("file:///" + getCssfile());
+                alert.getDialogPane().setId("message-box");
+                ImageView iw = utils.getImageView("medipi.images.doctor", 80, 80);
+                alert.setGraphic(iw);
                 Optional<ButtonType> result = alert.showAndWait();
-                if (result.get() == ButtonType.OK) {
+                if (result.get() == ButtonType.YES) {
                     mediPiWindow.lock();
                 }
             });
@@ -788,9 +796,8 @@ public class MediPi extends Application implements UnlockConsumer {
                     if (time == null || time.trim().length() == 0) {
                         time = "30";
                     }
-                    Integer incomingMessageCheckPeriod = Integer.parseInt(time);
-                    PollDownloads pim = new PollDownloads(this);
-                    POLLSERVICE.scheduleAtFixedRate(pim, (long) 1, (long) incomingMessageCheckPeriod, TimeUnit.SECONDS);
+                    incomingMessageCheckPeriod = Integer.parseInt(time);
+                    pim = new PollDownloads(this);
                 } catch (Exception nfe) {
                     makeFatalErrorMessage("Unable to start the download service - make sure that " + MEDIPIDOWNLOADPOLLPERIOD + " property is set correctly", null);
                     return;
@@ -837,11 +844,17 @@ public class MediPi extends Application implements UnlockConsumer {
         alert.setTitle("MediPi Exit");
         alert.setHeaderText(null);
         alert.getDialogPane().getStylesheets().add("file:///" + getCssfile());
-        alert.getDialogPane().setMaxSize(600, 300);
+        alert.getDialogPane().setMaxSize(400, 200);
         alert.getDialogPane().setId("message-box");
+        VBox vb = new VBox();
         Text text = new Text("Are you sure you want to close MediPi?");
-        text.setWrappingWidth(600);
-        alert.getDialogPane().setContent(text);
+        text.setTextAlignment(TextAlignment.CENTER);
+        text.setWrappingWidth(400);
+        vb.getChildren().add(text);
+        vb.setAlignment(Pos.CENTER);
+        ImageView iw = utils.getImageView("medipi.images.doctor", 80, 80);
+        alert.setGraphic(iw);
+        alert.getDialogPane().setContent(vb);
 
         Optional<ButtonType> result = alert.showAndWait();
         if (result.get() == ButtonType.YES) {
@@ -906,6 +919,7 @@ public class MediPi extends Application implements UnlockConsumer {
     public static void main(String[] args) {
         if (args[0].toLowerCase().trim().equals("-version")) {
             System.out.println(MEDIPINAME + " " + VERSION + "-" + VERSIONNAME);
+            System.exit(0);
         } else {
             launch(args);
         }
@@ -1027,11 +1041,23 @@ public class MediPi extends Application implements UnlockConsumer {
     @Override
     public void unlocked() {
         unlocked.set(true);
+        if (dhm.hasHandlers()) {
+            // Start the downloadable timer. This wakes up every definable period (default set to 30s) 
+            // and performs functions to send restful messages to retreive the downloadable entities - Hardware and Patient Messages
+            try {
+                POLLSERVICE = Executors.newSingleThreadScheduledExecutor();
+                POLLSERVICE.scheduleAtFixedRate(pim, (long) 1, (long) incomingMessageCheckPeriod, TimeUnit.SECONDS);
+            } catch (Exception nfe) {
+                makeFatalErrorMessage("Unable to start the download service - make sure that " + MEDIPIDOWNLOADPOLLPERIOD + " property is set correctly", null);
+                return;
+            }
+        }
     }
 
     @Override
     public void locked() {
         unlocked.set(false);
+        POLLSERVICE.shutdownNow();
     }
 
 }

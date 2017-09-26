@@ -20,6 +20,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -64,6 +66,7 @@ import org.medipi.DashboardTile;
 import org.medipi.MediPi;
 import org.medipi.MediPiMessageBox;
 import org.medipi.MediPiProperties;
+import org.medipi.logging.MediPiLogger;
 import org.medipi.model.DeviceDataDO;
 import org.medipi.utilities.Utilities;
 
@@ -581,6 +584,12 @@ public class Scheduler extends Device {
             Platform.runLater(() -> {
                 MediPiMessageBox.getInstance().makeErrorMessage("Parsing the Readings schedule file entries has encountered problems. It may be corrupt", e);
                 runScheduleNowButton.setDisable(true);
+                // This code is put in place to capture a non reproducable persistant error of null pointer
+                StringWriter sw = new StringWriter();
+                PrintWriter pw = new PrintWriter(sw);
+                e.printStackTrace(pw);
+                MediPiLogger.getInstance().log(Scheduler.class.getName() + ".error", "Stack Trace: " + sw.toString());
+               
             });
         }
 
@@ -775,7 +784,7 @@ public class Scheduler extends Device {
     }
 
     @Override
-    public void resetDevice() {
+    public synchronized void resetDevice() {
         nextUUID = null;
         lastScheduleItem = null;
         items.clear();

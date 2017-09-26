@@ -34,26 +34,14 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
-import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
 import javafx.beans.value.ObservableValue;
-import javafx.collections.MapChangeListener;
 import javafx.collections.ObservableMap;
-import javafx.event.ActionEvent;
-import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.SelectionMode;
@@ -63,12 +51,9 @@ import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
-import javafx.scene.layout.HBox;
-import javafx.scene.paint.Color;
 import org.medipi.AlertBanner;
 import org.medipi.MediPiProperties;
 import org.medipi.authentication.UnlockConsumer;
-import static org.medipi.devices.Scheduler.TRANSMITTED;
 import org.medipi.downloadable.handlers.DownloadableHandlerManager;
 import org.medipi.downloadable.handlers.MessageHandler;
 import org.medipi.logging.MediPiLogger;
@@ -212,6 +197,9 @@ public class Responses extends Element implements UnlockConsumer, MessageReceive
 
         File list[] = new File(responsesDirPath.toString()).listFiles();
         for (File f : list) {
+            if (!f.getName().contains("Alert")) {
+                continue;
+            }
             Message m;
             try {
                 m = new Message(f.getName());
@@ -444,6 +432,11 @@ public class Responses extends Element implements UnlockConsumer, MessageReceive
                     AlertListDO alertListDO = readJSONNotificationMessage(file);
                     // Loop through each AlertList
                     for (AlertDO ado : alertListDO.getAlert()) {
+                        
+                        //dont read any positive feedback messages
+                        if(ado.getStatus().equals("MESSAGE")){
+                            continue;
+                        }
                         // Only choose those alerts whose dataValueTime is within our schedule time
                         if (ado.getDataValueTime().toInstant().isAfter(scheduler.getCurrentScheduleStartTime())
                                 && ado.getDataValueTime().toInstant().isBefore(scheduler.getCurrentScheduleExpiryTime())) {
@@ -502,25 +495,35 @@ public class Responses extends Element implements UnlockConsumer, MessageReceive
         return NAME;
     }
 
+    // Filters out only those messages with a title of "Alert"
     @Override
     public void setMessageList(ObservableList<Message> items) {
-        this.items = items;
+        ObservableList<Message> filteredItems = FXCollections.observableArrayList();
+        items.forEach(s -> {
+            if (s.getMessageTitle().contains("Alert")) {
+                filteredItems.add(s);
+            }
+        });
+        this.items = filteredItems;
         if (!locked) {
             updateTableContents();
         }
     }
 
     /**
-     * Method which returns a booleanProperty which UI elements can be bound to,
-     * to discover whether a new message has arrived
+     * Method called when a new message has arrived
      *
-     * @return BooleanProperty signalling the presence of a new message
      */
     @Override
-    public BooleanProperty getAlertBooleanProperty() {
-        return new SimpleBooleanProperty(true);
+    public void newMessageReceived(File file) {
+        if(!file.getName().contains("Alert")){
+            return;
+        }
+        notificationBooleanProperty.set(true);
+        AlertBanner.getInstance().addAlert("messagewatcher", "A new Clinician's notification has arrived");
+        MediPiMessageBox.getInstance().makeMessage("A new clinician's message has arrived");
     }
-
+    
     private AlertListDO readJSONNotificationMessage(File file) throws Exception {
         ObjectMapper mapper = new ObjectMapper();
         EncryptedAndSignedUploadDO encryptedAndSignedUploadDO = mapper.readValue(file, EncryptedAndSignedUploadDO.class);

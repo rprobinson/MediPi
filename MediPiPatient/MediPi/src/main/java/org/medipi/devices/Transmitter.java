@@ -52,6 +52,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
+import javafx.scene.text.TextAlignment;
 import org.medipi.DashboardTile;
 import org.medipi.MediPi;
 import org.medipi.MediPiMessageBox;
@@ -280,9 +281,15 @@ public abstract class Transmitter extends Element {
                         alert.getDialogPane().setMaxSize(600, 300);
                         alert.getDialogPane().getStylesheets().add("file:///" + medipi.getCssfile());
                         alert.getDialogPane().setId("message-box");
-                        Text text = new Text("Data is missing for the following devices: \n" + sb.toString() + "\nWould you still like to transmit?");
+                        VBox vb = new VBox();
+                        Text text = new Text("You have not taken measurements for the following devices: \n\n" + sb.toString() + "\nWould you still like to transmit?");
                         text.setWrappingWidth(600);
-                        alert.getDialogPane().setContent(text);
+                        text.setTextAlignment(TextAlignment.CENTER);
+                        vb.getChildren().add(text);
+                        vb.setAlignment(Pos.CENTER);
+                        ImageView iw = medipi.utils.getImageView("medipi.images.doctor", 80, 80);
+                        alert.setGraphic(iw);
+                        alert.getDialogPane().setContent(vb);
                         Optional<ButtonType> result = alert.showAndWait();
                         if (result.get() == ButtonType.CANCEL) {
                             return;

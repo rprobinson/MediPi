@@ -32,10 +32,8 @@ import java.util.Map;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.collections.ObservableMap;
 import org.medipi.AlertBanner;
 import org.medipi.MediPi;
-import org.medipi.MediPiMessageBox;
 
 /**
  * Class to watch a the incoming messages directory for changes to files.
@@ -136,9 +134,7 @@ public class MessageWatcher extends Thread {
                     Platform.runLater(() -> {
                         messageReceiver.setMessageList(items);
                         if (event.kind().name().equals("ENTRY_CREATE")) {
-                            messageReceiver.getAlertBooleanProperty().set(true);
-                            alertBanner.addAlert("messagewatcher", "A new Clinician's notification has arrived");
-                            MediPiMessageBox.getInstance().makeMessage("A new clinician's message has arrived");
+                            messageReceiver.newMessageReceived(new File(child.toString()));
                         }
                     });
 

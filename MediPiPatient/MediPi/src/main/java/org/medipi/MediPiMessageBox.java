@@ -17,13 +17,18 @@ package org.medipi;
 
 import java.util.HashMap;
 import javafx.application.Platform;
+import javafx.geometry.Pos;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextArea;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
+import javafx.scene.text.TextAlignment;
 import javafx.util.Callback;
 import org.medipi.logging.MediPiLogger;
 
@@ -146,11 +151,15 @@ class AlertBox {
             a.getDialogPane().setId("message-box");
             a.setHeaderText(null);
             a.getDialogPane().setMaxSize(600, 300);
+            VBox vb = new VBox();
+            a.getDialogPane().setContent(vb);
             TextArea text = new TextArea("Error - " + message + debugString);
             text.setMaxWidth(400);
             text.setWrapText(true);
             text.setEditable(false);
-            a.getDialogPane().setContent(text);
+            vb.getChildren().add(text);
+            vb.setAlignment(Pos.CENTER);
+            a.getDialogPane().setContent(vb);
             a.setTitle("Error dialog");
 //            a.setContentText("Error - " + message + debugString);
 //            a.getDialogPane().getChildren().stream().filter(node -> node instanceof Label).forEach(node -> ((Label) node).setPrefHeight(300));
@@ -178,12 +187,17 @@ class AlertBox {
             a.getDialogPane().setId("message-box");
             a.setHeaderText(null);
             a.getDialogPane().setMaxSize(600, 300);
+            VBox vb = new VBox();
             Text text = new Text(message);
+            text.setTextAlignment(TextAlignment.CENTER);
             text.setWrappingWidth(600);
-            a.getDialogPane().setContent(text);
+            vb.getChildren().add(text);
+            vb.setAlignment(Pos.CENTER);
+            a.getDialogPane().setContent(vb);
 //           a.getDialogPane().getChildren().stream().filter(node -> node instanceof Label).forEach(node -> ((Label) node).setPrefHeight(300));
             a.setTitle("Message dialog");
-//            a.setContentText(message);
+            ImageView iw = medipi.utils.getImageView("medipi.images.doctor", 80, 80);
+            a.setGraphic(iw);
             liveMessages.put(uniqueString, a);
             a.setResultConverter(new Callback<ButtonType, ButtonType>() {
                 @Override

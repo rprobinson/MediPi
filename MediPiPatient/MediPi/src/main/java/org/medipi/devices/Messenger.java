@@ -35,17 +35,14 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import org.medipi.DashboardTile;
 import org.medipi.MediPi;
 import org.medipi.MediPiMessageBox;
 import org.medipi.downloadable.handlers.DownloadableHandlerManager;
-import org.medipi.downloadable.handlers.MessageHandler;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Instant;
-import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.scene.control.TableCell;
 import javafx.scene.image.Image;
@@ -53,13 +50,13 @@ import javafx.scene.paint.Color;
 import org.medipi.AlertBanner;
 import org.medipi.MediPiProperties;
 import org.medipi.authentication.UnlockConsumer;
+import org.medipi.downloadable.handlers.MessageHandler;
 import org.medipi.logging.MediPiLogger;
-import org.medipi.model.AlertListDO;
-import org.medipi.model.AlertDO;
 import org.medipi.security.CertificateDefinitions;
 import org.medipi.model.EncryptedAndSignedUploadDO;
 import org.medipi.security.UploadEncryptionAdapter;
 import org.medipi.utilities.Utilities;
+import org.medipi.model.SimpleMessageDO;
 
 /**
  * Class to display and handle the functionality for a incoming read-only
@@ -187,6 +184,9 @@ public class Messenger extends Element implements UnlockConsumer, MessageReceive
         // the messages have a filename of format yyyyMMddHHmmss-messagename.txt 
         Arrays.sort(list, (File f1, File f2) -> Long.valueOf(f2.lastModified()).compareTo(f1.lastModified()));
         for (File f : list) {
+            if (!f.getName().contains("SimpleMessage")) {
+                continue;
+            }
             Message m;
             try {
                 m = new Message(f.getName());
@@ -271,27 +271,54 @@ public class Messenger extends Element implements UnlockConsumer, MessageReceive
     public String getSpecificDeviceDisplayName() {
         return DISPLAYNAME;
     }
+
     @Override
     public String getGenericDeviceDisplayName() {
         return NAME;
     }
+
+    @Override
     public void setMessageList(ObservableList<Message> items) {
-        this.items = items;
+
+        ObservableList<Message> filteredItems = FXCollections.observableArrayList();
+        items.forEach(s -> {
+            if (s.getMessageTitle().contains("SimpleMessage")) {
+                filteredItems.add(s);
+            }
+        });
+        this.items = filteredItems;
         if (!locked) {
-            messageList.setItems(items);
+            messageList.setItems(filteredItems);
             messageList.getSelectionModel().select(0);
         }
     }
 
     /**
-     * Method which returns a booleanProperty which UI elements can be bound to,
-     * to discover whether a new message has arrived
-     *
-     * @return BooleanProperty signalling the presence of a new message
+     * Method called when a new message has arrived
+     * Filters out only those messages with a title of "SimpleMessage"
      */
     @Override
-    public BooleanProperty getAlertBooleanProperty() {
-        return notificationBooleanProperty;
+    public void newMessageReceived(File file) {
+        if (!file.getName().contains("SimpleMessage")) {
+            return;
+        }
+        notificationBooleanProperty.set(true);
+        if (showTile.getValue()) {
+            AlertBanner.getInstance().addAlert("messagewatcher", "A new Clinician's notification has arrived");
+            MediPiMessageBox.getInstance().makeMessage("A new clinician's message has arrived");
+
+        } else {
+            try {
+                String msg = readJSONNotificationMessage(file);
+                if (msg == null || msg.equals("")) {
+                    MediPiMessageBox.getInstance().makeErrorMessage("A new message has been received but it has no content", null);
+                } else {
+                    MediPiMessageBox.getInstance().makeMessage(msg);
+                }
+            } catch (Exception ex) {
+                MediPiMessageBox.getInstance().makeErrorMessage("A new message has been received but MediPi cannot understand it", null);
+            }
+        }
     }
 
     /**
@@ -306,7 +333,8 @@ public class Messenger extends Element implements UnlockConsumer, MessageReceive
 
     private String readJSONNotificationMessage(File file) throws Exception {
         ObjectMapper mapper = new ObjectMapper();
-        EncryptedAndSignedUploadDO encryptedAndSignedUploadDO = mapper.readValue(file, EncryptedAndSignedUploadDO.class);
+        EncryptedAndSignedUploadDO encryptedAndSignedUploadDO = mapper.readValue(file, EncryptedAndSignedUploadDO.class
+        );
         // instantiate the clinician encryption adapter
         UploadEncryptionAdapter clinicianEncryptionAdapter = new UploadEncryptionAdapter();
 
@@ -318,37 +346,32 @@ public class Messenger extends Element implements UnlockConsumer, MessageReceive
         clinicianCD.setENCRYPTKEYSTOREPASSWORD("medipi.patient.cert.password", CertificateDefinitions.SYSTEM);
 
         String clinicianAdapterError;
-        AlertListDO alertListDO = null;
+        SimpleMessageDO simpleMessageDO = null;
         try {
             clinicianAdapterError = clinicianEncryptionAdapter.init(clinicianCD, UploadEncryptionAdapter.SERVERMODE);
+
             if (clinicianAdapterError != null) {
-                MediPiLogger.getInstance().log(Messenger.class.getName() + ".error", "Failed to instantiate Clinician Encryption Adapter: " + clinicianAdapterError);
+                MediPiLogger.getInstance().log(Messenger.class
+                        .getName() + ".error", "Failed to instantiate Clinician Encryption Adapter: " + clinicianAdapterError);
                 throw new Exception("Failed to instantiate Clinician Encryption Adapter: " + clinicianAdapterError);
             }
-            alertListDO = (AlertListDO) clinicianEncryptionAdapter.decryptAndVerify(encryptedAndSignedUploadDO);
+            simpleMessageDO = (SimpleMessageDO) clinicianEncryptionAdapter.decryptAndVerify(encryptedAndSignedUploadDO);
+
         } catch (Exception e) {
-            MediPiLogger.getInstance().log(Messenger.class.getName() + ".error", "Notification Decryption exception: " + e.getLocalizedMessage());
+            MediPiLogger.getInstance().log(Messenger.class
+                    .getName() + ".error", "Notification Decryption exception: " + e.getLocalizedMessage());
             throw new Exception("Notification Decryption exception: " + e.getLocalizedMessage());
         }
         try {
 
             StringBuilder sb = new StringBuilder();
-            String type = "";
-            Instant time = Instant.EPOCH;
-            for (AlertDO alertDO : alertListDO.getAlert()) {
-                if (!type.equals(alertDO.getType())) {
-                    sb.append(alertDO.getType()).append(" Notification").append("\n");
-                }
-                if (!time.equals(alertDO.getAlertTime())) {
-                    sb.append("Created on ").append(Utilities.DISPLAY_FORMAT_LOCALTIME.format(alertDO.getAlertTime().toInstant())).append("\n");
-                }
-                sb.append(alertDO.getAlertText()).append("\n").append("\n");
-                type = alertDO.getType();
-                time = alertDO.getAlertTime().toInstant();
-            }
+
+            sb.append(simpleMessageDO.getSimpleMessageText());
             return sb.toString();
+
         } catch (Exception e) {
-            MediPiLogger.getInstance().log(Messenger.class.getName() + ".error", "Unable to save Notification exception: " + e.getLocalizedMessage());
+            MediPiLogger.getInstance().log(Messenger.class
+                    .getName() + ".error", "Unable to save Notification exception: " + e.getLocalizedMessage());
             throw new Exception("Unable to save Notification exception: " + e.getLocalizedMessage());
         }
 

@@ -34,7 +34,9 @@ import javafx.scene.control.ProgressIndicator;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
+import javafx.scene.text.TextAlignment;
 import org.medipi.MediPi;
 
 /**
@@ -302,11 +304,17 @@ public abstract class Element {
             alert.getDialogPane().setMaxSize(400, 300);
             alert.getDialogPane().getStylesheets().add("file:///" + medipi.getCssfile());
             alert.getDialogPane().setId("message-box");
+            VBox vb = new VBox();
             Text text = new Text("Confirm that the input value from " + getSpecificDeviceDisplayName() + " is correct?");
             text.setWrappingWidth(400);
+            text.setTextAlignment(TextAlignment.CENTER);
+            vb.getChildren().add(text);
+            vb.setAlignment(Pos.CENTER);
+            ImageView iw = medipi.utils.getImageView("medipi.images.doctor", 80, 80);
+            alert.setGraphic(iw);
             alert.setX(50);
             alert.setY(150);
-            alert.getDialogPane().setContent(text);
+            alert.getDialogPane().setContent(vb);
 
             Optional<ButtonType> result = alert.showAndWait();
             if (result.get() == ButtonType.YES) {

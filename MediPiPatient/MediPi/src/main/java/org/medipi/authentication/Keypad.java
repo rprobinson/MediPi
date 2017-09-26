@@ -38,6 +38,7 @@ import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.TilePane;
@@ -156,6 +157,8 @@ public class Keypad implements AuthenticationInterface {
                             alert.setHeaderText(null);
                             Text text = new Text("Would you like to reboot into Administration Mode?\nACCESS TO THE ADMINISTRATION MODE IS FOR AUTHORISED USERS ONLY.\nAny unauthorised user must click the 'CANCEL' button");
                             text.setWrappingWidth(600);
+                            alert.getDialogPane().getStylesheets().add("file:///" + MediPiProperties.getInstance().getProperties().getProperty("medipi.css"));
+                            alert.getDialogPane().setId("message-box");
                             alert.getDialogPane().setContent(text);
                             Optional<ButtonType> result = alert.showAndWait();
                             if (result.get() == ButtonType.OK) {

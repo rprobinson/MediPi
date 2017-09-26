@@ -32,6 +32,7 @@ import java.util.HashMap;
 import java.util.Map;
 import javafx.collections.ObservableMap;
 import org.apache.commons.io.IOUtils;
+import org.medipi.logging.MediPiLogger;
 
 /**
  * Class to watch a the time server output file directory for changes to files.
@@ -50,7 +51,7 @@ public class TimeServerWatcher extends Thread {
     private boolean trace = false;
     private final MediPi medipi;
     private final Path dir;
-    private String timeSyncSuccessString ="";
+    private String timeSyncSuccessString = "";
     private AlertBanner alertBanner = AlertBanner.getInstance();
 
     @SuppressWarnings("unchecked")
@@ -64,13 +65,13 @@ public class TimeServerWatcher extends Thread {
     TimeServerWatcher(Path d, MediPi m) throws Exception {
         dir = d;
         medipi = m;
-            // returned phrase to search for in the time server reponse
-            String response = medipi.getProperties().getProperty(MEDIPITIMESYNCSERVERRESPONSESTRING);
-            if (response == null || response.trim().length() == 0) {
-                throw new Exception("Time sync server response string not configured");
-            }
-            timeSyncSuccessString = response;
-        
+        // returned phrase to search for in the time server reponse
+        String response = medipi.getProperties().getProperty(MEDIPITIMESYNCSERVERRESPONSESTRING);
+        if (response == null || response.trim().length() == 0) {
+            throw new Exception("Time sync server response string not configured");
+        }
+        timeSyncSuccessString = response;
+
         this.watcher = FileSystems.getDefault().newWatchService();
         this.keys = new HashMap<>();
         register();
@@ -99,7 +100,7 @@ public class TimeServerWatcher extends Thread {
     @Override
     public void run() {
 
-        System.out.println("TimeServerWatcher run at: "+Instant.now());
+        System.out.println("TimeServerWatcher run at: " + Instant.now());
         boolean running = true;
         while (running) {
 
@@ -158,13 +159,16 @@ public class TimeServerWatcher extends Thread {
             if (everything.toLowerCase().contains(timeSyncSuccessString)) {
                 medipi.timeSync.set(true);
                 alertBanner.removeAlert(CLASSKEY);
+                MediPiLogger.getInstance().log(TimeServerWatcher.class.getName(), "Time set from NTP server");
             } else {
                 medipi.timeSync.set(false);
                 alertBanner.addAlert(CLASSKEY, ALERTBANNERMESSAGE);
+                MediPiLogger.getInstance().log(TimeServerWatcher.class.getName(), "Time not set yet from NTP server");
             }
         } catch (FileNotFoundException ex) {
             medipi.timeSync.set(false);
             alertBanner.addAlert(CLASSKEY, ALERTBANNERMESSAGE);
+            MediPiLogger.getInstance().log(TimeServerWatcher.class.getName(), "Time not set from NTP server, file not accessible");
         } catch (IOException ex) {
             return "Can't access the Time server directory";
         } finally {

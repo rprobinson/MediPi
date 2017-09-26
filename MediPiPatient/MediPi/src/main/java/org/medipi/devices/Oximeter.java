@@ -329,20 +329,10 @@ public abstract class Oximeter extends Device {
 
     @Override
     public void setData(ArrayList<ArrayList<String>> data) {
-        boolean batteryMessage = false;
-        if (data == null || data.isEmpty()) {
-            // This is a work round for the battery replacement in Nonin 9560 finger Oximeter
-            batteryMessage = true;
-        }
         data = deviceTimestampChecker.checkTimestamp(data);
         String dataCheckMessage = null;
         if ((dataCheckMessage = deviceTimestampChecker.getMessages()) != null) {
-            if (batteryMessage) {
-                // This is a work round for the battery replacement in Nonin 9560 finger Oximeter
-                MediPiMessageBox.getInstance().makeMessage(getSpecificDeviceDisplayName() + "\n" + dataCheckMessage + "\n" + "This condition can happen with the Nonin 9560 Pulse Oximeter when the batteries need replacing. Retry the measurement and replace them if this message is repeated");
-            } else {
-                MediPiMessageBox.getInstance().makeMessage(getSpecificDeviceDisplayName() + "\n" + dataCheckMessage);
-            }
+            MediPiMessageBox.getInstance().makeMessage(getSpecificDeviceDisplayName() + "\n" + dataCheckMessage);
         }
         if (data == null || data.isEmpty()) {
         } else {
