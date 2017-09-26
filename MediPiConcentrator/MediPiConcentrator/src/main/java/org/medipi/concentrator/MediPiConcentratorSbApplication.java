@@ -54,8 +54,8 @@ public class MediPiConcentratorSbApplication implements CommandLineRunner {
 
     // MediPi version Number
     private static final String MEDIPINAME = "MediPi Concentrator";
-    private static final String VERSION = "MediPiConcentrator_v1.0.5";
-    private static final String VERSIONNAME = "PILOT-20170714-2";
+    private static final String VERSION = "MediPiConcentrator_v1.0.6";
+    private static final String VERSIONNAME = "PILOT-20170921-1";
     private final MediPiLogger logger = MediPiLogger.getInstance();
     private ServletContext scxt;
     private final UploadEncryptionAdapter patientEncryptionAdapter = new UploadEncryptionAdapter();

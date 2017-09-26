@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Date;
 import java.util.UUID;
+import org.medipi.concentrator.controllers.PatientMessagingServiceController;
 import org.medipi.concentrator.controllers.PatientUploadServiceController;
 import org.medipi.concentrator.dao.PatientCertificateDAOImpl;
 import org.medipi.concentrator.dao.PatientDAOImpl;
@@ -72,10 +73,12 @@ public class PatientMessagingService {
     @Value("${medipi.concentrator.alertmessagedir}")
     private String alertmessagedir;
 
-    
+    @Value("${medipi.concentrator.simplemessagedir}")
+    private String simplemessagedir;
+
     /**
-     * alert interface. This interface simply saves and makes available the
-     * encrypted and signed message to the specified patient. It does not
+     * Direct Message interface. This interface simply saves and makes available
+     * the encrypted and signed message to the specified patient. It does not
      * decrypt the message as it has no access to the private keys of the
      *
      * TODO - Currently not sure what should be done with the version field?
@@ -86,12 +89,12 @@ public class PatientMessagingService {
      * @return Encrypted and Signed Response
      */
     @Transactional(rollbackFor = RuntimeException.class)
-    public ResponseEntity<EncryptedAndSignedUploadDO> persistAlert(String patientUuid, EncryptedAndSignedUploadDO content) {
+    public ResponseEntity<EncryptedAndSignedUploadDO> persistDirectMessage(String patientUuid, EncryptedAndSignedUploadDO content, int messageType) {
         try {
-            logger.log(PatientMessagingService.class.getName(), new Date().toString() + " Encrypted Alert Payload with uuid: " + content.getUploadUuid() + " has been sucessfully decrypted. Patient uuid: " + patientUuid);
+            logger.log(PatientMessagingService.class.getName(), new Date().toString() + " Encrypted Direct Message Payload with uuid: " + content.getUploadUuid() + " has been sucessfully decrypted. Patient uuid: " + patientUuid);
             //validate that the patient is registered with this DB
             Patient patient = patientDAOImpl.findByPrimaryKey(patientUuid);
-            if(patient == null){
+            if (patient == null) {
                 throw new BadRequest400Exception("The patient is not registered on the concentrator when clinical system attempting to send a message to the patient");
             }
             //validate that the concentrator serves a certificate for this patient
@@ -103,57 +106,69 @@ public class PatientMessagingService {
             } catch (Exception e) {
                 throw new InternalServerError500Exception("Internal Server Error " + e.getLocalizedMessage());
             }
-            
+
+            try {
+                FileOutputStream fop = null;
                 try {
-                    FileOutputStream fop = null;
-                    try {
-                        Date messageDate = new Date();
-                        StringBuilder fnb = new StringBuilder(alertmessagedir);
-                        fnb.append(System.getProperty("file.separator"));
-                        fnb.append(messageDate.getTime());
-                        fnb.append("-Alert");
-                        fnb.append(".txt");
-                        File file = new File(fnb.toString());
-                        fop = new FileOutputStream(file);
-                        // if file doesnt exists, then create it
-                        if (!file.exists()) {
-                            file.createNewFile();
-                        }
-                        writeJSON(content, fop);
-                        fop.flush();
-                        fop.close();
-
-                        PatientDownloadable pd = new PatientDownloadable(UUID.randomUUID().toString());
-                        pd.setPatientUuid(patient);
-                        pd.setScriptLocation(fnb.toString());
-                        pd.setVersion("1.0");
-                        pd.setVersionAuthor("concentrator-created");
-                        pd.setVersionDate(messageDate);
-                        pd.setSignature(createSignature(pd, file.getName()));
-
-                        patientDownloadableDAOImpl.save(pd);
-
-                        logger.log(PatientUploadServiceController.class.getName(), new Date().toString() + " Written alert for Patient: " + patientUuid);
-                    } catch (IOException e) {
-                        logger.log(PatientUploadServiceController.class.getName() + ".error", "Cannot save outbound Alert message payload to local drive - check the configured directory: " + alertmessagedir);
-                        throw new InternalServerError500Exception("Unable to save Alert to file and persist to DB: " + e.getLocalizedMessage());
-                    } finally {
-                        try {
-                            if (fop != null) {
-                                fop.close();
-                            }
-                        } catch (IOException e) {
-                            logger.log(PatientUploadServiceController.class.getName() + ".error", "Cannot save outbound alert message payload to local drive - check the configured directory: " + alertmessagedir);
-                        }
+                    Date messageDate = new Date();
+                    StringBuilder fnb = new StringBuilder();
+                    switch (messageType) {
+                        case PatientMessagingServiceController.ALERT:
+                            fnb.append(alertmessagedir);
+                            fnb.append(System.getProperty("file.separator"));
+                            fnb.append(messageDate.getTime());
+                            fnb.append("-Alert");
+                            break;
+                        case PatientMessagingServiceController.SIMPLEMESSAGE:
+                            fnb.append(simplemessagedir);
+                            fnb.append(System.getProperty("file.separator"));
+                            fnb.append(messageDate.getTime());
+                            fnb.append("-SimpleMessage");
+                            break;
+                        default:
+                            break;
                     }
+                    fnb.append(".txt");
+                    File file = new File(fnb.toString());
+                    fop = new FileOutputStream(file);
+                    // if file doesnt exists, then create it
+                    if (!file.exists()) {
+                        file.createNewFile();
+                    }
+                    writeJSON(content, fop);
+                    fop.flush();
+                    fop.close();
 
-                    // TODO - NEED TO RETURN THE updated ALERTLISTDO object - what to do with the encryption and signing?
-                    return new ResponseEntity<>(HttpStatus.OK);
-                } catch (Exception e) {
-                    throw new BadRequest400Exception("Unable to save Alert exception: " + e.getLocalizedMessage());
+                    PatientDownloadable pd = new PatientDownloadable(UUID.randomUUID().toString());
+                    pd.setPatientUuid(patient);
+                    pd.setScriptLocation(fnb.toString());
+                    pd.setVersion("1.0");
+                    pd.setVersionAuthor("concentrator-created");
+                    pd.setVersionDate(messageDate);
+                    pd.setSignature(createSignature(pd, file.getName()));
+
+                    patientDownloadableDAOImpl.save(pd);
+
+                    logger.log(PatientUploadServiceController.class.getName(), new Date().toString() + " Written Direct Message for Patient: " + patientUuid);
+                } catch (IOException e) {
+                    logger.log(PatientUploadServiceController.class.getName() + ".error", "Cannot save outbound Direct Message message payload to local drive - check the configured directory: " + alertmessagedir);
+                    throw new InternalServerError500Exception("Unable to save Direct Message to file and persist to DB: " + e.getLocalizedMessage());
+                } finally {
+                    try {
+                        if (fop != null) {
+                            fop.close();
+                        }
+                    } catch (IOException e) {
+                        logger.log(PatientUploadServiceController.class.getName() + ".error", "Cannot save outbound Direct Message message payload to local drive - check the configured directory: " + alertmessagedir);
+                    }
                 }
+
+                return new ResponseEntity<>(HttpStatus.OK);
+            } catch (Exception e) {
+                throw new BadRequest400Exception("Unable to save Direct Message exception: " + e.getLocalizedMessage());
+            }
         } catch (Exception e) {
-            throw new BadRequest400Exception("Alert Decryption exception: " + e.getLocalizedMessage());
+            throw new BadRequest400Exception("Direct Message Decryption exception: " + e.getLocalizedMessage());
         }
     }
 

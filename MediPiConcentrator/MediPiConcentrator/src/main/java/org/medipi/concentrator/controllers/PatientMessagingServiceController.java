@@ -46,8 +46,10 @@ public class PatientMessagingServiceController {
     @Autowired
     private MediPiLogger logger;
 
+    public static final int ALERT = 0;
+    public static final int SIMPLEMESSAGE = 1;
     /**
-     * Controller for uploading an encrypted and signed message to a patient
+     * Controller for uploading an encrypted and signed alert message to a patient
      * device. This method saves the incoming message to file, if configured and
      * passes the incoming message to the service layer for processing
      *
@@ -61,7 +63,24 @@ public class PatientMessagingServiceController {
         logger.log(PatientMessagingServiceController.class.getName(), new Date().toString() + " Alert received for patientUuid: " + patientUuid);
         EncryptedAndSignedUploadDO encryptedContent = easu;
 
-        return this.patientMessagingService.persistAlert(patientUuid, encryptedContent);
+        return this.patientMessagingService.persistDirectMessage(patientUuid, encryptedContent, ALERT);
     }
 
+    /**
+     * Controller for uploading an encrypted and signed simple message to a patient
+     * device. This method saves the incoming message to file, if configured and
+     * passes the incoming message to the service layer for processing
+     *
+     * @param easu Encrypted and signed alert data object
+     * @param patientUuid patientUuid of the intended recipient 
+     * @return Response to the request
+     */
+    @RequestMapping(value = "/simplemessage/{patientUuid}", method = RequestMethod.POST, produces = {MediaType.APPLICATION_JSON_VALUE}, consumes = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public ResponseEntity<EncryptedAndSignedUploadDO> sendSimpleMessage(@PathVariable("patientUuid") String patientUuid, @RequestBody EncryptedAndSignedUploadDO easu) {
+        logger.log(PatientMessagingServiceController.class.getName(), new Date().toString() + " Simple Message received for patientUuid: " + patientUuid);
+        EncryptedAndSignedUploadDO encryptedContent = easu;
+
+        return this.patientMessagingService.persistDirectMessage(patientUuid, encryptedContent, SIMPLEMESSAGE);
+    }
 }
