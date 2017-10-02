@@ -16,31 +16,33 @@
 package org.medipi.model;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Date;
 
 /**
  * Data Object for a list of Alerts
  * @author rick@robinsonhq.com
  */
-public class AlertListDO implements Serializable, DirectPatientMessage {
+public class SimpleMessageDO implements Serializable, DirectPatientMessage {
 
     private static final long serialVersionUID = 1L;
     private String patientUuid;
-    private List<AlertDO> alertList = new ArrayList<>();
+    private String simpleMessageText;
+    private Long simpleMessageId;
+    private Date simpleMessageTime;
 
-    public AlertListDO() {
+    public SimpleMessageDO() {
     }
 
-    public AlertListDO(String patientUuid) {
+    public SimpleMessageDO(String patientUuid) {
         this.patientUuid = patientUuid;
     }
 
-    public AlertListDO(String patientUuid, List<AlertDO> alertList) {
+    public SimpleMessageDO(String patientUuid, String simpleMessageText) {
         this.patientUuid = patientUuid;
-        this.alertList = alertList;
+        this.simpleMessageText = simpleMessageText;
     }
 
+    @Override
     public String getPatientUuid() {
         return patientUuid;
     }
@@ -49,18 +51,29 @@ public class AlertListDO implements Serializable, DirectPatientMessage {
         this.patientUuid = patientUuid;
     }
 
-    public List<AlertDO> getAlert() {
-        return alertList;
+    public String getSimpleMessageText() {
+        return simpleMessageText;
     }
 
-    public void setAlert(List<AlertDO> lastDownload) {
-        this.alertList = lastDownload;
+    public void setSimpleMessageText(String simpleMessageText) {
+        this.simpleMessageText = simpleMessageText;
     }
 
-    public void addAlert(AlertDO alert) {
-        this.alertList.add(alert);
+    public Long getSimpleMessageId() {
+        return simpleMessageId;
     }
 
+    public void setSimpleMessageId(Long simpleMessageId) {
+        this.simpleMessageId = simpleMessageId;
+    }
+
+    public Date getSimpleMessageTime() {
+        return simpleMessageTime;
+    }
+
+    public void setSimpleMessageTime(Date simpleMessageTime) {
+        this.simpleMessageTime = simpleMessageTime;
+    }
 
 
 }
