@@ -133,7 +133,7 @@ public class PollDownloads
             }
         } catch (ProcessingException pe) {
             MediPiLogger.getInstance().log(PollDownloads.class.getName() + ".error", "Attempt to retreive incoming messages has failed - MediPi Concentrator is not available - please try again later. " + pe.getLocalizedMessage());
-            MediPiMessageBox.getInstance().makeErrorMessage("Attempt to retreive incoming messages has failed - MediPi Concentrator is not available - please try again later.", pe);
+            MediPiMessageBox.getInstance().makeErrorMessage("Attempt to retreive incoming messages from the MediPi Server has failed - This may be an issue with your connection to the Internet or the MediPi Server could be down.\nIf this message appears persistently please check your connection and/or try again later.", null);
         } catch (Exception e) {
             MediPiLogger.getInstance().log(PollDownloads.class.getName() + ".error", "Error detected when attempting to poll the Concentrator: " + e.getLocalizedMessage());
             MediPiMessageBox.getInstance().makeErrorMessage("Error detected when attempting to poll the Concentrator: " + e.getLocalizedMessage(), e);

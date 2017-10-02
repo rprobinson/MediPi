@@ -20,14 +20,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import javafx.application.Platform;
-import javafx.geometry.Insets;
-import javafx.scene.Node;
-import javafx.scene.control.ButtonBar.ButtonData;
-import javafx.scene.control.ButtonType;
-import javafx.scene.control.Dialog;
-import javafx.scene.layout.GridPane;
-import javafx.util.Pair;
 import org.medipi.MediPi;
 import org.medipi.devices.Element;
 import org.medipi.devices.Scheduler;
@@ -178,7 +170,7 @@ public class DeviceTimestampChecker {
                     dataResponseMessage.append("A measurement taken at " + dataTime + " is in the future and therfore all data is deemed suspect. Please retake the reading.\n");
                     return null;
                 } else {
-                    dataResponseMessage.append("A measurement taken at " + dataTime + " is too old and has been ignored.\n");
+                    dataResponseMessage.append("A measurement taken at " + dataTime + " is too old and has been ignored.\n If no measurement appears on the MediPi Patient Device, please retake.\n");
                 }
 
         }
@@ -207,10 +199,10 @@ public class DeviceTimestampChecker {
                 requiredResult = true;
             } else //Physiological device clock is beyong the future limit therefore all data is questionable wrt timestamp - REJECT ALL
              if (dataTime.isAfter(postLimit)) {
-                    dataResponseMessage.append("A measurement taken at " + dataTime + " is in the future and therfore all data is deemed suspect.\n");
+                    dataResponseMessage.append("A measurement taken at " + dataTime + " is in the future and therfore all data is deemed suspect. Please retake the reading.\n");
                     unacceptableResult = true;
                 } else {
-                    dataResponseMessage.append("A measurement taken at " + dataTime + " is too old and has been ignored.\n");
+                    dataResponseMessage.append("A measurement taken at " + dataTime + " is too old and has been ignored.\n If no measurement appears on the MediPi Patient Device, please retake.\n");
                 }
 
         }
@@ -239,7 +231,7 @@ public class DeviceTimestampChecker {
                     //Physiological device clock is within scheduled period - accept
                     returnList.add(a);
                 } else {
-                    dataResponseMessage.append("A measurement taken at " + dataTime + " is outside the current scheduled period and have been ignored.\n");
+                    dataResponseMessage.append("A measurement taken at " + dataTime + " is outside the current scheduled period and have been ignored.\n If no measurement appears on the MediPi Patient Device, please retake.\n");
                 }
 
             }
