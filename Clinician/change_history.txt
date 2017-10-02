@@ -6,3 +6,8 @@ Changes since MediPiClinical_v1.0.2-PILOT-20170103-1
 - Addition of the ability to alert for situations where the threshold has been calculated as "postive" and "cannot calculate"
 - Addition of extra fields in alert to support representation of output on MediPi Patient results screen
 - Creation of RelativeInclusiveHighTest - a threshold test to measure if an incoming data point has exceeded a "value + buffer" boundary
+
+MediPiClinical PILOT-20170921-1
+- Refactored the direct messaging to separate messaging from the CLinical server into 2 types: SimpleMessages and Alerts.
+- New DB tables created to support the new messages. The response templates for these messages are now stored in the database so that they can be altered dynamically without the need for a restart.Addition of read timeout parameters for connection to Concentrator
+- Addition of timeout parameters for connection to Concentrator

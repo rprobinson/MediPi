@@ -126,3 +126,10 @@ Changes since MediPi_v1.0.13
 - improvements to understandability of alert messages to patient
 - addition of connection timeout to MediPi Concentrator
 
+Changes MediPi_v1.0.15 PILOT-20170920-1
+
+- Update the method which MediPi uses to access the data from the Continua Approved devices with the implementation of Signove Antidote library. This is now used for both the Nonin Pulse Oximeter and the Omron Blood Pressure cuff.
+- Update to the UI to improve the look and feel of the messages to the user.
+- Refactored the direct messaging to allow SimpleMessages to be directed to the Messenger Element and Alerts to the Responses Element. When Messenger is instantiated with "showdashboardtile No" it will now just show the incoming communication as a popup message, otherwise it will be displayed in the same table as previously.
+
+

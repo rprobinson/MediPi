@@ -23,3 +23,8 @@ Changes since MediPiConcentrator_v1.0.1-PILOT-20160911-1
 Changes since MediPiConcentrator_v1.0.3-PILOT-20170103-1
 - Addition of a back-off time period - Period in milliseconds which allows the database time to save any new incoming data and will not allow it to be queried until after this period has expired. When 3rd party systems (including the Clinical System) request data from MediPi Concentrator it will exlude data for the latest period to allow all data that might be in the process of being persisted in the database to be saved.
 
+MediPiConcentrator 1.0.6
+- Removed logging which is too verbose
+- Change to allow MediPi Concentrator to push messages containing the patient's UUID only to Slack upon receipt of patient data
+- Correct sending of script messaging for duplicate and non writing submissions to the DB
+- Refactored the direct messaging to separate messaging from the CLinical server into 2 types: SimpleMessages and Alerts. New HTTP interface created for the SimpleMessages so that each type of message can be handled type specifically
