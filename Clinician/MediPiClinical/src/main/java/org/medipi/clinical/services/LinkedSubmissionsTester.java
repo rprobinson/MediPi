@@ -15,6 +15,7 @@
  */
 package org.medipi.clinical.services;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -98,7 +99,9 @@ public class LinkedSubmissionsTester implements Tester {
                     }
                 }
                 responseText = responseText.replace(CONSECUTIVE_SUBMISSIONS, String.valueOf(consecutiveSubmissions));
-                responseText = responseText.replace(SUBMISSION_DATE, String.valueOf(new Date()));
+                SimpleDateFormat simpleDateFormat = new SimpleDateFormat("EEE d MMM, h:mm a");
+
+                responseText = responseText.replace(SUBMISSION_DATE, simpleDateFormat.format(new Date()));
 
                 CreateAlert(patient, simpleMessageDO, responseText);
             }
