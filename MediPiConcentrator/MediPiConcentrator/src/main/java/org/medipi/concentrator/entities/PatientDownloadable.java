@@ -81,7 +81,7 @@ public class PatientDownloadable implements Serializable {
     private Date downloadedDate;
     @Basic(optional = false)
     @NotNull
-    @Size(min = 1, max = 100)
+    @Size(min = 1, max = 1000)
     @Column(name = "script_location")
     private String scriptLocation;
     @Basic(optional = false)
