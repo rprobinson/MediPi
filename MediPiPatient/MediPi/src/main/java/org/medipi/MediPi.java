@@ -123,7 +123,7 @@ public class MediPi extends Application implements UnlockConsumer {
     // MediPi version Number
     private static final String MEDIPINAME = "MediPi Telehealth";
     private static final String VERSION = "MediPi_v1.0.15";
-    private static final String VERSIONNAME = "PILOT-20171002-1";
+    private static final String VERSIONNAME = "PILOT-20171003-1";
 
     // Set the MediPi Log directory
     private static final String LOG = "medipi.log";
