@@ -8,8 +8,9 @@ As tested by YorkEMC Services on 7th-21st April 2017
 
 Test Reports:
 
-[I'm a relative reference to a repository file](/EMC_Testing/12387TR1-EMC_Test_Report.pdf)
+[Electromagnetic Conformance (EMC) Test Report](/EMC_Testing/12387TR1-EMC_Test_Report.pdf)
 
+[Electromagnetic Conformance (EMC) Test Cerificate](/EMC_Testing/12388TC1-EMC_Test_Certificate.pdf)
 
 #### Component list
 * RPI3-MODB-16GB-NOOBS  Raspberry Pi 3 Model B & 16GB MicroSD card preloaded with NOOBS for the Raspberry Pi
