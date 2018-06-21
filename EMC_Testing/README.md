@@ -8,7 +8,7 @@ As tested by YorkEMC Services on 7th-21st April 2017
 
 Test Reports:
 
-[I'm a relative reference to a repository file](/home/riro/git/MediPi/EMC_Testing/12387TR1-EMC_Test_Report.pdf)
+[I'm a relative reference to a repository file](/EMC_Testing/12387TR1-EMC_Test_Report.pdf)
 
 
 #### Component list
