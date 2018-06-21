@@ -87,6 +87,7 @@ public class RESTfulMessagingEngine {
         builder.sslContext(sslContext);
         builder.hostnameVerifier(new javax.net.ssl.HostnameVerifier() {
 
+            @Override
             public boolean verify(String hostname,
                     javax.net.ssl.SSLSession sslSession) {
                 // verify is not necessary

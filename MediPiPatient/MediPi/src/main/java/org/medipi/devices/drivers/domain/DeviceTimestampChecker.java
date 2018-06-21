@@ -61,6 +61,9 @@ public class DeviceTimestampChecker {
     private MediPi medipi;
     private boolean enforceWithinCurrentScheduledPeriod = false;
     private boolean latestValueOnly = false;
+    private boolean tooOldMessage = false;
+    private boolean outsideThresholdPeriodMessage = false;
+    private boolean futureMessage = false;
 
     public DeviceTimestampChecker(MediPi m, Element elem) throws Exception {
         element = elem;
@@ -111,6 +114,9 @@ public class DeviceTimestampChecker {
     public ArrayList<ArrayList<String>> checkTimestamp(ArrayList<ArrayList<String>> list) {
         ArrayList<ArrayList<String>> result = new ArrayList<>();
         dataResponseMessage = new StringBuilder();
+        tooOldMessage = false;
+        outsideThresholdPeriodMessage = false;
+        futureMessage = false;
         if (list.isEmpty()) {
             dataResponseMessage.append("No data is available from the device.\n");
             return result;
@@ -124,7 +130,7 @@ public class DeviceTimestampChecker {
                 return i1.compareTo(i2);
             }
         });
-       
+
         if (storedDeviceTimestampDeviation == -1 && realtimeDeviceTimestampDeviation == -1) {
             return latestValueOnly(isWithinCurrentScheduledPeriod(list));
         }
@@ -152,7 +158,6 @@ public class DeviceTimestampChecker {
 
     }
 
-
     private ArrayList<ArrayList<String>> isStoredInPeriod(ArrayList<ArrayList<String>> inArray, int futureTollerance) {
         Instant now = Instant.now();
         ArrayList<ArrayList<String>> returnList = new ArrayList<ArrayList<String>>();
@@ -166,12 +171,16 @@ public class DeviceTimestampChecker {
                 //Physiological device clock is within stored threshold - accept
                 returnList.add(a);
             } else //Physiological device clock is beyong the future limit therefore all data is questionable wrt timestamp - REJECT ALL
-             if (dataTime.isAfter(postLimit)) {
-                    dataResponseMessage.append("A measurement taken at " + dataTime + " is in the future and therfore all data is deemed suspect. Please retake the reading.\n");
+            {
+                if (dataTime.isAfter(postLimit)) {
+                    futureMessage = true;
+//                    dataResponseMessage.append("A measurement taken at " + dataTime + " is in the future and therfore all data is deemed suspect. Please retake the reading.\n");
                     return null;
                 } else {
-                    dataResponseMessage.append("A measurement taken at " + dataTime + " is too old and has been ignored.\n If no measurement appears on the MediPi Patient Device, please retake.\n");
+                    tooOldMessage = true;
+//                    dataResponseMessage.append("A measurement taken at " + dataTime + " is too old and has been ignored.\n If no measurement appears on the MediPi Patient Device, please retake.\n");
                 }
+            }
 
         }
         // After having tested all results return those which are in the acceptable timeframe.
@@ -198,12 +207,16 @@ public class DeviceTimestampChecker {
                 //Physiological device clock is within REALTIME threshold - accept
                 requiredResult = true;
             } else //Physiological device clock is beyong the future limit therefore all data is questionable wrt timestamp - REJECT ALL
-             if (dataTime.isAfter(postLimit)) {
-                    dataResponseMessage.append("A measurement taken at " + dataTime + " is in the future and therfore all data is deemed suspect. Please retake the reading.\n");
+            {
+                if (dataTime.isAfter(postLimit)) {
+                    futureMessage = true;
+//                    dataResponseMessage.append("A measurement taken at " + dataTime + " is in the future and therfore all data is deemed suspect. Please retake the reading.\n");
                     unacceptableResult = true;
                 } else {
-                    dataResponseMessage.append("A measurement taken at " + dataTime + " is too old and has been ignored.\n If no measurement appears on the MediPi Patient Device, please retake.\n");
+                    tooOldMessage = true;
+//                    dataResponseMessage.append("A measurement taken at " + dataTime + " is too old and has been ignored.\n If no measurement appears on the MediPi Patient Device, please retake.\n");
                 }
+            }
 
         }
         // After having tested all results, provided that there is 1 acceptable 
@@ -231,7 +244,8 @@ public class DeviceTimestampChecker {
                     //Physiological device clock is within scheduled period - accept
                     returnList.add(a);
                 } else {
-                    dataResponseMessage.append("A measurement taken at " + dataTime + " is outside the current scheduled period and have been ignored.\n If no measurement appears on the MediPi Patient Device, please retake.\n");
+                    outsideThresholdPeriodMessage = true;
+//                    dataResponseMessage.append("A measurement taken at " + dataTime + " is outside the current scheduled period and have been ignored.\n If no measurement appears on the MediPi Patient Device, please retake.\n");
                 }
 
             }
@@ -274,6 +288,16 @@ public class DeviceTimestampChecker {
     }
 
     public String getMessages() {
+        if (tooOldMessage) {
+            dataResponseMessage.append("Some measurements taken were too old and have been ignored.\n If no measurement appears on the MediPi Patient Device, please retake.\n");
+        }
+        if (outsideThresholdPeriodMessage) {
+            dataResponseMessage.append("Some measurements taken were outside the current scheduled period and have been ignored.\n If no measurement appears on the MediPi Patient Device, please retake.\n");
+        }
+        if (futureMessage) {
+            dataResponseMessage.append("Some measurements taken were marked as being in the future and therfore deemed suspect. Please retake the reading.\n");
+        }
+
         if (dataResponseMessage.toString() == null || dataResponseMessage.toString().equals("")) {
             return null;
         } else {

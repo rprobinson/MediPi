@@ -61,6 +61,7 @@ public class ContinuaBloodPressure implements ContinuaMeasurement {
                 }else if(s.equals("0")){
                     dataValue[0] = "false";
                 }else{
+                    dataValue[0] = "true";
                     throw new Exception("Irregular Heart Beat units unrecognised");
                 }
                 break;
