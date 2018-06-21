@@ -24,8 +24,8 @@ Test Reports:
 * Advance Tapes AT7 Black PVC Electrical Insulation Tape, 19mm x 33m, 0.15mm Thick ~50cm required
 * 10cm Dupont Jumper Wire GPIO Cable  Female-Female x2
 
-| Image | Instructions  |
-| -------------- |:-------------:|
+| MediPi&nbsp;Patient&nbsp;Device&nbsp;Image&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; | Instructions  |
+| ---------------------------------|:-------------:|
 | ![Screenshot](images/1.jpg) | Unwrap the enclosure |
 |![Screenshot](images/2.jpg) | Stick the copper tape (cut into appropriately sized strips) on the inside of the boxed part of the enclosure. Place the strips side-by-side so that they touch and leave no gaps. Make sure the copper tape is pressed stuck on all sides and is firmly anchored in the corners. All the cut outs for the ports should be covered. Lastly add one small strip which covers the inside corner where there is a rebate for the LCD screen cable – this will make electrical contact with the copper tape and ground plane of the LCD screen.|
 |![Screenshot](images/3.jpg)|Take the LCD Touchscreen and make sure that the standoff posts are firmly tightened (they often are loose from the package). Firmly lock the inter-board ribbon cable into the lower board (ribbon contacts facing upwards). Slip the ribbon cable ferrite over the cable.|
