@@ -1,0 +1,286 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jmeterTestPlan version="1.2" properties="3.1" jmeter="3.1 r1770033">
+  <hashTree>
+    <TestPlan guiclass="TestPlanGui" testclass="TestPlan" testname="Test Plan" enabled="true">
+      <stringProp name="TestPlan.comments"></stringProp>
+      <boolProp name="TestPlan.functional_mode">false</boolProp>
+      <boolProp name="TestPlan.serialize_threadgroups">false</boolProp>
+      <elementProp name="TestPlan.user_defined_variables" elementType="Arguments" guiclass="ArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
+        <collectionProp name="Arguments.arguments"/>
+      </elementProp>
+      <stringProp name="TestPlan.user_define_classpath">/git/MediPi/Commons/MediPiTransportTools/target/MediPiTransportTools-1.0-SNAPSHOT.jar,/git/MediPi/MediPiPatient/MediPi/target/MediPi.jar</stringProp>
+    </TestPlan>
+    <hashTree>
+      <Arguments guiclass="ArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
+        <collectionProp name="Arguments.arguments"/>
+      </Arguments>
+      <hashTree/>
+      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Thread Group 1" enabled="true">
+        <stringProp name="ThreadGroup.on_sample_error">startnextloop</stringProp>
+        <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller" enabled="true">
+          <boolProp name="LoopController.continue_forever">false</boolProp>
+          <stringProp name="LoopController.loops">1</stringProp>
+        </elementProp>
+        <stringProp name="ThreadGroup.num_threads">50</stringProp>
+        <stringProp name="ThreadGroup.ramp_time">1</stringProp>
+        <longProp name="ThreadGroup.start_time">1489768290000</longProp>
+        <longProp name="ThreadGroup.end_time">1489768290000</longProp>
+        <boolProp name="ThreadGroup.scheduler">false</boolProp>
+        <stringProp name="ThreadGroup.duration"></stringProp>
+        <stringProp name="ThreadGroup.delay"></stringProp>
+        <boolProp name="ThreadGroup.delayedStart">true</boolProp>
+      </ThreadGroup>
+      <hashTree>
+        <BeanShellSampler guiclass="BeanShellSamplerGui" testclass="BeanShellSampler" testname="BeanShell Sampler" enabled="true">
+          <stringProp name="BeanShellSampler.query">import org.medipi.security.UploadEncryptionAdapter;
+import org.medipi.security.CertificateDefinitions;
+import org.medipi.model.EncryptedAndSignedUploadDO;
+import org.medipi.model.DevicesPayloadDO;
+import org.medipi.model.DeviceDataDO;
+import org.medipi.MediPiProperties;
+import java.time.Instant;
+import java.util.Date;
+import java.util.Properties;
+import java.util.UUID;
+import java.time.temporal.ChronoUnit;
+
+String scale = &quot;metadata-&gt;persist-&gt;medipiversion-&gt;MediPi_LOADTEST\nmetadata-&gt;make-&gt;Marsden\nmetadata-&gt;model-&gt;M-430\nmetadata-&gt;displayname-&gt;Marsden M-430 Scales\nmetadata-&gt;datadelimiter-&gt;^\nmetadata-&gt;scheduleeffectivedate-&gt;__SCHEDEFFDATE__\nmetadata-&gt;scheduleexpirydate-&gt;__SCHEDEXPDATE__\nmetadata-&gt;columns-&gt;iso8601time^weight^grossweight^tareweight^height^bmi\nmetadata-&gt;format-&gt;DATE^DOUBLE^DOUBLE^DOUBLE^DOUBLE^DOUBLE\nmetadata-&gt;units-&gt;NONE^kg^kg^kg^cm^NONE\n__TIME__^71.0^71.0^0.0^---^N/A\n&quot;;
+String oximeter = &quot;metadata-&gt;persist-&gt;medipiversion-&gt;MediPi_LOADTEST\nmetadata-&gt;make-&gt;Nonin\nmetadata-&gt;model-&gt;9560\nmetadata-&gt;displayname-&gt;Nonin 9560 Finger Pulse Oximeter\nmetadata-&gt;datadelimiter-&gt;^\nmetadata-&gt;scheduleeffectivedate-&gt;__SCHEDEFFDATE__\nmetadata-&gt;scheduleexpirydate-&gt;__SCHEDEXPDATE__\nmetadata-&gt;columns-&gt;iso8601time^pulse^spo2\nmetadata-&gt;format-&gt;DATE^INTEGER^INTEGER\nmetadata-&gt;units-&gt;NONE^BPM^%\n__TIME__^85^93\n&quot;;
+String bpSitting = &quot;metadata-&gt;persist-&gt;medipiversion-&gt;MediPi_LOADTEST\nmetadata-&gt;make-&gt;Omron\nmetadata-&gt;model-&gt;708-BT\nmetadata-&gt;displayname-&gt;Omron 708-BT Blood Pressure Meter (sitting)\nmetadata-&gt;datadelimiter-&gt;^\nmetadata-&gt;scheduleeffectivedate-&gt;__SCHEDEFFDATE__\nmetadata-&gt;scheduleexpirydate-&gt;__SCHEDEXPDATE__\nmetadata-&gt;columns-&gt;iso8601time^systol^diastol^pulserate^MAP\nmetadata-&gt;format-&gt;DATE^INTEGER^INTEGER^INTEGER^INTEGER\nmetadata-&gt;units-&gt;NONE^mmHg^mmHg^BPM^NONE\n__TIME__^132^105^59^103\n&quot;;
+String bpStanding = &quot;metadata-&gt;persist-&gt;medipiversion-&gt;MediPi_LOADTEST\nmetadata-&gt;make-&gt;Omron\nmetadata-&gt;model-&gt;708-BT\nmetadata-&gt;displayname-&gt;Omron 708-BT Blood Pressure Meter (standing)\nmetadata-&gt;datadelimiter-&gt;^\nmetadata-&gt;scheduleeffectivedate-&gt;__SCHEDEFFDATE__\nmetadata-&gt;scheduleexpirydate-&gt;__SCHEDEXPDATE__\nmetadata-&gt;columns-&gt;iso8601time^systol^diastol^pulserate^MAP\nmetadata-&gt;format-&gt;DATE^INTEGER^INTEGER^INTEGER^INTEGER\nmetadata-&gt;units-&gt;NONE^mmHg^mmHg^BPM^NONE\n__TIME__^150^110^59^113\n&quot;;
+String thermometer = &quot;metadata-&gt;persist-&gt;medipiversion-&gt;MediPi_LOADTEST\nmetadata-&gt;make-&gt;Braun\nmetadata-&gt;model-&gt;Pro\nmetadata-&gt;displayname-&gt;Braun Pro 6000 Tympanic Thermometer\nmetadata-&gt;datadelimiter-&gt;^\nmetadata-&gt;scheduleeffectivedate-&gt;__SCHEDEFFDATE__\nmetadata-&gt;scheduleexpirydate-&gt;__SCHEDEXPDATE__\nmetadata-&gt;columns-&gt;iso8601time^temperature\nmetadata-&gt;format-&gt;DATE^DOUBLE\nmetadata-&gt;units-&gt;NONE^CELSIUS\n__TIME__^39.5\n&quot;;
+String heartQuestionnaire = &quot;metadata-&gt;persist-&gt;medipiversion-&gt;MediPi_LOADTEST\nmetadata-&gt;persist-&gt;questionnaireversion-&gt;Heart Questionnaire\nmetadata-&gt;make-&gt;Heart Questionnaire\nmetadata-&gt;model-&gt;NONE\nmetadata-&gt;displayname-&gt;Heart Questionnaire\nmetadata-&gt;datadelimiter-&gt;^\nmetadata-&gt;scheduleeffectivedate-&gt;__SCHEDEFFDATE__\nmetadata-&gt;scheduleexpirydate-&gt;__SCHEDEXPDATE__\nmetadata-&gt;columns-&gt;iso8601time^outcome\nmetadata-&gt;format-&gt;DATE^STRING\nmetadata-&gt;units-&gt;NONE^NONE\n__TIME__^{\&quot;status\&quot;:\&quot;GREEN_FLAG\&quot;,\&quot;conversation\&quot;:[[\&quot;Are you waking in the night finding it difficult to breathe?\&quot;,\&quot;No\&quot;],[\&quot;Are you using more pillows to sleep?\&quot;,\&quot;No\&quot;],[\&quot;Are you feeling more breathless than usual today?\&quot;,\&quot;No\&quot;],[\&quot;Do you feel more bloated in the abdomen before eating?\&quot;,\&quot;No\&quot;],[\&quot;Are you coughing up frothy sputum?\&quot;,\&quot;No\&quot;],[\&quot;Are your ankles more swollen than usual?\&quot;,\&quot;No\&quot;]],\&quot;advice\&quot;:\&quot;Good, please take your medication as prescribed, if you are concerned about your symptoms please contact your nurse or GP for advice\&quot;}\n&quot;;
+String copdQuestionnaire = &quot;metadata-&gt;persist-&gt;medipiversion-&gt;MediPi_LOADTEST\nmetadata-&gt;persist-&gt;questionnaireversion-&gt;COPD Questionnaire\nmetadata-&gt;make-&gt;COPD Questionnaire\nmetadata-&gt;model-&gt;NONE\nmetadata-&gt;displayname-&gt;COPD Questionnaire\nmetadata-&gt;datadelimiter-&gt;^\nmetadata-&gt;scheduleeffectivedate-&gt;__SCHEDEFFDATE__\nmetadata-&gt;scheduleexpirydate-&gt;__SCHEDEXPDATE__\nmetadata-&gt;columns-&gt;iso8601time^outcome\nmetadata-&gt;format-&gt;DATE^STRING\nmetadata-&gt;units-&gt;NONE^NONE\n__TIME__^{\&quot;status\&quot;:\&quot;RED_FLAG\&quot;,\&quot;conversation\&quot;:[[\&quot;Are you feeling more breathless or coughing more than usual today?\&quot;,\&quot;Yes\&quot;],[\&quot;Increase your bronchodilator as advised by your key worker. Is your cough or breathlessness much worse than usual?\&quot;,\&quot;Yes\&quot;],[\&quot;Has your cough or breathlessness been worse for more than a day?\&quot;,\&quot;Yes\&quot;],[\&quot;Have you found it more difficult to undertake your normal routine?\&quot;,\&quot;Yes\&quot;],[\&quot;Are you coughing up sputum?\&quot;,\&quot;Yes\&quot;],[\&quot;Has the amount of sputum increased or become more difficult to clear?\&quot;,\&quot;Yes\&quot;],[\&quot;Has your sputum changed colour or thickness since yesterday?\&quot;,\&quot;Yes\&quot;]],\&quot;advice\&quot;:\&quot;Keep following your management plan, or seek advice from your key worker.\&quot;}\n&quot;;
+String diabetesQuestionnaire = &quot;metadata-&gt;persist-&gt;medipiversion-&gt;MediPi_LOADTEST\nmetadata-&gt;persist-&gt;questionnaireversion-&gt;Diabetes Questionnaire\nmetadata-&gt;make-&gt;Diabetes Questionnaire\nmetadata-&gt;model-&gt;NONE\nmetadata-&gt;displayname-&gt;Diabetes Questionnaire\nmetadata-&gt;datadelimiter-&gt;^\nmetadata-&gt;scheduleeffectivedate-&gt;__SCHEDEFFDATE__\nmetadata-&gt;scheduleexpirydate-&gt;__SCHEDEXPDATE__\nmetadata-&gt;columns-&gt;iso8601time^outcome\nmetadata-&gt;format-&gt;DATE^STRING\nmetadata-&gt;units-&gt;NONE^NONE\n__TIME__^{\&quot;status\&quot;:\&quot;RED_FLAG\&quot;,\&quot;conversation\&quot;:[[\&quot;Are you feeling well today?\&quot;,\&quot;No\&quot;],[\&quot;Have you felt excessively thirsty?\&quot;,\&quot;Yes\&quot;]],\&quot;advice\&quot;:\&quot;Please contact your diabetes nurse for further advice\&quot;}&quot;;
+System.out.println(Instant.now().truncatedTo(ChronoUnit.DAYS));
+
+        MediPiProperties mpp = MediPiProperties.getInstance();
+        if (!mpp.setProperties(&quot;/MediPi_v1.0.15_Live/MediPi.properties&quot;)) {
+            System.out.println(&quot;fail&quot;);
+//return;
+        }
+        Properties properties = mpp.getProperties();
+
+        DevicesPayloadDO devicesPayload = new DevicesPayloadDO(UUID.randomUUID().toString());
+        devicesPayload.setUploadedDate(Date.from(Instant.now()));
+        
+        DeviceDataDO payload = new DeviceDataDO(UUID.randomUUID().toString());
+        payload.setProfileId(&quot;urn:nhs-en:profile:DiagnosticScale&quot;);
+        scale = scale.replace(&quot;__SCHEDEFFDATE__&quot;,Instant.now().truncatedTo(ChronoUnit.DAYS).toString());
+        scale = scale.replace(&quot;__SCHEDEXPDATE__&quot;,Instant.now().truncatedTo(ChronoUnit.DAYS).plus(1,ChronoUnit.DAYS).toString());
+        scale = scale.replace(&quot;__TIME__&quot;,Instant.now().toString());
+        payload.setPayload(scale);
+        devicesPayload.addPayload(payload);
+
+        DeviceDataDO payload = new DeviceDataDO(UUID.randomUUID().toString());
+        payload.setProfileId(&quot;urn:nhs-en:profile:BloodPressureSitting&quot;);
+        bpSitting = bpSitting.replace(&quot;__SCHEDEFFDATE__&quot;,Instant.now().truncatedTo(ChronoUnit.DAYS).toString());
+        bpSitting = bpSitting.replace(&quot;__SCHEDEXPDATE__&quot;,Instant.now().truncatedTo(ChronoUnit.DAYS).plus(1,ChronoUnit.DAYS).toString());
+        bpSitting = bpSitting.replace(&quot;__TIME__&quot;,Instant.now().toString());
+        payload.setPayload(bpSitting);
+        devicesPayload.addPayload(payload);
+
+        payload = new DeviceDataDO(UUID.randomUUID().toString());
+        payload.setProfileId(&quot;urn:nhs-en:profile:Oximeter&quot;);
+        oximeter = oximeter.replace(&quot;__SCHEDEFFDATE__&quot;,Instant.now().truncatedTo(ChronoUnit.DAYS).toString());
+        oximeter = oximeter.replace(&quot;__SCHEDEXPDATE__&quot;,Instant.now().truncatedTo(ChronoUnit.DAYS).plus(1,ChronoUnit.DAYS).toString());
+        oximeter = oximeter.replace(&quot;__TIME__&quot;,Instant.now().toString());
+        payload.setPayload(oximeter);
+        devicesPayload.addPayload(payload);
+
+        payload = new DeviceDataDO(UUID.randomUUID().toString());
+        payload.setProfileId(&quot;urn:nhs-en:profile:Thermometer&quot;);
+        thermometer = thermometer.replace(&quot;__SCHEDEFFDATE__&quot;,Instant.now().truncatedTo(ChronoUnit.DAYS).toString());
+        thermometer = thermometer.replace(&quot;__SCHEDEXPDATE__&quot;,Instant.now().truncatedTo(ChronoUnit.DAYS).plus(1,ChronoUnit.DAYS).toString());
+        thermometer = thermometer.replace(&quot;__TIME__&quot;,Instant.now().toString());
+        payload.setPayload(thermometer);
+        devicesPayload.addPayload(payload);
+
+        DeviceDataDO payload = new DeviceDataDO(UUID.randomUUID().toString());
+        payload.setProfileId(&quot;urn:nhs-en:profile:BloodPressureStanding&quot;);
+        bpStanding = bpStanding.replace(&quot;__SCHEDEFFDATE__&quot;,Instant.now().truncatedTo(ChronoUnit.DAYS).toString());
+        bpStanding = bpStanding.replace(&quot;__SCHEDEXPDATE__&quot;,Instant.now().truncatedTo(ChronoUnit.DAYS).plus(1,ChronoUnit.DAYS).toString());
+        bpStanding = bpStanding.replace(&quot;__TIME__&quot;,Instant.now().toString());
+        payload.setPayload(bpStanding);
+        devicesPayload.addPayload(payload);
+        
+        payload = new DeviceDataDO(UUID.randomUUID().toString());
+        payload.setProfileId(&quot;urn:nhs-en:profile:Questionnaire&quot;);
+        heartQuestionnaire = heartQuestionnaire.replace(&quot;__SCHEDEFFDATE__&quot;,Instant.now().truncatedTo(ChronoUnit.DAYS).toString());
+        heartQuestionnaire = heartQuestionnaire.replace(&quot;__SCHEDEXPDATE__&quot;,Instant.now().truncatedTo(ChronoUnit.DAYS).plus(1,ChronoUnit.DAYS).toString());
+        heartQuestionnaire = heartQuestionnaire.replace(&quot;__TIME__&quot;,Instant.now().toString());
+        payload.setPayload(heartQuestionnaire);
+        devicesPayload.addPayload(payload);
+        
+        payload = new DeviceDataDO(UUID.randomUUID().toString());
+        payload.setProfileId(&quot;urn:nhs-en:profile:Questionnaire&quot;);
+        copdQuestionnaire = copdQuestionnaire.replace(&quot;__SCHEDEFFDATE__&quot;,Instant.now().truncatedTo(ChronoUnit.DAYS).toString());
+        copdQuestionnaire = copdQuestionnaire.replace(&quot;__SCHEDEXPDATE__&quot;,Instant.now().truncatedTo(ChronoUnit.DAYS).plus(1,ChronoUnit.DAYS).toString());
+        copdQuestionnaire = copdQuestionnaire.replace(&quot;__TIME__&quot;,Instant.now().toString());
+        payload.setPayload(copdQuestionnaire);
+        devicesPayload.addPayload(payload);
+
+        payload = new DeviceDataDO(UUID.randomUUID().toString());
+        payload.setProfileId(&quot;urn:nhs-en:profile:Questionnaire&quot;);
+        diabetesQuestionnaire = diabetesQuestionnaire.replace(&quot;__SCHEDEFFDATE__&quot;,Instant.now().truncatedTo(ChronoUnit.DAYS).toString());
+        diabetesQuestionnaire = diabetesQuestionnaire.replace(&quot;__SCHEDEXPDATE__&quot;,Instant.now().truncatedTo(ChronoUnit.DAYS).plus(1,ChronoUnit.DAYS).toString());
+        diabetesQuestionnaire = diabetesQuestionnaire.replace(&quot;__TIME__&quot;,Instant.now().toString());
+        payload.setPayload(diabetesQuestionnaire);
+        devicesPayload.addPayload(payload);
+
+        try {
+//Set up the encryption and signing adaptor
+            System.setProperty(&quot;medipi.patient.cert.password&quot;, new String(&quot;**CERT_PASSWORD**&quot;));
+            UploadEncryptionAdapter uploadEncryptionAdapter = new UploadEncryptionAdapter();
+            CertificateDefinitions cd = new CertificateDefinitions(properties);
+            cd.setSIGNKEYSTOREPASSWORD(&quot;medipi.patient.cert.password&quot;, CertificateDefinitions.SYSTEM);
+            cd.setSIGNKEYSTOREALIAS(&quot;medipi.patient.cert.alias&quot;, CertificateDefinitions.INTERNAL);
+            cd.setSIGNKEYSTORELOCATION(&quot;medipi.patient.cert.location&quot;, CertificateDefinitions.INTERNAL);
+            String error = uploadEncryptionAdapter.init(cd, UploadEncryptionAdapter.CLIENTMODE);
+            if (error != null) {
+                System.out.println(error);
+            }
+            EncryptedAndSignedUploadDO encryptedMessage = uploadEncryptionAdapter.encryptAndSign(devicesPayload);
+            vars.put(&quot;cipherData&quot;,encryptedMessage.getCipherData());
+            vars.put(&quot;encryptedKey&quot;,encryptedMessage.getEncryptedKey());
+            vars.put(&quot;uploadUuid&quot;,encryptedMessage.getUploadUuid());
+            System.out.println(encryptedMessage.toString());
+        } catch (Exception ex) {
+            System.out.println(&quot;exception &quot; + ex.getLocalizedMessage());
+        }
+</stringProp>
+          <stringProp name="BeanShellSampler.filename"></stringProp>
+          <stringProp name="BeanShellSampler.parameters"></stringProp>
+          <boolProp name="BeanShellSampler.resetInterpreter">false</boolProp>
+        </BeanShellSampler>
+        <hashTree/>
+        <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Response Assertion" enabled="true">
+          <collectionProp name="Asserion.test_strings">
+            <stringProp name="49586">200</stringProp>
+          </collectionProp>
+          <stringProp name="Assertion.test_field">Assertion.response_code</stringProp>
+          <boolProp name="Assertion.assume_success">false</boolProp>
+          <intProp name="Assertion.test_type">16</intProp>
+        </ResponseAssertion>
+        <hashTree/>
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="HTTP Request" enabled="true">
+          <boolProp name="HTTPSampler.postBodyRaw">true</boolProp>
+          <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+            <collectionProp name="Arguments.arguments">
+              <elementProp name="" elementType="HTTPArgument">
+                <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                <stringProp name="Argument.value">{&quot;cipherData&quot;:&quot;${cipherData}&quot;,&quot;encryptedKey&quot;:&quot;${encryptedKey}&quot;,&quot;uploadUuid&quot;:&quot;${uploadUuid}&quot;}</stringProp>
+                <stringProp name="Argument.metadata">=</stringProp>
+              </elementProp>
+            </collectionProp>
+          </elementProp>
+          <stringProp name="HTTPSampler.domain">**MEDIPI_CONCENTRATOR_IP**</stringProp>
+          <stringProp name="HTTPSampler.port">443</stringProp>
+          <stringProp name="HTTPSampler.connect_timeout"></stringProp>
+          <stringProp name="HTTPSampler.response_timeout"></stringProp>
+          <stringProp name="HTTPSampler.protocol">https</stringProp>
+          <stringProp name="HTTPSampler.contentEncoding"></stringProp>
+          <stringProp name="HTTPSampler.path">/MediPiConcentrator/webresources/patientupload/**TEST_DEVICE_UUID**/**TEST_PATIENT_UUID**</stringProp>
+          <stringProp name="HTTPSampler.method">PUT</stringProp>
+          <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+          <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
+          <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+          <boolProp name="HTTPSampler.DO_MULTIPART_POST">false</boolProp>
+          <stringProp name="HTTPSampler.implementation">HttpClient4</stringProp>
+          <boolProp name="HTTPSampler.monitor">false</boolProp>
+          <stringProp name="HTTPSampler.embedded_url_re"></stringProp>
+        </HTTPSamplerProxy>
+        <hashTree>
+          <KeystoreConfig guiclass="TestBeanGUI" testclass="KeystoreConfig" testname="Keystore Configuration" enabled="true">
+            <stringProp name="preload">True</stringProp>
+            <stringProp name="clientCertAliasVarName"></stringProp>
+            <stringProp name="startIndex"></stringProp>
+            <stringProp name="endIndex"></stringProp>
+          </KeystoreConfig>
+          <hashTree/>
+        </hashTree>
+        <ResultCollector guiclass="TableVisualizer" testclass="ResultCollector" testname="View Results in Table" enabled="true">
+          <boolProp name="ResultCollector.error_logging">false</boolProp>
+          <objProp>
+            <name>saveConfig</name>
+            <value class="SampleSaveConfiguration">
+              <time>true</time>
+              <latency>true</latency>
+              <timestamp>true</timestamp>
+              <success>true</success>
+              <label>true</label>
+              <code>true</code>
+              <message>true</message>
+              <threadName>true</threadName>
+              <dataType>true</dataType>
+              <encoding>false</encoding>
+              <assertions>true</assertions>
+              <subresults>true</subresults>
+              <responseData>false</responseData>
+              <samplerData>false</samplerData>
+              <xml>true</xml>
+              <fieldNames>false</fieldNames>
+              <responseHeaders>false</responseHeaders>
+              <requestHeaders>false</requestHeaders>
+              <responseDataOnError>false</responseDataOnError>
+              <saveAssertionResultsFailureMessage>false</saveAssertionResultsFailureMessage>
+              <assertionsResultsToSave>0</assertionsResultsToSave>
+              <bytes>true</bytes>
+            </value>
+          </objProp>
+          <stringProp name="filename"></stringProp>
+        </ResultCollector>
+        <hashTree/>
+        <ResultCollector guiclass="ViewResultsFullVisualizer" testclass="ResultCollector" testname="View Results Tree" enabled="true">
+          <boolProp name="ResultCollector.error_logging">false</boolProp>
+          <objProp>
+            <name>saveConfig</name>
+            <value class="SampleSaveConfiguration">
+              <time>true</time>
+              <latency>true</latency>
+              <timestamp>true</timestamp>
+              <success>true</success>
+              <label>true</label>
+              <code>true</code>
+              <message>true</message>
+              <threadName>true</threadName>
+              <dataType>true</dataType>
+              <encoding>false</encoding>
+              <assertions>true</assertions>
+              <subresults>true</subresults>
+              <responseData>false</responseData>
+              <samplerData>false</samplerData>
+              <xml>false</xml>
+              <fieldNames>false</fieldNames>
+              <responseHeaders>false</responseHeaders>
+              <requestHeaders>false</requestHeaders>
+              <responseDataOnError>false</responseDataOnError>
+              <saveAssertionResultsFailureMessage>false</saveAssertionResultsFailureMessage>
+              <assertionsResultsToSave>0</assertionsResultsToSave>
+              <bytes>true</bytes>
+            </value>
+          </objProp>
+          <stringProp name="filename"></stringProp>
+        </ResultCollector>
+        <hashTree/>
+        <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="HTTP Header Manager" enabled="true">
+          <collectionProp name="HeaderManager.headers">
+            <elementProp name="" elementType="Header">
+              <stringProp name="Header.name">Content-Type</stringProp>
+              <stringProp name="Header.value">application/json</stringProp>
+            </elementProp>
+            <elementProp name="" elementType="Header">
+              <stringProp name="Header.name">Accept</stringProp>
+              <stringProp name="Header.value">application/json</stringProp>
+            </elementProp>
+            <elementProp name="" elementType="Header">
+              <stringProp name="Header.name">Data-Format</stringProp>
+              <stringProp name="Header.value">MediPiNative</stringProp>
+            </elementProp>
+          </collectionProp>
+        </HeaderManager>
+        <hashTree/>
+      </hashTree>
+    </hashTree>
+  </hashTree>
+</jmeterTestPlan>

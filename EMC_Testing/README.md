@@ -1,12 +1,12 @@
-# MediPi Patient Device Build Instructions
-### This guide instructs how to construct a Raspberry Pi Device which will conform to the following Specifications:
+# MediPi Patient Device Build Instructions and Electromagnetic Conformance Testing
+The MediPi Patient device is built using a Raspberry Pi with a touch screen display within a plastic enclosure. Although the Raspberry Pi, the screen and the power supply have individually been tested by the Raspberry Pi Foundation against the Electromagnetic Conformance specification, the unit as a whole has not been. Additionally, the standard for electromagnetic radiated emissions for electronic equipment which will be used for patients who may be using sensitive medical devices such as pacemakers is higher. This guide instructs how to construct a Raspberry Pi Device which will conform to the following specifications:
 
-EN60601-1-2:2007 + Corr.20
-Medical electrical equipment – Part 1: general requirements for safety. Section 1.2 Collateral Standard: Electromagnetic Compatibility – Requirements and tests.
+**EN60601-1-2:2007 + Corr.20**  
+** Medical electrical equipment - Part 1: general requirements for safety. Section 1.2 Collateral Standard: Electromagnetic Compatibility – Requirements and tests.**
 
-As tested by YorkEMC Services on 7th-21st April 2017
+As tested by York EMC Services on 7th-21st April 2017
 
-Test Reports:
+Test Reports and Certificates:
 
 [Electromagnetic Conformance (EMC) Test Report](/EMC_Testing/12387TR1-EMC_Test_Report.pdf)
 
