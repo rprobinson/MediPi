@@ -17,15 +17,15 @@ Functional testing of the end to end functionality of the MediPi remote patient 
    *	Patient detailed view screen including threshold management
 
 #### Test Evidence
-[MediPi Test Report Executive](/FuntionalTesting/MediPiTestReportv0.5.doc)  
-[MediPi Full Test Schedule and Evidence](/FuntionalTesting/MediPi-NHSDigitalFunctionalTestScheduleandEvidence.docx)
+[MediPi Test Report Executive](/Testing/FunctionalTesting/MediPiTestReportv0.5.doc)  
+[MediPi Full Test Schedule and Evidence](/Testing/FunctionalTesting/MediPi-NHSDigitalFunctionalTestScheduleandEvidence.docx)
 
 ## Non-Functional Testing
 Some basic non-functional testing was carried out using Apache JMeter 3.1.
 The tests were carried out by injecting 50 concurrent threads to both:
-* MediPi Concentrator - Patient Upload interface: [JMeter script](/NonFunctionalTestingScripts/MediPi_Concentrator_Patient_Upload.jmx)
-* MediPi Clinical Server - Web Front End: [JMeter script](/NonFunctionalTestingScripts/MediPi_Front_End.jmx)
+* MediPi Concentrator - Patient Upload interface: [JMeter script](/Testing/NonFunctionalTestingScripts/MediPi_Concentrator_Patient_Upload.jmx)
+* MediPi Clinical Server - Web Front End: [JMeter script](/Testing/NonFunctionalTestingScripts/MediPi_Front_End.jmx)
 
 #### Test Evidence
- [MediPi Concentrator test evidence](/NonFunctionalTestingScripts/MediPiConcentratorPatientLoadTest.xml)  
-[MediPi Clinical Web Server test evidence](/NonFunctionalTestingScripts/MediPiFrontEndLoadTest.xml)
+ [MediPi Concentrator test evidence](/Testing/NonFunctionalTestingScripts/MediPiConcentratorPatientLoadTest.xml)  
+[MediPi Clinical Web Server test evidence](/Testing/NonFunctionalTestingScripts/MediPiFrontEndLoadTest.xml)
