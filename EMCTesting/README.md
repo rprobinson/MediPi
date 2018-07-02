@@ -1,17 +1,20 @@
 # MediPi Patient Device Build Instructions and Electromagnetic Conformance Testing
 The MediPi Patient device is built using a Raspberry Pi with a touch screen display within a plastic enclosure. Although the Raspberry Pi, the screen and the power supply have individually been tested by the Raspberry Pi Foundation against the Electromagnetic Conformance specification, the unit as a whole has not been. Additionally, the standard for electromagnetic radiated emissions for electronic equipment which will be used for patients who may be using sensitive medical devices such as pacemakers is higher.
-The biggest issues we had were controlling the Raspberry Pi unit's electromagnetic emmissions as, without any control, was too high. Controlling measures were iteratively taken and re-tested. This was a time consuming process as each iteration could take >1hr.  Controlling measures included ferrite sleeves, shortening of excess cables and copper tape sheilding - see guide below. The final solution could probably be improved upon with more time. Here are the 30MHz-1GHz improvements that were made before (above) and after (below):
 
-![Screenshot](images/emmissions_chamber_tests/007.JPG)
+The biggest issues we had were controlling the Raspberry Pi unit's electromagnetic emmissions, which uncontrolled were too high. Controlling measures were iteratively taken and re-tested. This was a time consuming process as each iteration could take >1hr.  Controlling measures included ferrite sleeves, shortening of excess cables and copper tape sheilding - see guide below. The final solution could probably be improved upon with more time.
+
+Here are the 30MHz-1GHz improvements that were made:
+
+![Screenshot](images/emmissions_chamber_tests/30MHz-1GHz.jpg)
 
 Electromagnetic Conformance Testing was carried out at [York EMC Services](www.yorkemc.com), taking 5 days.
 
-|  ![Screenshot](images/emmissions_chamber_tests/001.JPG) |![Screenshot](images/emmissions_chamber_tests/002.JPG)|  ![Screenshot](images/emmissions_chamber_tests/003.JPG)
-| -------------|-------------|-------------|
-|  ![Screenshot](images/emmissions_chamber_tests/004.JPG) |![Screenshot](images/emmissions_chamber_tests/005.JPG)|  ![Screenshot](images/emmissions_chamber_tests/006.JPG)
-|![Screenshot](images/lab_tests/001.JPG)|![Screenshot](images/lab_tests/002.JPG)|![Screenshot](images/lab_tests/003.JPG)|
-|![Screenshot](images/lab_tests/004.JPG)|![Screenshot](images/lab_tests/005.JPG)|![Screenshot](images/lab_tests/006.JPG)|
-|![Screenshot](images/lab_tests/007.JPG)||||
+|  ![Screenshot](images/emmissions_chamber_tests/001.JPG) Radiated RF Immunity, <1GHz|![Screenshot](images/emmissions_chamber_tests/002.JPG)Radiated Emissions, <1GHz|  ![Screenshot](images/emmissions_chamber_tests/003.JPG)Radiated Emissions, >1GHz
+| :-------------|:-------------|:-------------|
+|![Screenshot](images/emmissions_chamber_tests/004.JPG) Semi Anechoic Chamber|![Screenshot](images/emmissions_chamber_tests/005.JPG)Radiated Emissions, >1GHz|  ![Screenshot](images/emmissions_chamber_tests/006.JPG) Radiated RF Immunity, <1GHz
+|![Screenshot](images/lab_tests/001.JPG) Conducted Emmisions Test|![Screenshot](images/lab_tests/002.JPG)EFT/B, Power lines|![Screenshot](images/lab_tests/003.JPG)Conducted RF Immunity, Power Lines|
+|![Screenshot](images/lab_tests/004.JPG)ESD Test|![Screenshot](images/lab_tests/005.JPG)Voltage dips and interruptions immunity setup|![Screenshot](images/lab_tests/006.JPG)Mains Harmonic Emmisions And Voltage Fluctuations Test|
+|![Screenshot](images/lab_tests/007.JPG)Power Frequency Magnetic Immunity||||
 
 **EN60601-1-2:2007 + Corr.20**  
 ** Medical electrical equipment - Part 1: general requirements for safety. Section 1.2 Collateral Standard: Electromagnetic Compatibility – Requirements and tests.**
