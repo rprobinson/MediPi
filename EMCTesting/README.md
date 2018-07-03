@@ -3,8 +3,6 @@ The MediPi Patient device is built using a Raspberry Pi with a touch screen disp
 
 The biggest issues we had were controlling the Raspberry Pi unit's electromagnetic emmissions, which uncontrolled were too high. Controlling measures were iteratively taken and re-tested. This was a time consuming process as each iteration could take >1hr.  Controlling measures included ferrite sleeves, shortening of excess cables and copper tape sheilding - see guide below. The final solution could probably be improved upon with more time.
 
-[click on this link](#component-list)
-
 Here are the 30MHz-1GHz improvements that were made:
 
 ![Screenshot](images/emmissions_chamber_tests/30MHz-1GHz.jpg)
