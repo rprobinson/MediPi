@@ -21,9 +21,9 @@ Additionally, in response to clinicians' requests, we developed a daily subjecti
 
 Measurements and information from these devices/interfaces was then transmitted securely to the MediPi Concentrator. From this central hub server approved systems can securely request patient data to process and present to clinicians. For the purposes of the pilot we developed a mock clinical system to perform these actions.
 
-|![Screenshot](images/IMG_20180703_110407.jpg)|![Screenshot](images/IMG_20180703_110425.jpg)
+|![Screenshot](https://github.com/rprobinson/MediPi/blob/master/images/IMG_20180703_110407.jpg)|![Screenshot](https://github.com/rprobinson/MediPi/blob/master/images/IMG_20180703_110425.jpg)
 |:-----:|:-----:|
-|![Screenshot](images/IMG_20180703_122749.jpg)|
+|![Screenshot](https://github.com/rprobinson/MediPi/blob/master/images/IMG_20180703_122749.jpg)|
 
 
 
