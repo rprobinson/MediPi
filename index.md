@@ -23,7 +23,9 @@ Measurements and information from these devices/interfaces was then transmitted 
 
 |![Screenshot](https://github.com/rprobinson/MediPi/blob/master/images/IMG_20180703_110407.jpg)|![Screenshot](https://github.com/rprobinson/MediPi/blob/master/images/IMG_20180703_110425.jpg)
 |:-----:|:-----:|
-|![Screenshot](https://github.com/rprobinson/MediPi/blob/master/images/IMG_20180703_122749.jpg)|
+
+
+[Screenshot](https://github.com/rprobinson/MediPi/blob/master/images/IMG_20180703_122749.jpg)
 
 
 
