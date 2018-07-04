@@ -24,6 +24,8 @@ Measurements and information from these devices/interfaces was then transmitted 
 |![Screenshot](https://user-images.githubusercontent.com/13271321/42266243-c41911bc-7f6d-11e8-8fb6-3aeb288d62d0.jpg)|![Screenshot](https://user-images.githubusercontent.com/13271321/42266244-c43370fc-7f6d-11e8-8647-659dec18d142.jpg)
 |:-----:|:-----:|
 
+<blockquote class="twitter-tweet" data-lang="en"><p lang="en" dir="ltr">MEDIPI IS OUT &amp; in our patient&#39;s homes enabling greater self-management &amp; saving our nurses valuable time <a href="https://twitter.com/NHSDigital?ref_src=twsrc%5Etfw">@NHSDigital</a> <a href="https://twitter.com/whtimes?ref_src=twsrc%5Etfw">@whtimes</a> <a href="https://t.co/qFIlAMPE6K">pic.twitter.com/qFIlAMPE6K</a></p>&mdash; Hertfordshire Community NHS Trust (@HCTNHS) <a href="https://twitter.com/HCTNHS/status/885389620216823808?ref_src=twsrc%5Etfw">July 13, 2017</a></blockquote>
+<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
 
 
 The GitHub repository has been used an open-source repository for all aspects of the project wherever possible. Other than code, this includes software testing results, Electromagnetic Conformance (EMC) testing etc...  
