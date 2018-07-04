@@ -23,7 +23,6 @@ Measurements and information from these devices/interfaces was then transmitted 
 
 |![Screenshot](https://user-images.githubusercontent.com/13271321/42266243-c41911bc-7f6d-11e8-8fb6-3aeb288d62d0.jpg)|![Screenshot](https://user-images.githubusercontent.com/13271321/42266244-c43370fc-7f6d-11e8-8647-659dec18d142.jpg)
 |:-----:|:-----:|
-|![Screenshot](https://user-images.githubusercontent.com/13271321/42266245-c44de4c8-7f6d-11e8-9c78-ea88a5c9e880.jpg)|
 
 
 
