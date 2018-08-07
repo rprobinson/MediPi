@@ -17,15 +17,15 @@ Functional testing of the end to end functionality of the MediPi remote patient 
    *	Patient detailed view screen including threshold management
 
 #### Test Evidence
-[MediPi Test Report Executive](/Testing/FunctionalTesting/MediPiTestReportv0.5.doc)  
-[MediPi Full Test Schedule and Evidence](/Testing/FunctionalTesting/MediPi-NHSDigitalFunctionalTestScheduleandEvidence.docx)
+[MediPi Test Report Executive](https://github.com/rprobinson/MediPi/tree/master/SoftwareTesting/FunctionalTesting/MediPiTestReportv0.5.doc)  
+[MediPi Full Test Schedule and Evidence](https://github.com/rprobinson/MediPi/tree/master/SoftwareTesting/FunctionalTesting/MediPi-NHSDigitalFunctionalTestScheduleandEvidence.docx)
 
 ## Non-Functional Testing
 Some basic non-functional testing was carried out using Apache JMeter 3.1.
 The tests were carried out by injecting 50 concurrent threads to both:
-* MediPi Concentrator - Patient Upload interface: [JMeter script](/Testing/NonFunctionalTestingScripts/MediPi_Concentrator_Patient_Upload.jmx)
-* MediPi Clinical Server - Web Front End: [JMeter script](/Testing/NonFunctionalTestingScripts/MediPi_Front_End.jmx)
+* MediPi Concentrator - Patient Upload interface: [JMeter script](https://github.com/rprobinson/MediPi/tree/master/SoftwareTesting/NonFunctionalTestingScripts/MediPi_Concentrator_Patient_Upload.jmx)
+* MediPi Clinical Server - Web Front End: [JMeter script](https://github.com/rprobinson/MediPi/tree/master/SoftwareTesting/NonFunctionalTestingScripts/MediPi_Front_End.jmx)
 
 #### Test Evidence
- [MediPi Concentrator test evidence](/Testing/NonFunctionalTestingScripts/MediPiConcentratorPatientLoadTest.xml)  
-[MediPi Clinical Web Server test evidence](/Testing/NonFunctionalTestingScripts/MediPiFrontEndLoadTest.xml)
+ [MediPi Concentrator test evidence](https://github.com/rprobinson/MediPi/tree/master/SoftwareTesting/NonFunctionalTestingScripts/MediPiConcentratorPatientLoadTest.xml)  
+[MediPi Clinical Web Server test evidence](https://github.com/rprobinson/MediPi/tree/master/SoftwareTesting/NonFunctionalTestingScripts/MediPiFrontEndLoadTest.xml)
