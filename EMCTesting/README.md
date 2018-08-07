@@ -23,9 +23,9 @@ As tested by York EMC Services on 7th-21st April 2017
 
 Test Reports and Certificates:
 
-[Electromagnetic Conformance (EMC) Test Report](/EMC_Testing/12387TR1-EMC_Test_Report.pdf)
+[Electromagnetic Conformance (EMC) Test Report](https://github.com/rprobinson/MediPi/tree/master/EMCTesting/12387TR1-EMC_Test_Report.pdf)
 
-[Electromagnetic Conformance (EMC) Test Cerificate](/EMC_Testing/12388TC1-EMC_Test_Certificate.pdf)
+[Electromagnetic Conformance (EMC) Test Cerificate](https://github.com/rprobinson/MediPi/tree/master/EMCTesting/12388TC1-EMC_Test_Certificate.pdf)
 
 This guide instructs how to construct a Raspberry Pi Device which will conform to the following specifications:
 
