@@ -8,7 +8,9 @@ Distilled to its core, MediPi allows secure transmission of data from one or man
 
 ### Hertfordshire Community NHS Trust Pilot
 
-MediPi has been developed in partnership with Hertfordshire Community NHS Trust. The solution has been tested as part a small scale pilot with patients who have conditions such as Heart Failure, COPD and Diabetes.   
+MediPi has been developed in partnership with Hertfordshire Community NHS Trust. The solution has been tested as part a small scale pilot with patients who have conditions such as Heart Failure, COPD and Diabetes.
+* [MediPi Hertfordshire Community NHS Trust Pilot Report](https://github.com/rprobinson/MediPi/blob/master/documents/MediPi-Cost_Effective_Remote_Patient_Monitoring_using_a_Raspberry_Pi_Single_Board_Computer-Final.pdf)
+
 Hertfordshire have stated that there is a saving of £70 for each nurse visit avoided, but this does not account for secondary benefits such as reduction in A&E visits, reduced caseload of clinicians etc. as well as the “softer” perceptual benefits which can be captured by patient and clinician surveys.
 
 The physiological devices used in the pilot were:

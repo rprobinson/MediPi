@@ -63,11 +63,11 @@ A Device Class to schedule data recording and orchestrate the collection and tra
 	* STARTED: This records when a schedule was started and what elements were due to be run (this can configurably be omitted)
 	* MEASURED: This records what time a particular element was measured (this can configurably be omitted)
 	* TRANSMITTED: This records at what time, which elements were transmitted
-	
-	The scheduler class has been designed to allow the scheduler.json file to be remotely updated but currently only part implemented - see above. 
+
+	The scheduler class has been designed to allow the scheduler.json file to be remotely updated but currently only part implemented - see above.
 
 	Each of the scheduled elements defined in the most recent SCHEDULED element are executed in turn and the transmitter is called
-	
+
 	The devices which are to be executed as part of the schedule can be modified and maintained by the Settings element
 
 * #### Transmitter Element Class
@@ -81,7 +81,7 @@ A Device Class to schedule data recording and orchestrate the collection and tra
 	* Bluetooth Settings: validated fields for setting MAC addresses for serial bluetooth devices. Only devices requiring this setting are shown
 	* Synchronisation procedures (automatic and manual) for specific devices where it is necessary to maintain correct time on the physiological device.
 	* Schedule Settings: A checkbox is displayed for each device configured on the MediPi Patient Device allowing a patient specific choice of scheduled physiological devices to be made. Validated input fields for first schedule time and repeat time.
-	
+
 * #### Responses Element Class
 	 The MediPi Clinical system allows clinicians to set and maintain thresholds for each device a patient submits data from. The responses element allows patients to see the results of their current scheduled measurement submissions when compared and calculated against the clincian's thresholds. The responses class receives automatically created encrypted and signed messages from the Clinical system and displays each of them in a list coloured by their threshold status. The overall status of the current schedule period is displayed on the element's tile as a green smiley face, a red frowny face, an exclaimation mark or question mark dependent on the responses.
 
@@ -96,7 +96,7 @@ MediPi Patient software includes configuration to connect to the MediPi Concentr
 MediPi Patient software relies on the internal clock being correct. Some physiological devices take their data value timestamps directly from the internal clock and other devices use the internal clock as a reference for granular based checking to see if the physiological device's clock has drifted outside of an allowable threshold. Correct timestamp is vital for the scheduler and scheduling functionality. To this end, synchronisation is vital before any data can be recorded. As part of the calling script which MediPi Patient uses when executed, it calls the timesync.sh script which attempts to contact pool.ntp.org. It will repeatedly continue to do this until a sucessful synchronisation has occurred. When this happens MediPi patient software will enable all data downloading functions with the devices.
 
 ### Authentication
-MediPi Patient software includes an authentication interface with an implementation of an n-digit PIN keypad authentication class. Other methods of authentication could be developed and plugged into this interface (When in the Admin mode using the Raspberry Pi as authentication has already been input to boot into the admin environment a interface of NONE is used which allows access without authentication). The Keypad allows access to MediPi Patient functionality when a 4 digit PIN is entered - technically this unlocks the patient certificate Java Keystore. The keypad will automatically require reauthentication and reappear after a configurable period of inactivity. The Keypad also has an "Admin" logon facility which takes a 10 digit PIN known to the Administrative user for access to configure certain parameters: bluetooth connections and displayable patient demographics. 
+MediPi Patient software includes an authentication interface with an implementation of an n-digit PIN keypad authentication class. Other methods of authentication could be developed and plugged into this interface (When in the Admin mode using the Raspberry Pi as authentication has already been input to boot into the admin environment a interface of NONE is used which allows access without authentication). The Keypad allows access to MediPi Patient functionality when a 4 digit PIN is entered - technically this unlocks the patient certificate Java Keystore. The keypad will automatically require reauthentication and reappear after a configurable period of inactivity. The Keypad also has an "Admin" logon facility which takes a 10 digit PIN known to the Administrative user for access to configure certain parameters: bluetooth connections and displayable patient demographics.
 
 ### CSS Implementation
 MediPi uses JavaFX which can be skinned/controlled using CSS. Whilst individual elements can be controlled, a refactoring exercise is required to properly implement it and take full advantage of the technology.
@@ -164,7 +164,7 @@ The Patient device requires 2 certificates:
 #### - Patient Certificate - The JKS password controls the authentication of the patient device. The cert is used to encrypt and sign the patient measurement data in the EncryptedAndSignedUploadDO data object.
 #### - Device Certificate - The JKS is unlocked using the MAC address of the host computer at start up and will not allow operation unless the MAC address of the system unlocks the device certificate JKS. The provided test certificate will not work on your system as the MAC address will not match your system, however for test purposes the following line can be amended in org.medpi.MediPi class to allow it to work:
 
-For the device cert 9b636f94-e1c2-4773-a5ca-3858ba176e9c.jks 
+For the device cert 9b636f94-e1c2-4773-a5ca-3858ba176e9c.jks
 
 Linux:
 
@@ -191,8 +191,8 @@ to be:
 ```
 
 The Device Certificate is also used for 2-Way SSl/TLSMA encryption on the data in transit.
-	
-The certs for MediPi Patient software are published here (and are intended to work out-of-the-box) as java key stores and should allow testing of the MediPiPatient with the MediPi Concentrator. 
+
+The certs for MediPi Patient software are published here (and are intended to work out-of-the-box) as java key stores and should allow testing of the MediPiPatient with the MediPi Concentrator.
 
 The patient authentication PIN is 2222
 
@@ -214,7 +214,7 @@ The admin authentication PIN is 9999999999
  See the License for the specific language governing permissions and
  limitations under the License.
 
-## Warranty 
+## Warranty
 Under construction... from the Apache 2 licence:
 
 Unless required by applicable law or agreed to in writing, Licensor provides the Work (and each Contributor provides its Contributions) on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied, including, without limitation, any warranties or conditions of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A PARTICULAR PURPOSE. You are solely responsible for determining the appropriateness of using or redistributing the Work and assume any risks associated with Your exercise of permissions under this License.
@@ -229,7 +229,7 @@ Assuming the use of a Raspberry Pi 2 or 3:
 
 1. Flash the latest Raspbian Jessie image to a C10 microSD card (at least 8Gb)
 2. update and upgrade the Raspbian OS:
-    
+
     ```
     sudo apt-get update
     sudo apt-get upgrade
@@ -245,7 +245,7 @@ then add a line:
 
     ```
     lcd_rotate=2
-    
+
     ```
 
 5. Install OpenJFX - Since java 1.8.0_33 Java for ARM hardfloat has not shipped with JavaFX.
@@ -257,7 +257,7 @@ Guide for building OpenJFX: https://wiki.openjdk.java.net/display/OpenJFX/Buildi
     sudo apt-get install librxtx-java
 
     ```
-7. Configure the pi so that USB ports can be used without needing su 
+7. Configure the pi so that USB ports can be used without needing su
 
     ```
     sudo adduser pi plugdev
@@ -281,13 +281,13 @@ Guide for building OpenJFX: https://wiki.openjdk.java.net/display/OpenJFX/Buildi
 
 11. Upgrade the Java Cryptography Extention. Download from http://www.oracle.com/technetwork/java/javase/downloads/jce8-download-2133166.html and follow the README.txt instructions included in the package. The certs included for demonstration purposes require greater strength binaries in the JRE than are present by default.
 12. Execute MediPi using:
-        
+
         java -Djava.library.path=/usr/lib/jni -jar /home/{user}/MediPi/MediPi.jar --propertiesFile=/home/{user}/MediPi/config/MediPi.properties
 
 # Even Quicker Start - MediPi V1.0.15.img Pilot image file
-If you wish to try out the software using a raspberry pi (with or without a touchscreen) here is a microSD card image which you can use. Uncompress and flash the image to a microSD card (8Gb or larger) and insert into a raspberry pi 3. This downloadable image file of MediPi Patient v1.0.15 was built on the latest version of Raspbian (Jessie) and has been compressed. This is the image which is being used in the pilot. 
+If you wish to try out the software using a raspberry pi (with or without a touchscreen) here is a microSD card image which you can use. Uncompress and flash the image to a microSD card (8Gb or larger) and insert into a raspberry pi 3. This downloadable image file of MediPi Patient v1.0.15 was built on the latest version of Raspbian (Jessie) and has been compressed. This is the image which is being used in the pilot.
 
-[Compressed MediPi Image File](https://www.dropbox.com/s/e7yrhwimzhf6ero/MediPiImage_MediPi_v1.0.15_PILOT-20170530-1_sanitised.img.zip?dl=0)
+[Compressed MediPi Image File](https://www.dropbox.com/s/i1bvwtja3up5vcg/MediPiImage_v1.0.15_PILOT-20171025-1_sanitised.img.zip?dl=0)
 
 [Raspberry Pi Guide to writing an image to microSD](https://www.raspberrypi.org/documentation/installation/installing-images/)
 
