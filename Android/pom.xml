@@ -1,0 +1,93 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>uk.gov.nhs.digital.telehealth</groupId>
+	<artifactId>MediMobile</artifactId>
+	<version>1.0.0</version>
+	<packaging>pom</packaging>
+	<name>Medi Mobile</name>
+	<url>http://maven.apache.org</url>
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	</properties>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.fortasoft</groupId>
+				<artifactId>gradle-maven-plugin</artifactId>
+				<version>1.0.7</version>
+				<configuration>
+					<tasks>
+						<!-- this would effectively call "gradle assembleRelease" -->
+						<task>assembleRelease</task>
+					</tasks>
+				</configuration>
+				<executions>
+					<execution>
+						<!-- You can bind this to any phase you like -->
+						<phase>compile</phase>
+						<goals>
+							<!-- goal must be "invoke" -->
+							<goal>invoke</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+
+	<repositories>
+		<repository>
+			<id>atlassian-public</id>
+			<url>https://maven.atlassian.com/repository/public</url>
+			<snapshots>
+				<enabled>true</enabled>
+				<updatePolicy>never</updatePolicy>
+				<checksumPolicy>warn</checksumPolicy>
+			</snapshots>
+			<releases>
+				<enabled>true</enabled>
+				<checksumPolicy>warn</checksumPolicy>
+			</releases>
+		</repository>
+		<repository>
+			<id>jcenter</id>
+			<url>http://jcenter.bintray.com </url>
+			<snapshots>
+				<enabled>true</enabled>
+				<updatePolicy>never</updatePolicy>
+				<checksumPolicy>warn</checksumPolicy>
+			</snapshots>
+			<releases>
+				<enabled>true</enabled>
+				<checksumPolicy>warn</checksumPolicy>
+			</releases>
+		</repository>
+	</repositories>
+
+	<pluginRepositories>
+		<pluginRepository>
+			<id>atlassian-public</id>
+			<url>https://maven.atlassian.com/repository/public</url>
+			<snapshots>
+				<enabled>true</enabled>
+				<updatePolicy>never</updatePolicy>
+				<checksumPolicy>warn</checksumPolicy>
+			</snapshots>
+			<releases>
+				<enabled>true</enabled>
+				<checksumPolicy>warn</checksumPolicy>
+			</releases>
+		</pluginRepository>
+		<pluginRepository>
+			<id>jcenter</id>
+			<name>jcenter</name>
+			<url>http://jcenter.bintray.com </url>
+		</pluginRepository>
+		<pluginRepository>
+			<id>jfrog-plugins</id>
+			<name>jfrog-plugins-dist</name>
+			<url>http://repo.jfrog.org/artifactory/plugins-releases</url>
+		</pluginRepository>
+	</pluginRepositories>
+</project>
