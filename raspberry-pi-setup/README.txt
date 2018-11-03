@@ -1,0 +1,7 @@
+1. Copy the MediPi directory to /home/pi/ directory 'sudo cp -R /media/pi/KK/MediPi-Setup/* /home/pi/'
+2. Copy the README.txt file to /home/pi/MediPi directory 'sudo cp -R /home/pi/README.txt /home/pi/MediPi'
+3. Copy the MediPi directory to /home/pi/ directory 'sudo chmod -R 777 /home/pi/mastek-wi-fi'
+4. Copy the MediPi directory to /home/pi/ directory 'sudo chmod -R 777 /home/pi/MediPi'
+5. Run the command  to configure mastek wi-fi settings '/home/pi/mastek-wi-fi/configure-mastek-wi-fi.sh 172.16.72.212'
+6. Wait for the network to come up and run the command to setup javafx, RXTXlib and configure MediPi '/home/pi/MediPi/raspberry-pi-setup/setup.sh'
+7. Once the raspberry pi is restarted, run command to start MediPi application '/home/pi/MediPi/run-medi-pi.sh'
