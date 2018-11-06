@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:id="@+id/layout">
+    <LinearLayout android:id="@+id/top"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp"
+        android:orientation="horizontal"
+        android:layout_width="fill_parent"
+        android:layout_height="50dp">
+        <TextView android:id="@+id/text"
+            android:text="- -"
+            android:textSize="32dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+        </TextView>
+        <RelativeLayout
+            android:orientation="horizontal"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent">
+            <uk.gov.nhs.digital.telehealth.service.others.HeartbeatView android:id="@+id/image"
+                android:layout_centerInParent="true"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+            </uk.gov.nhs.digital.telehealth.service.others.HeartbeatView>
+        </RelativeLayout>
+    </LinearLayout>
+    <SurfaceView android:id="@+id/preview"
+        android:layout_weight="1"
+        android:layout_width="fill_parent"
+        android:layout_height="0dp">
+    </SurfaceView>
+</LinearLayout>

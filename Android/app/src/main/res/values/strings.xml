@@ -1,0 +1,32 @@
+<resources>
+    <string name="app_name">Medi Mobile</string>
+    <string name="label_activity_oximeter">Oximeter</string>
+    <string name="label_activity_blood_pressure">Blood Pressure</string>
+    <string name="label_activity_diagnostic_scale">Diagnostic Scale</string>
+    <string name="label_activity_sugar">Sugar Calculator</string>
+    <string name="label_activity_voice">Voice Test</string>
+    <string name="label_activity_finger_heart_rate">Finger Heart Rate</string>
+
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+
+    <string name="start_process_button_name">START</string>
+    <string name="stop_process_button_name">STOP</string>
+    <string name="default_empty_string">- - -</string>
+
+    <!-- Oximeter constants -->
+    <string name="label_percentage_spo2">%SpO2</string>
+    <string name="label_pulse_rate">PRbpm</string>
+
+    <!-- Blood Pressure constants-->
+    <string name="label_sys">SYS</string>
+    <string name="label_dia">DIA</string>
+    <string name="label_heart_rate">PRbpm</string>
+
+    <string name="label_current_location">Current Location</string>
+
+    <!-- Error messages -->
+    <string name="message_location_untraceable">Unable to trace the location</string>
+    <string name="exception_message_no_devices_connected">No devices connected</string>
+    <string name="exception_message_unable_to_connect_device">Unable to connect to the device</string>
+</resources>
