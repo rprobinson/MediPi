@@ -5,7 +5,7 @@
 This is an implementation of a Clinician application (It is intended to be used in with the MediPi Patient and Medipi Concentrator implementation which is published alongside this GitHub repository). It has been developed to be flexible and extensible.
 
 This project started as a demonstration of a general telehealth system but with clinical involvement from a Hertfordshire Community NHS Trust, it has been developed into a Heart Failure implementation.
-The project is written using Java, Spring Boot, Hibernate, JQuery, JSP and Postgres Database. The application is designed on the SOA principles. The medipi-clinician-service exposes the APIs to get/post the data to/from the database and medipi-clinician-web-application provides the UI for clinicians to monitor the patients which in-turn access the APIs exposed by medipi-clinician-service.
+The project is written using Java, Spring Boot, Hibernate, JQuery, JSP and Postgres Database. The application is designed on the SOA principles. The [medipi-clinician-service](https://github.com/rprobinson/MediPi/tree/master/Application/Services/medipi-clinician-service) exposes the APIs to get/post the data to/from the database and [medipi-clinician-web-application](https://github.com/rprobinson/MediPi/tree/master/Application/Web-Aplication/medipi-clinician-web-application) provides the UI for clinicians to monitor the patients which in-turn access the APIs exposed by medipi-clinician-service.
 
 It is intended to be used in with the MediPi Patient and Medipi Concentrator implementation which is published alongside this GitHub repository.
 
