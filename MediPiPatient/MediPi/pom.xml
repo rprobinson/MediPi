@@ -80,7 +80,7 @@
         <dependency>
             <groupId>com.nimbusds</groupId>
             <artifactId>nimbus-jose-jwt</artifactId>
-            <version>4.21</version>
+            <version>7.9</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/net.minidev/json-smart -->
         <!--
