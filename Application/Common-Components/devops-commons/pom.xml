@@ -18,7 +18,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<spring.boot.version>1.2.0.RELEASE</spring.boot.version>
 		<devops.commons>0.0.1-SNAPSHOT</devops.commons>
-		<spring.version>3.2.0.RELEASE</spring.version>
+		<spring.version>5.2.21.RELEASE</spring.version>
 	</properties>
 
 	<dependencies>
